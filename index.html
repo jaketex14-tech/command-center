@@ -560,9 +560,15 @@
     /********************************************************************
      * LIVE CLOUD SYNC ENGINE (FIREBASE REALTIME DATABASE REST + POLLING)
      ********************************************************************/
-    function getFirebaseUrl() {
-      return (localStorage.getItem(FIREBASE_URL_KEY) || "").trim().replace(/\/$/, "");
-    }
+   const INJECTED_CLOUD_URL = "PLACEHOLDER_FIREBASE_URL";
+
+function getFirebaseUrl() {
+  const saved = localStorage.getItem(FIREBASE_URL_KEY);
+  if (saved && saved.startsWith("https://")) {
+    return saved.trim().replace(/\/$/, "");
+  }
+  return INJECTED_CLOUD_URL.trim().replace(/\/$/, "");
+}
 
     function saveFirebaseUrl() {
       const raw = document.getElementById("firebase-url-input").value.trim().replace(/\/$/, "");
