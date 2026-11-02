@@ -41,31 +41,25 @@
       padding-bottom: 90px;
     }
 
-    .sim-bar {
+    /* Cloud Status Bar */
+    .sync-bar {
       background: #020617;
       border-bottom: 1px solid var(--card-border);
-      padding: 8px 12px;
+      padding: 7px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      font-size: 12px;
+      font-size: 11px;
     }
-    .sim-bar span {
-      color: var(--muted);
-      font-weight: 600;
-      white-space: nowrap;
+    .sync-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: var(--warning);
     }
-    .sim-bar select {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--accent);
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 12px;
-      flex: 1;
-      margin-bottom: 0;
-    }
+    .sync-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
 
     header {
       padding: 14px 16px;
@@ -349,11 +343,16 @@
 </head>
 <body>
 
-  <div class="sim-bar">
-    <span>⚡ Instant Role Test:</span>
-    <select id="quick-user-switch" onchange="switchUser(this.value)"></select>
+  <!-- Top Live Sync Status Bar -->
+  <div class="sync-bar">
+    <div>
+      <span id="sync-dot" class="sync-dot"></span>
+      <span id="sync-status-text">Local Mode (Add Firebase URL in Users tab for Live Multi-Phone Sync)</span>
+    </div>
+    <span id="sync-time" style="color:var(--muted);"></span>
   </div>
 
+  <!-- Heads-Up Notification Banner -->
   <div id="push-banner">
     <div>
       <div class="push-title" id="push-title">New Notification</div>
@@ -377,11 +376,11 @@
         <span id="header-role-badge" class="role-badge role-admin">ADMIN</span>
       </div>
     </div>
-    <button class="btn-logout" onclick="showLoginScreen()">Switch Login</button>
+    <button class="btn-logout" onclick="logoutUser()">Sign Out</button>
   </header>
 
   <main>
-    <!-- Login Screen with Large Custom Vector Emblem -->
+    <!-- PIN-Protected Login Screen -->
     <section id="login-screen" class="hidden">
       <svg width="72" height="72" viewBox="0 0 108 108" style="border-radius:18px; margin: 0 auto; display:block; box-shadow: 0 4px 14px rgba(0,0,0,0.5);">
         <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#3b82f6" stroke-width="3"/>
@@ -391,25 +390,25 @@
         <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f8fafc" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <h2>Command Center</h2>
-      <p>Select your account to sign in.</p>
+      <p>Select your account and enter your PIN (Default: 1234)</p>
       <select id="login-user-select"></select>
-      <input type="password" id="login-pin" placeholder="••••" value="1234" />
+      <input type="password" id="login-pin" inputmode="numeric" placeholder="Enter 4-Digit PIN" />
+      <div id="login-error" style="color:var(--danger); font-size:12px; margin-bottom:10px; display:none;">Incorrect PIN. Please try again.</div>
       <button class="btn" onclick="handleLogin()">Sign In</button>
     </section>
 
+    <!-- TAB 1: ADMIN TRIAGE QUEUE -->
     <section id="tab-triage" class="hidden">
       <div class="card" style="border-color: var(--accent);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <strong style="font-size:14px;">📲 Simulate Incoming Phone Capture</strong>
+          <strong style="font-size:14px;">📥 Quick Triage / Schedule Entry</strong>
           <span style="font-size:11px; color:var(--muted);">Admin Private Feed</span>
         </div>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
-          Test how incoming Texts, Samsung Reminders, and Calendar events land in your private triage queue before you assign them.
-        </p>
+        <input type="text" id="triage-manual-input" placeholder="Paste message, reminder, or schedule item..." />
         <div class="row">
-          <button class="btn btn-sm btn-outline" onclick="simulateCapture('SMS')">+ Incoming SMS</button>
-          <button class="btn btn-sm btn-outline" onclick="simulateCapture('SAMSUNG')">+ Samsung Rem</button>
-          <button class="btn btn-sm btn-outline" onclick="simulateCapture('CAL')">+ Google Cal</button>
+          <button class="btn btn-sm" onclick="addTriageManual('SMS')">+ Add as SMS</button>
+          <button class="btn btn-sm btn-outline" onclick="addTriageManual('SAMSUNG')">+ Reminder</button>
+          <button class="btn btn-sm btn-outline" onclick="addTriageManual('CAL')">+ Calendar</button>
         </div>
       </div>
 
@@ -420,6 +419,7 @@
       <div id="triage-list"></div>
     </section>
 
+    <!-- TAB 2: TASK BOARD -->
     <section id="tab-tasks" class="hidden">
       <div id="admin-task-creator" class="card">
         <strong style="font-size:14px; display:block; margin-bottom:10px;">➕ Create & Assign Task</strong>
@@ -440,14 +440,31 @@
       <div id="tasks-list"></div>
     </section>
 
+    <!-- TAB 3: CLOUD SYNC & USER MANAGEMENT (ADMINS ONLY) -->
     <section id="tab-team" class="hidden">
+      <!-- Live Firebase Cloud Connection Card -->
+      <div class="card" style="border-color: var(--success);">
+        <strong style="font-size:14px; display:block; margin-bottom:6px;">☁️ Live Multi-Phone Cloud Sync</strong>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
+          Paste your Firebase Realtime Database URL below so tasks and completions sync across all Android and iPhone devices in real time.
+        </p>
+        <input type="url" id="firebase-url-input" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+        <div class="row">
+          <button class="btn btn-sm" style="background:var(--success);" onclick="saveFirebaseUrl()">Connect Live Cloud</button>
+          <button class="btn btn-sm btn-outline" onclick="copyInviteLink()">📋 Copy Team Link</button>
+        </div>
+      </div>
+
       <div class="card">
-        <strong style="font-size:14px; display:block; margin-bottom:10px;">👤 Add User or Administrator</strong>
-        <input type="text" id="new-user-name" placeholder="Full Name" />
-        <select id="new-user-role">
-          <option value="member">Sub-User (Member - Sees Only Assigned Tasks)</option>
-          <option value="admin">Administrator (Full Command & Assignment Access)</option>
-        </select>
+        <strong style="font-size:14px; display:block; margin-bottom:10px;">👤 Add / Update User Account</strong>
+        <input type="text" id="new-user-name" placeholder="Full Name (e.g. Kaylee, Ronnie, Terry)" />
+        <div class="row">
+          <select id="new-user-role">
+            <option value="member">Sub-User (Member)</option>
+            <option value="admin">Administrator</option>
+          </select>
+          <input type="text" id="new-user-pin" inputmode="numeric" placeholder="4-Digit PIN (1234)" value="1234" />
+        </div>
         <button class="btn" onclick="addNewUser()">Add Account</button>
       </div>
 
@@ -466,20 +483,28 @@
       <span id="badge-tasks" class="nav-badge hidden">0</span>
     </button>
     <button id="nav-team" class="nav-item" onclick="switchTab('team')">
-      <span>👥 Users & Roles</span>
+      <span>👥 Cloud & Users</span>
     </button>
   </nav>
 
   <script>
-    const STORAGE_KEY = "unified_command_center_v1";
+    const STORAGE_KEY = "unified_command_center_v2";
+    const SESSION_USER_KEY = "command_center_logged_in_user";
+    const FIREBASE_URL_KEY = "command_center_firebase_url";
+    const LAST_NOTIF_KEY = "command_center_last_notif_id";
 
-    const DEFAULT_STATE = {
-      currentUserId: "u_admin1",
+    // Auto-read Firebase URL if shared via team invite link (?db=https://...)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("db")) {
+      localStorage.setItem(FIREBASE_URL_KEY, urlParams.get("db").replace(/\/$/, ""));
+    }
+
+    const DEFAULT_SHARED_STATE = {
       users: [
-        { id: "u_admin1", name: "Admin 1 (You)", role: "admin" },
-        { id: "u_admin2", name: "Admin 2 (Co-Admin)", role: "admin" },
-        { id: "u_member1", name: "User 1 (Team Member)", role: "member" },
-        { id: "u_member2", name: "User 2 (Team Member)", role: "member" }
+        { id: "u_admin1", name: "Admin 1 (You)", role: "admin", pin: "1234" },
+        { id: "u_admin2", name: "Admin 2 (Co-Admin)", role: "admin", pin: "1234" },
+        { id: "u_member1", name: "User 1 (Team Member)", role: "member", pin: "1234" },
+        { id: "u_member2", name: "User 2 (Team Member)", role: "member", pin: "1234" }
       ],
       tasks: [
         {
@@ -505,134 +530,275 @@
           completed: false,
           completedBy: null,
           completedAt: null
-        },
-        {
-          id: "t_103",
-          title: "Submit weekly schedule check",
-          source: "CAL",
-          due: "Today 5:00 PM",
-          visibility: "assigned",
-          assignedTo: "u_member2",
-          createdBy: "u_admin2",
-          completed: true,
-          completedBy: "u_member2",
-          completedAt: "1:15 PM"
         }
       ],
       lastNotification: null
     };
 
-    let state = loadState();
+    let state = loadLocalState();
+    let currentUserId = localStorage.getItem(SESSION_USER_KEY) || null;
     let activeTab = "tasks";
     let adminFilterUserId = "ALL";
+    let cloudPollTimer = null;
 
-    function loadState() {
+    function loadLocalState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_STATE));
-          return JSON.parse(JSON.stringify(DEFAULT_STATE));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SHARED_STATE));
+          return JSON.parse(JSON.stringify(DEFAULT_SHARED_STATE));
         }
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        if (!parsed.users) parsed.users = DEFAULT_SHARED_STATE.users;
+        if (!parsed.tasks) parsed.tasks = [];
+        return parsed;
       } catch (e) {
-        return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        return JSON.parse(JSON.stringify(DEFAULT_SHARED_STATE));
       }
     }
 
-    function saveState(notifyTitle, notifyBody, targetUserId) {
+    /********************************************************************
+     * LIVE CLOUD SYNC ENGINE (FIREBASE REALTIME DATABASE REST + POLLING)
+     ********************************************************************/
+    function getFirebaseUrl() {
+      return (localStorage.getItem(FIREBASE_URL_KEY) || "").trim().replace(/\/$/, "");
+    }
+
+    function saveFirebaseUrl() {
+      const raw = document.getElementById("firebase-url-input").value.trim().replace(/\/$/, "");
+      if (!raw.startsWith("https://")) {
+        alert("Please enter a valid https:// Firebase Realtime Database URL.");
+        return;
+      }
+      localStorage.setItem(FIREBASE_URL_KEY, raw);
+      pushStateToCloud("☁️ Cloud Sync Connected", "All devices connected to this database will now sync live.", "ALL");
+      startCloudSyncLoop();
+    }
+
+    function copyInviteLink() {
+      const dbUrl = getFirebaseUrl();
+      if (!dbUrl) {
+        alert("Connect your Firebase URL first so it can be embedded in the invite link.");
+        return;
+      }
+      const shareUrl = `https://${location.hostname.includes("github.io") ? location.host + location.pathname : "YOUR-GITHUB-USERNAME.github.io/command-center/"}?db=${encodeURIComponent(dbUrl)}`;
+      navigator.clipboard?.writeText(shareUrl);
+      alert("Invite link copied! Send this link to iPhones or other devices and they will automatically connect to your live database:\n\n" + shareUrl);
+    }
+
+    async function pushStateToCloud(notifyTitle, notifyBody, targetAudience) {
       if (notifyTitle && notifyBody) {
         state.lastNotification = {
           id: Date.now(),
           title: notifyTitle,
           body: notifyBody,
-          targetUserId: targetUserId || "ALL"
+          target: targetAudience || "ALL",
+          actorId: currentUserId
         };
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderAll();
 
       if (notifyTitle && notifyBody) {
-        triggerDeviceNotification(notifyTitle, notifyBody);
+        checkAndFireNotification(state.lastNotification, true);
+      }
+
+      const dbUrl = getFirebaseUrl();
+      if (!dbUrl) return;
+
+      try {
+        await fetch(`${dbUrl}/command_center.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state)
+        });
+        updateSyncIndicator(true);
+      } catch (err) {
+        updateSyncIndicator(false);
       }
     }
 
-    async function triggerDeviceNotification(title, body) {
+    async function pullStateFromCloud() {
+      const dbUrl = getFirebaseUrl();
+      if (!dbUrl) {
+        updateSyncIndicator(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${dbUrl}/command_center.json?t=${Date.now()}`);
+        if (!res.ok) throw new Error("Sync HTTP error");
+        const remoteData = await res.json();
+
+        if (!remoteData) {
+          // First time connecting an empty Firebase DB: seed it with current state
+          await pushStateToCloud();
+          return;
+        }
+
+        state = {
+          users: remoteData.users || DEFAULT_SHARED_STATE.users,
+          tasks: remoteData.tasks || [],
+          lastNotification: remoteData.lastNotification || null
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        updateSyncIndicator(true);
+        renderAll();
+
+        if (state.lastNotification) {
+          checkAndFireNotification(state.lastNotification, false);
+        }
+      } catch (err) {
+        updateSyncIndicator(false);
+      }
+    }
+
+    function startCloudSyncLoop() {
+      clearInterval(cloudPollTimer);
+      const dbUrl = getFirebaseUrl();
+      const inputEl = document.getElementById("firebase-url-input");
+      if (inputEl && dbUrl) inputEl.value = dbUrl;
+
+      if (dbUrl) {
+        pullStateFromCloud();
+        cloudPollTimer = setInterval(pullStateFromCloud, 2500);
+      } else {
+        updateSyncIndicator(false);
+      }
+    }
+
+    function updateSyncIndicator(isOnline) {
+      const dot = document.getElementById("sync-dot");
+      const txt = document.getElementById("sync-status-text");
+      const timeEl = document.getElementById("sync-time");
+      if (isOnline) {
+        dot.className = "sync-dot online";
+        txt.textContent = "Live Cloud Sync Active";
+        timeEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      } else {
+        dot.className = "sync-dot";
+        txt.textContent = getFirebaseUrl() ? "Reconnecting to Cloud..." : "Offline / Local Mode (Connect Cloud in Cloud & Users tab)";
+      }
+    }
+
+    /********************************************************************
+     * TARGETED NATIVE NOTIFICATION ENGINE
+     ********************************************************************/
+    function checkAndFireNotification(notifObj, isLocalAction) {
+      if (!notifObj || !notifObj.id) return;
+      const lastSeenId = Number(localStorage.getItem(LAST_NOTIF_KEY) || 0);
+      if (notifObj.id <= lastSeenId) return;
+
+      localStorage.setItem(LAST_NOTIF_KEY, String(notifObj.id));
+
+      const user = getCurrentUser();
+      if (!user) return;
+
+      // Determine if this phone should ring:
+      // - If it's a remote action, only ring if targeted at this user, ADMINS (and user is admin), or ALL
+      const isTargetedToMe =
+        notifObj.target === "ALL" ||
+        notifObj.target === user.id ||
+        (notifObj.target === "ADMINS" && user.role === "admin");
+
+      if (!isTargetedToMe && !isLocalAction) return;
+
+      // 1. Show in-app heads-up toast
       const banner = document.getElementById("push-banner");
-      document.getElementById("push-title").textContent = title;
-      document.getElementById("push-body").textContent = body;
+      document.getElementById("push-title").textContent = notifObj.title;
+      document.getElementById("push-body").textContent = notifObj.body;
       banner.style.display = "flex";
       clearTimeout(window._pushTimer);
       window._pushTimer = setTimeout(hidePush, 5000);
+
+      // 2. Trigger Real Native Android Status-Bar Notification with Sound
+      try {
+        if (window.AndroidNative && typeof window.AndroidNative.sendNotification === "function") {
+          window.AndroidNative.sendNotification(notifObj.title, notifObj.body);
+          return;
+        }
+      } catch (e) {}
+
+      // 3. Fallback for iPhone / Web PWA Notification API
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(notifObj.title, { body: notifObj.body });
+      }
     }
 
     function hidePush() {
       document.getElementById("push-banner").style.display = "none";
     }
 
+    /********************************************************************
+     * AUTHENTICATION & USER ROLES
+     ********************************************************************/
     function getCurrentUser() {
-      return state.users.find(u => u.id === state.currentUserId) || state.users[0];
-    }
-
-    function switchUser(userId) {
-      state.currentUserId = userId;
-      const user = getCurrentUser();
-      if (user.role !== "admin") activeTab = "tasks";
-      saveState();
-    }
-
-    function showLoginScreen() {
-      document.getElementById("app-header").classList.add("hidden");
-      document.getElementById("bottom-nav").classList.add("hidden");
-      document.getElementById("tab-triage").classList.add("hidden");
-      document.getElementById("tab-tasks").classList.add("hidden");
-      document.getElementById("tab-team").classList.add("hidden");
-      document.getElementById("login-screen").classList.remove("hidden");
+      if (!currentUserId) return null;
+      return state.users.find(u => u.id === currentUserId) || null;
     }
 
     function handleLogin() {
       const selectedId = document.getElementById("login-user-select").value;
-      document.getElementById("login-screen").classList.add("hidden");
-      switchUser(selectedId);
+      const enteredPin = document.getElementById("login-pin").value.trim();
+      const userAccount = state.users.find(u => u.id === selectedId);
+      const errEl = document.getElementById("login-error");
+
+      if (!userAccount) return;
+      const requiredPin = userAccount.pin || "1234";
+
+      if (enteredPin !== requiredPin) {
+        errEl.style.display = "block";
+        return;
+      }
+
+      errEl.style.display = "none";
+      currentUserId = userAccount.id;
+      localStorage.setItem(SESSION_USER_KEY, currentUserId);
+      document.getElementById("login-pin").value = "";
+
+      if (userAccount.role !== "admin") activeTab = "tasks";
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      renderAll();
+    }
+
+    function logoutUser() {
+      currentUserId = null;
+      localStorage.removeItem(SESSION_USER_KEY);
+      renderAll();
     }
 
     function switchTab(tabName) {
       const user = getCurrentUser();
-      if (user.role !== "admin" && tabName !== "tasks") return;
+      if (!user || (user.role !== "admin" && tabName !== "tasks")) return;
       activeTab = tabName;
       renderAll();
     }
 
-    function simulateCapture(sourceType) {
-      const samples = {
-        SMS: [
-          "Text from Client: Need someone to drop off keys at the office before 3:30 PM",
-          "SMS: Don't forget to pick up replacement hydraulic fittings today"
-        ],
-        SAMSUNG: [
-          "Samsung Reminder: Call insurance agent back at 1:00 PM",
-          "Samsung Reminder: Order supplies before 4:00 PM cutoff"
-        ],
-        CAL: [
-          "Google Calendar: Afternoon site walk & inspection @ 2:00 PM"
-        ]
-      };
-      const list = samples[sourceType] || samples.SMS;
-      const randomTitle = list[Math.floor(Math.random() * list.length)];
+    /********************************************************************
+     * TASK TRIAGE, ASSIGNMENT & COMPLETION ACTIONS
+     ********************************************************************/
+    function addTriageManual(sourceType) {
+      const inputEl = document.getElementById("triage-manual-input");
+      const text = inputEl.value.trim();
+      if (!text) return;
 
       state.tasks.unshift({
         id: "t_" + Date.now(),
-        title: randomTitle,
+        title: text,
         source: sourceType,
         due: "Today",
         visibility: "triage",
         assignedTo: null,
-        createdBy: getCurrentUser().id,
+        createdBy: currentUserId,
         completed: false,
         completedBy: null,
         completedAt: null
       });
 
-      saveState(`📥 Captured ${sourceType} Item`, `"${randomTitle}" added to Admin Triage.`);
+      inputEl.value = "";
+      pushStateToCloud(`📥 Added to Triage (${sourceType})`, `"${text}" added to Admin Triage Queue.`, "ADMINS");
     }
 
     function assignTriageItem(taskId, selectElemId) {
@@ -640,16 +806,20 @@
       const task = state.tasks.find(t => t.id === taskId);
       const targetUser = state.users.find(u => u.id === targetUserId);
       const adminUser = getCurrentUser();
-      if (!task || !targetUser) return;
+      if (!task || !targetUser || !adminUser) return;
 
       task.visibility = "assigned";
       task.assignedTo = targetUser.id;
-      saveState(`📲 Push Sent to ${targetUser.name}`, `${adminUser.name} assigned: "${task.title}"`, targetUser.id);
+      pushStateToCloud(
+        `📲 New Task Assigned to ${targetUser.name}`,
+        `${adminUser.name} assigned: "${task.title}"`,
+        targetUser.id
+      );
     }
 
     function dismissTriageItem(taskId) {
       state.tasks = state.tasks.filter(t => t.id !== taskId);
-      saveState();
+      pushStateToCloud();
     }
 
     function createAndAssignTask() {
@@ -678,44 +848,72 @@
 
       titleInput.value = "";
       dueInput.value = "";
-      saveState(`📲 Push Alert → ${targetUser.name}`, `New Task from ${adminUser.name}: "${title}"`, targetUser.id);
+      pushStateToCloud(
+        `📲 New Task for ${targetUser.name}`,
+        `${adminUser.name}: "${title}" (Due: ${due})`,
+        targetUser.id
+      );
     }
 
     function toggleTaskCompletion(taskId) {
       const task = state.tasks.find(t => t.id === taskId);
-      if (!task) return;
-
       const actor = getCurrentUser();
+      if (!task || !actor) return;
+
       task.completed = !task.completed;
 
       if (task.completed) {
         const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         task.completedBy = actor.id;
         task.completedAt = nowStr;
-        saveState(`✅ Completed by ${actor.name}`, `"${task.title}" marked DONE at ${nowStr}.`, "ADMINS");
+        pushStateToCloud(
+          `✅ Completed by ${actor.name}`,
+          `"${task.title}" marked DONE at ${nowStr}.`,
+          "ADMINS"
+        );
       } else {
         task.completedBy = null;
         task.completedAt = null;
-        saveState(`🔄 Task Re-Opened`, `${actor.name} unmarked "${task.title}".`, "ADMINS");
+        pushStateToCloud(
+          `🔄 Task Re-Opened`,
+          `${actor.name} unmarked "${task.title}".`,
+          "ADMINS"
+        );
       }
     }
 
     function deleteTask(taskId) {
       state.tasks = state.tasks.filter(t => t.id !== taskId);
-      saveState();
+      pushStateToCloud();
     }
 
     function addNewUser() {
       const nameInput = document.getElementById("new-user-name");
       const roleSelect = document.getElementById("new-user-role");
+      const pinInput = document.getElementById("new-user-pin");
       const name = nameInput.value.trim();
+      const pin = pinInput.value.trim() || "1234";
       if (!name) return;
 
-      state.users.push({ id: "u_" + Date.now(), name, role: roleSelect.value });
+      state.users.push({
+        id: "u_" + Date.now(),
+        name,
+        role: roleSelect.value,
+        pin
+      });
       nameInput.value = "";
-      saveState("👤 Account Added", `${name} added to Command Center.`);
+      pushStateToCloud("👤 Account Added", `${name} added to Command Center.`, "ADMINS");
     }
 
+    function removeUser(userId) {
+      if (state.users.length <= 1) return;
+      state.users = state.users.filter(u => u.id !== userId);
+      pushStateToCloud();
+    }
+
+    /********************************************************************
+     * UI RENDERING
+     ********************************************************************/
     function getSourceBadge(source) {
       const map = {
         SMS: { cls: "src-sms", label: "💬 SMS Text" },
@@ -734,23 +932,35 @@
     }
 
     function renderAll() {
+      const loginSelect = document.getElementById("login-user-select");
+      const prevLoginSel = loginSelect.value;
+      loginSelect.innerHTML = state.users.map(u =>
+        `<option value="${u.id}">${u.name} (${u.role.toUpperCase()})</option>`
+      ).join("");
+      if (prevLoginSel && state.users.some(u => u.id === prevLoginSel)) {
+        loginSelect.value = prevLoginSel;
+      }
+
       const user = getCurrentUser();
+      if (!user) {
+        document.getElementById("app-header").classList.add("hidden");
+        document.getElementById("bottom-nav").classList.add("hidden");
+        document.getElementById("tab-triage").classList.add("hidden");
+        document.getElementById("tab-tasks").classList.add("hidden");
+        document.getElementById("tab-team").classList.add("hidden");
+        document.getElementById("login-screen").classList.remove("hidden");
+        return;
+      }
+
+      document.getElementById("login-screen").classList.add("hidden");
       const isAdmin = user.role === "admin";
 
-      const switcher = document.getElementById("quick-user-switch");
-      const loginSelect = document.getElementById("login-user-select");
       const assigneeSelect = document.getElementById("new-task-assignee");
-
-      const userOptionsHtml = state.users.map(u =>
-        `<option value="${u.id}" ${u.id === user.id ? "selected" : ""}>${u.name} [${u.role.toUpperCase()}]</option>`
-      ).join("");
-
-      switcher.innerHTML = userOptionsHtml;
-      loginSelect.innerHTML = userOptionsHtml;
-
       const prevAssignee = assigneeSelect.value;
-      assigneeSelect.innerHTML = state.users.map(u => `<option value="${u.id}">Assign to: ${u.name}</option>`).join("");
-      if (prevAssignee && state.users.some(u => u.id === prevAssignee)) assigneeSelect.value = prevAssignee;
+      if ( document.activeElement !== assigneeSelect ) {
+        assigneeSelect.innerHTML = state.users.map(u => `<option value="${u.id}">Assign to: ${u.name}</option>`).join("");
+        if (prevAssignee && state.users.some(u => u.id === prevAssignee)) assigneeSelect.value = prevAssignee;
+      }
 
       document.getElementById("app-header").classList.remove("hidden");
       document.getElementById("bottom-nav").classList.remove("hidden");
@@ -772,28 +982,32 @@
       document.getElementById("nav-tasks").classList.toggle("active", activeTab === "tasks");
       document.getElementById("nav-team").classList.toggle("active", activeTab === "team");
 
+      // Render Triage Queue
       const triageItems = state.tasks.filter(t => t.visibility === "triage");
       document.getElementById("triage-count").textContent = `${triageItems.length} items`;
       const badgeTriage = document.getElementById("badge-triage");
       badgeTriage.textContent = triageItems.length;
       badgeTriage.classList.toggle("hidden", triageItems.length === 0);
 
-      const triageListEl = document.getElementById("triage-list");
-      triageListEl.innerHTML = triageItems.length === 0
-        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px;">All incoming items have been triaged!</div>`
-        : triageItems.map(t => `
-          <div class="card">
-            <div class="task-meta">${getSourceBadge(t.source)} <span class="task-sub">Due: ${t.due}</span></div>
-            <div class="task-title" style="margin:6px 0 10px;">${t.title}</div>
-            <div class="row" style="align-items:center;">
-              <select id="assign-sel-${t.id}" style="margin-bottom:0;">
-                ${state.users.map(u => `<option value="${u.id}">Assign → ${u.name}</option>`).join("")}
-              </select>
-              <button class="btn btn-sm" onclick="assignTriageItem('${t.id}', 'assign-sel-${t.id}')">Assign</button>
-              <button class="btn btn-sm btn-outline" onclick="dismissTriageItem('${t.id}')">✕</button>
+      // Avoid overwriting dropdown while Admin is actively selecting a user
+      if (!document.activeElement || !document.activeElement.id.startsWith("assign-sel-")) {
+        const triageListEl = document.getElementById("triage-list");
+        triageListEl.innerHTML = triageItems.length === 0
+          ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px;">All incoming items have been triaged!</div>`
+          : triageItems.map(t => `
+            <div class="card">
+              <div class="task-meta">${getSourceBadge(t.source)} <span class="task-sub">Due: ${t.due}</span></div>
+              <div class="task-title" style="margin:6px 0 10px;">${t.title}</div>
+              <div class="row" style="align-items:center;">
+                <select id="assign-sel-${t.id}" style="margin-bottom:0;">
+                  ${state.users.map(u => `<option value="${u.id}">Assign → ${u.name}</option>`).join("")}
+                </select>
+                <button class="btn btn-sm" onclick="assignTriageItem('${t.id}', 'assign-sel-${t.id}')">Assign</button>
+                <button class="btn btn-sm btn-outline" onclick="dismissTriageItem('${t.id}')">✕</button>
+              </div>
             </div>
-          </div>
-        `).join("");
+          `).join("");
+      }
 
       if (isAdmin) {
         const chips = [{ id: "ALL", label: "All Users" }, ...state.users.map(u => ({ id: u.id, label: u.name }))];
@@ -843,9 +1057,12 @@
           <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
             <div>
               <div style="font-weight:600; font-size:15px;">${u.name}</div>
-              <div style="font-size:12px; color:var(--muted);">ID: ${u.id}</div>
+              <div style="font-size:12px; color:var(--muted);">PIN: ${u.pin || "1234"} • Role: ${u.role.toUpperCase()}</div>
             </div>
-            <span class="role-badge ${u.role === "admin" ? "role-admin" : "role-member"}">${u.role.toUpperCase()}</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="role-badge ${u.role === "admin" ? "role-admin" : "role-member"}">${u.role.toUpperCase()}</span>
+              ${u.id !== user.id ? `<button class="btn-logout" onclick="removeUser('${u.id}')">✕</button>` : ""}
+            </div>
           </div>
         `).join("");
       }
@@ -857,6 +1074,7 @@
     }
 
     renderAll();
+    startCloudSyncLoop();
   </script>
 </body>
 </html>
