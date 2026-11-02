@@ -347,7 +347,7 @@
   <div class="sync-bar">
     <div>
       <span id="sync-dot" class="sync-dot"></span>
-      <span id="sync-status-text">Local Mode (Add Firebase URL in Users tab for Live Multi-Phone Sync)</span>
+      <span id="sync-status-text">Connecting to Live Cloud...</span>
     </div>
     <span id="sync-time" style="color:var(--muted);"></span>
   </div>
@@ -425,9 +425,12 @@
         <strong style="font-size:14px; display:block; margin-bottom:10px;">➕ Create & Assign Task</strong>
         <input type="text" id="new-task-title" placeholder="What needs to get done?" />
         <div class="row">
-          <select id="new-task-assignee"></select>
+          <select id="new-task-assignee" multiple style="height: 90px;" title="Hold Ctrl/Cmd or tap multiple to select several users">
+            <!-- Populated dynamically -->
+          </select>
           <input type="text" id="new-task-due" placeholder="Due (e.g. Today 3:00 PM)" />
         </div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px; margin-bottom:10px;">💡 Tip: Tap multiple names to assign to several team members at once.</div>
         <button class="btn" onclick="createAndAssignTask()">Assign & Send Push Alert</button>
       </div>
 
@@ -442,17 +445,12 @@
 
     <!-- TAB 3: CLOUD SYNC & USER MANAGEMENT (ADMINS ONLY) -->
     <section id="tab-team" class="hidden">
-      <!-- Live Firebase Cloud Connection Card -->
       <div class="card" style="border-color: var(--success);">
         <strong style="font-size:14px; display:block; margin-bottom:6px;">☁️ Live Multi-Phone Cloud Sync</strong>
         <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
-          Paste your Firebase Realtime Database URL below so tasks and completions sync across all Android and iPhone devices in real time.
+          Your Firebase database is securely baked in via GitHub Secrets. All devices connect automatically.
         </p>
-        <input type="url" id="firebase-url-input" placeholder="https://your-project-default-rtdb.firebaseio.com" />
-        <div class="row">
-          <button class="btn btn-sm" style="background:var(--success);" onclick="saveFirebaseUrl()">Connect Live Cloud</button>
-          <button class="btn btn-sm btn-outline" onclick="copyInviteLink()">📋 Copy Team Link</button>
-        </div>
+        <button class="btn btn-sm btn-outline" onclick="copyInviteLink()">📋 Copy Team Link</button>
       </div>
 
       <div class="card">
@@ -488,15 +486,19 @@
   </nav>
 
   <script>
-    const STORAGE_KEY = "unified_command_center_v2";
+    const STORAGE_KEY = "unified_command_center_v3";
     const SESSION_USER_KEY = "command_center_logged_in_user";
     const FIREBASE_URL_KEY = "command_center_firebase_url";
     const LAST_NOTIF_KEY = "command_center_last_notif_id";
 
-    // Auto-read Firebase URL if shared via team invite link (?db=https://...)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("db")) {
-      localStorage.setItem(FIREBASE_URL_KEY, urlParams.get("db").replace(/\/$/, ""));
+    const INJECTED_CLOUD_URL = "PLACEHOLDER_FIREBASE_URL";
+
+    function getFirebaseUrl() {
+      const saved = localStorage.getItem(FIREBASE_URL_KEY);
+      if (saved && saved.startsWith("https://")) {
+        return saved.trim().replace(/\/$/, "");
+      }
+      return INJECTED_CLOUD_URL.trim().replace(/\/$/, "");
     }
 
     const DEFAULT_SHARED_STATE = {
@@ -513,7 +515,7 @@
           source: "SMS",
           due: "Today 2:30 PM",
           visibility: "triage",
-          assignedTo: null,
+          assignedTo: [],
           createdBy: "u_admin1",
           completed: false,
           completedBy: null,
@@ -525,7 +527,7 @@
           source: "SAMSUNG",
           due: "Today 4:00 PM",
           visibility: "assigned",
-          assignedTo: "u_member1",
+          assignedTo: ["u_member1"],
           createdBy: "u_admin1",
           completed: false,
           completedBy: null,
@@ -557,39 +559,11 @@
       }
     }
 
-    /********************************************************************
-     * LIVE CLOUD SYNC ENGINE (FIREBASE REALTIME DATABASE REST + POLLING)
-     ********************************************************************/
-   const INJECTED_CLOUD_URL = "PLACEHOLDER_FIREBASE_URL";
-
-function getFirebaseUrl() {
-  const saved = localStorage.getItem(FIREBASE_URL_KEY);
-  if (saved && saved.startsWith("https://")) {
-    return saved.trim().replace(/\/$/, "");
-  }
-  return INJECTED_CLOUD_URL.trim().replace(/\/$/, "");
-}
-
-    function saveFirebaseUrl() {
-      const raw = document.getElementById("firebase-url-input").value.trim().replace(/\/$/, "");
-      if (!raw.startsWith("https://")) {
-        alert("Please enter a valid https:// Firebase Realtime Database URL.");
-        return;
-      }
-      localStorage.setItem(FIREBASE_URL_KEY, raw);
-      pushStateToCloud("☁️ Cloud Sync Connected", "All devices connected to this database will now sync live.", "ALL");
-      startCloudSyncLoop();
-    }
-
     function copyInviteLink() {
       const dbUrl = getFirebaseUrl();
-      if (!dbUrl) {
-        alert("Connect your Firebase URL first so it can be embedded in the invite link.");
-        return;
-      }
-      const shareUrl = `https://${location.hostname.includes("github.io") ? location.host + location.pathname : "YOUR-GITHUB-USERNAME.github.io/command-center/"}?db=${encodeURIComponent(dbUrl)}`;
+      const shareUrl = `https://${location.hostname.includes("github.io") ? location.host + location.pathname : "github.io/"}?db=${encodeURIComponent(dbUrl)}`;
       navigator.clipboard?.writeText(shareUrl);
-      alert("Invite link copied! Send this link to iPhones or other devices and they will automatically connect to your live database:\n\n" + shareUrl);
+      alert("Invite link copied!");
     }
 
     async function pushStateToCloud(notifyTitle, notifyBody, targetAudience) {
@@ -610,7 +584,7 @@ function getFirebaseUrl() {
       }
 
       const dbUrl = getFirebaseUrl();
-      if (!dbUrl) return;
+      if (!dbUrl || dbUrl.includes("PLACEHOLDER")) return;
 
       try {
         await fetch(`${dbUrl}/command_center.json`, {
@@ -626,7 +600,7 @@ function getFirebaseUrl() {
 
     async function pullStateFromCloud() {
       const dbUrl = getFirebaseUrl();
-      if (!dbUrl) {
+      if (!dbUrl || dbUrl.includes("PLACEHOLDER")) {
         updateSyncIndicator(false);
         return;
       }
@@ -637,7 +611,6 @@ function getFirebaseUrl() {
         const remoteData = await res.json();
 
         if (!remoteData) {
-          // First time connecting an empty Firebase DB: seed it with current state
           await pushStateToCloud();
           return;
         }
@@ -662,10 +635,7 @@ function getFirebaseUrl() {
     function startCloudSyncLoop() {
       clearInterval(cloudPollTimer);
       const dbUrl = getFirebaseUrl();
-      const inputEl = document.getElementById("firebase-url-input");
-      if (inputEl && dbUrl) inputEl.value = dbUrl;
-
-      if (dbUrl) {
+      if (dbUrl && !dbUrl.includes("PLACEHOLDER")) {
         pullStateFromCloud();
         cloudPollTimer = setInterval(pullStateFromCloud, 2500);
       } else {
@@ -677,19 +647,17 @@ function getFirebaseUrl() {
       const dot = document.getElementById("sync-dot");
       const txt = document.getElementById("sync-status-text");
       const timeEl = document.getElementById("sync-time");
-      if (isOnline) {
+      const dbUrl = getFirebaseUrl();
+      if (isOnline && dbUrl && !dbUrl.includes("PLACEHOLDER")) {
         dot.className = "sync-dot online";
         txt.textContent = "Live Cloud Sync Active";
         timeEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       } else {
         dot.className = "sync-dot";
-        txt.textContent = getFirebaseUrl() ? "Reconnecting to Cloud..." : "Offline / Local Mode (Connect Cloud in Cloud & Users tab)";
+        txt.textContent = "Offline / Local Mode";
       }
     }
 
-    /********************************************************************
-     * TARGETED NATIVE NOTIFICATION ENGINE
-     ********************************************************************/
     function checkAndFireNotification(notifObj, isLocalAction) {
       if (!notifObj || !notifObj.id) return;
       const lastSeenId = Number(localStorage.getItem(LAST_NOTIF_KEY) || 0);
@@ -700,16 +668,14 @@ function getFirebaseUrl() {
       const user = getCurrentUser();
       if (!user) return;
 
-      // Determine if this phone should ring:
-      // - If it's a remote action, only ring if targeted at this user, ADMINS (and user is admin), or ALL
       const isTargetedToMe =
         notifObj.target === "ALL" ||
+        (Array.isArray(notifObj.target) && notifObj.target.includes(user.id)) ||
         notifObj.target === user.id ||
         (notifObj.target === "ADMINS" && user.role === "admin");
 
       if (!isTargetedToMe && !isLocalAction) return;
 
-      // 1. Show in-app heads-up toast
       const banner = document.getElementById("push-banner");
       document.getElementById("push-title").textContent = notifObj.title;
       document.getElementById("push-body").textContent = notifObj.body;
@@ -717,7 +683,6 @@ function getFirebaseUrl() {
       clearTimeout(window._pushTimer);
       window._pushTimer = setTimeout(hidePush, 5000);
 
-      // 2. Trigger Real Native Android Status-Bar Notification with Sound
       try {
         if (window.AndroidNative && typeof window.AndroidNative.sendNotification === "function") {
           window.AndroidNative.sendNotification(notifObj.title, notifObj.body);
@@ -725,7 +690,6 @@ function getFirebaseUrl() {
         }
       } catch (e) {}
 
-      // 3. Fallback for iPhone / Web PWA Notification API
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification(notifObj.title, { body: notifObj.body });
       }
@@ -735,9 +699,6 @@ function getFirebaseUrl() {
       document.getElementById("push-banner").style.display = "none";
     }
 
-    /********************************************************************
-     * AUTHENTICATION & USER ROLES
-     ********************************************************************/
     function getCurrentUser() {
       if (!currentUserId) return null;
       return state.users.find(u => u.id === currentUserId) || null;
@@ -782,9 +743,6 @@ function getFirebaseUrl() {
       renderAll();
     }
 
-    /********************************************************************
-     * TASK TRIAGE, ASSIGNMENT & COMPLETION ACTIONS
-     ********************************************************************/
     function addTriageManual(sourceType) {
       const inputEl = document.getElementById("triage-manual-input");
       const text = inputEl.value.trim();
@@ -796,7 +754,7 @@ function getFirebaseUrl() {
         source: sourceType,
         due: "Today",
         visibility: "triage",
-        assignedTo: null,
+        assignedTo: [],
         createdBy: currentUserId,
         completed: false,
         completedBy: null,
@@ -808,18 +766,21 @@ function getFirebaseUrl() {
     }
 
     function assignTriageItem(taskId, selectElemId) {
-      const targetUserId = document.getElementById(selectElemId).value;
+      const selectElem = document.getElementById(selectElemId);
+      const selectedOptions = Array.from(selectElem.selectedOptions).map(opt => opt.value);
+      
       const task = state.tasks.find(t => t.id === taskId);
-      const targetUser = state.users.find(u => u.id === targetUserId);
       const adminUser = getCurrentUser();
-      if (!task || !targetUser || !adminUser) return;
+      if (!task || selectedOptions.length === 0 || !adminUser) return;
 
       task.visibility = "assigned";
-      task.assignedTo = targetUser.id;
+      task.assignedTo = selectedOptions;
+
+      const names = selectedOptions.map(id => getUserName(id)).join(", ");
       pushStateToCloud(
-        `📲 New Task Assigned to ${targetUser.name}`,
+        `📲 Task Assigned to ${names}`,
         `${adminUser.name} assigned: "${task.title}"`,
-        targetUser.id
+        selectedOptions
       );
     }
 
@@ -831,13 +792,15 @@ function getFirebaseUrl() {
     function createAndAssignTask() {
       const titleInput = document.getElementById("new-task-title");
       const dueInput = document.getElementById("new-task-due");
-      const assigneeId = document.getElementById("new-task-assignee").value;
+      const selectElem = document.getElementById("new-task-assignee");
+      
+      const selectedOptions = Array.from(selectElem.selectedOptions).map(opt => opt.value);
       const title = titleInput.value.trim();
-      if (!title) return;
+      if (!title || selectedOptions.length === 0) return;
 
-      const targetUser = state.users.find(u => u.id === assigneeId);
       const adminUser = getCurrentUser();
       const due = dueInput.value.trim() || "Today";
+      const names = selectedOptions.map(id => getUserName(id)).join(", ");
 
       state.tasks.unshift({
         id: "t_" + Date.now(),
@@ -845,7 +808,7 @@ function getFirebaseUrl() {
         source: "MANUAL",
         due,
         visibility: "assigned",
-        assignedTo: assigneeId,
+        assignedTo: selectedOptions,
         createdBy: adminUser.id,
         completed: false,
         completedBy: null,
@@ -855,9 +818,9 @@ function getFirebaseUrl() {
       titleInput.value = "";
       dueInput.value = "";
       pushStateToCloud(
-        `📲 New Task for ${targetUser.name}`,
-        `${adminUser.name}: "${title}" (Due: ${due})`,
-        targetUser.id
+        `📲 Group Task → ${names}`,
+        `New Task from ${adminUser.name}: "${title}" (Due: ${due})`,
+        selectedOptions
       );
     }
 
@@ -917,9 +880,6 @@ function getFirebaseUrl() {
       pushStateToCloud();
     }
 
-    /********************************************************************
-     * UI RENDERING
-     ********************************************************************/
     function getSourceBadge(source) {
       const map = {
         SMS: { cls: "src-sms", label: "💬 SMS Text" },
@@ -935,6 +895,12 @@ function getFirebaseUrl() {
     function getUserName(userId) {
       const u = state.users.find(x => x.id === userId);
       return u ? u.name : "Unassigned";
+    }
+
+    function getAssigneeBadges(assignedToField) {
+      const ids = Array.isArray(assignedToField) ? assignedToField : (assignedToField ? [assignedToField] : []);
+      if (ids.length === 0) return '<span class="assignee-pill">👤 Unassigned</span>';
+      return ids.map(id => `<span class="assignee-pill">👤 ${getUserName(id)}</span>`).join(" ");
     }
 
     function renderAll() {
@@ -962,10 +928,12 @@ function getFirebaseUrl() {
       const isAdmin = user.role === "admin";
 
       const assigneeSelect = document.getElementById("new-task-assignee");
-      const prevAssignee = assigneeSelect.value;
-      if ( document.activeElement !== assigneeSelect ) {
-        assigneeSelect.innerHTML = state.users.map(u => `<option value="${u.id}">Assign to: ${u.name}</option>`).join("");
-        if (prevAssignee && state.users.some(u => u.id === prevAssignee)) assigneeSelect.value = prevAssignee;
+      const prevSelected = Array.from(assigneeSelect.selectedOptions).map(o => o.value);
+      if (document.activeElement !== assigneeSelect) {
+        assigneeSelect.innerHTML = state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join("");
+        Array.from(assigneeSelect.options).forEach(opt => {
+          if (prevSelected.includes(opt.value)) opt.selected = true;
+        });
       }
 
       document.getElementById("app-header").classList.remove("hidden");
@@ -995,7 +963,6 @@ function getFirebaseUrl() {
       badgeTriage.textContent = triageItems.length;
       badgeTriage.classList.toggle("hidden", triageItems.length === 0);
 
-      // Avoid overwriting dropdown while Admin is actively selecting a user
       if (!document.activeElement || !document.activeElement.id.startsWith("assign-sel-")) {
         const triageListEl = document.getElementById("triage-list");
         triageListEl.innerHTML = triageItems.length === 0
@@ -1005,8 +972,8 @@ function getFirebaseUrl() {
               <div class="task-meta">${getSourceBadge(t.source)} <span class="task-sub">Due: ${t.due}</span></div>
               <div class="task-title" style="margin:6px 0 10px;">${t.title}</div>
               <div class="row" style="align-items:center;">
-                <select id="assign-sel-${t.id}" style="margin-bottom:0;">
-                  ${state.users.map(u => `<option value="${u.id}">Assign → ${u.name}</option>`).join("")}
+                <select id="assign-sel-${t.id}" multiple style="height:50px; margin-bottom:0;">
+                  ${state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join("")}
                 </select>
                 <button class="btn btn-sm" onclick="assignTriageItem('${t.id}', 'assign-sel-${t.id}')">Assign</button>
                 <button class="btn btn-sm btn-outline" onclick="dismissTriageItem('${t.id}')">✕</button>
@@ -1024,11 +991,19 @@ function getFirebaseUrl() {
 
       let visibleTasks = state.tasks.filter(t => t.visibility === "assigned");
       if (!isAdmin) {
-        visibleTasks = visibleTasks.filter(t => t.assignedTo === user.id);
+        visibleTasks = visibleTasks.filter(t => {
+          const list = Array.isArray(t.assignedTo) ? t.assignedTo : (t.assignedTo ? [t.assignedTo] : []);
+          return list.includes(user.id);
+        });
         document.getElementById("tasks-heading").textContent = "My Assigned Tasks";
       } else {
         document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Team Tasks" : `Tasks for ${getUserName(adminFilterUserId)}`;
-        if (adminFilterUserId !== "ALL") visibleTasks = visibleTasks.filter(t => t.assignedTo === adminFilterUserId);
+        if (adminFilterUserId !== "ALL") {
+          visibleTasks = visibleTasks.filter(t => {
+            const list = Array.isArray(t.assignedTo) ? t.assignedTo : (t.assignedTo ? [t.assignedTo] : []);
+            return list.includes(adminFilterUserId);
+          });
+        }
       }
 
       const pendingCount = visibleTasks.filter(t => !t.completed).length;
@@ -1045,7 +1020,7 @@ function getFirebaseUrl() {
             <div class="task-content">
               <div class="task-meta">
                 ${getSourceBadge(t.source)}
-                <span class="assignee-pill">👤 ${getUserName(t.assignedTo)}</span>
+                ${getAssigneeBadges(t.assignedTo)}
                 <span class="task-sub">⏰ ${t.due}</span>
               </div>
               <div class="task-title">${t.title}</div>
