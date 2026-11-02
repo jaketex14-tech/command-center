@@ -1,9 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Unified Command Center</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Command" />
   <script>
-    if ("serviceWorker" in navigator) {
+    // Only register Service Worker on the web (prevents APK from caching a blank screen)
+    if ("serviceWorker" in navigator && location.hostname.includes("github.io")) {
       window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
     }
   </script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    .sim-bar {
+      background: #020617;
+      border-bottom: 1px solid var(--card-border);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .sim-bar span {
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .sim-bar select {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 12px;
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    header {
+      padding: 16px;
+      background: rgba(30, 41, 59, 0.9);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .user-info h1 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .role-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-top: 4px;
+    }
+    .role-admin { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+    .role-member { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #push-banner {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      background: #1e293b;
+      border-left: 5px solid var(--accent);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.65);
+      z-index: 999;
+      display: none;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .push-title { font-size: 13px; font-weight: 700; color: #60a5fa; margin-bottom: 3px; }
+    .push-body { font-size: 13px; color: var(--text); }
+
+    main {
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    #login-screen {
+      max-width: 400px;
+      margin: 40px auto;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    #login-screen h2 { margin-bottom: 8px; font-size: 20px; }
+    #login-screen p { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+    .row > * { flex: 1; }
+
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 12px;
+      width: auto;
+      border-radius: 8px;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .src-sms { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .src-samsung { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .src-gtask { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .src-cal { background: rgba(139, 92, 246, 0.2); color: #c084fc; }
+    .src-manual { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+    .task-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .task-card.completed { opacity: 0.6; }
+    .task-card.completed .task-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    .checkbox {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      background: transparent;
+      color: #fff;
+      font-weight: bold;
+    }
+    .task-card.completed .checkbox {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .task-content { flex: 1; }
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .task-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+    .task-sub { font-size: 12px; color: var(--muted); }
+    .assignee-pill {
+      font-size: 11px;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: #e2e8f0;
+    }
+    .done-stamp {
+      font-size: 11px;
+      color: #34d399;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .chip {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    nav.bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #020617;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 14px;
+      z-index: 30;
+    }
+    .nav-item {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-badge {
+      position: absolute;
+      top: -4px;
+      right: -10px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 999px;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="sim-bar">
+    <span>⚡ Instant Role Test:</span>
+    <select id="quick-user-switch" onchange="switchUser(this.value)"></select>
+  </div>
+
+  <div id="push-banner">
+    <div>
+      <div class="push-title" id="push-title">New Notification</div>
+      <div class="push-body" id="push-body"></div>
+    </div>
+    <button class="btn-logout" onclick="hidePush()">Dismiss</button>
+  </div>
+
+  <header id="app-header" class="hidden">
+    <div class="user-info">
+      <h1 id="header-username">Command Center</h1>
+      <span id="header-role-badge" class="role-badge role-admin">ADMIN</span>
+    </div>
+    <button class="btn-logout" onclick="showLoginScreen()">Switch Login</button>
+  </header>
+
+  <main>
+    <section id="login-screen" class="hidden">
+      <h2>Command Center Login</h2>
+      <p>Select your account or log in with your team credentials.</p>
+      <label style="font-size:12px; color:var(--muted);">Select User Account</label>
+      <select id="login-user-select"></select>
+      <label style="font-size:12px; color:var(--muted);">PIN / Password</label>
+      <input type="password" id="login-pin" placeholder="••••" value="1234" />
+      <button class="btn" onclick="handleLogin()">Sign In</button>
+    </section>
+
+    <section id="tab-triage" class="hidden">
+      <div class="card" style="border-color: var(--accent);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="font-size:14px;">📲 Simulate Incoming Phone Capture</strong>
+          <span style="font-size:11px; color:var(--muted);">Admin Private Feed</span>
+        </div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
+          Test how incoming Texts, Samsung Reminders, and Calendar events land in your private triage queue before you assign them.
+        </p>
+        <div class="row">
+          <button class="btn btn-sm btn-outline" onclick="simulateCapture('SMS')">+ Incoming SMS</button>
+          <button class="btn btn-sm btn-outline" onclick="simulateCapture('SAMSUNG')">+ Samsung Rem</button>
+          <button class="btn btn-sm btn-outline" onclick="simulateCapture('CAL')">+ Google Cal</button>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <span>Unassigned Triage Queue</span>
+        <span id="triage-count">0 items</span>
+      </div>
+      <div id="triage-list"></div>
+    </section>
+
+    <section id="tab-tasks" class="hidden">
+      <div id="admin-task-creator" class="card">
+        <strong style="font-size:14px; display:block; margin-bottom:10px;">➕ Create & Assign Task</strong>
+        <input type="text" id="new-task-title" placeholder="What needs to get done?" />
+        <div class="row">
+          <select id="new-task-assignee"></select>
+          <input type="text" id="new-task-due" placeholder="Due (e.g. Today 3:00 PM)" />
+        </div>
+        <button class="btn" onclick="createAndAssignTask()">Assign & Send Push Alert</button>
+      </div>
+
+      <div id="admin-filter-bar" class="filter-bar"></div>
+
+      <div class="section-title">
+        <span id="tasks-heading">Active Tasks</span>
+        <span id="tasks-stats"></span>
+      </div>
+      <div id="tasks-list"></div>
+    </section>
+
+    <section id="tab-team" class="hidden">
+      <div class="card">
+        <strong style="font-size:14px; display:block; margin-bottom:10px;">👤 Add User or Administrator</strong>
+        <input type="text" id="new-user-name" placeholder="Full Name" />
+        <select id="new-user-role">
+          <option value="member">Sub-User (Member - Sees Only Assigned Tasks)</option>
+          <option value="admin">Administrator (Full Command & Assignment Access)</option>
+        </select>
+        <button class="btn" onclick="addNewUser()">Add Account</button>
+      </div>
+
+      <div class="section-title">Registered Accounts</div>
+      <div id="team-list"></div>
+    </section>
+  </main>
+
+  <nav id="bottom-nav" class="bottom-nav hidden">
+    <button id="nav-triage" class="nav-item" onclick="switchTab('triage')">
+      <span>📥 Inbox & Schedule</span>
+      <span id="badge-triage" class="nav-badge hidden">0</span>
+    </button>
+    <button id="nav-tasks" class="nav-item active" onclick="switchTab('tasks')">
+      <span>✅ Task Board</span>
+      <span id="badge-tasks" class="nav-badge hidden">0</span>
+    </button>
+    <button id="nav-team" class="nav-item" onclick="switchTab('team')">
+      <span>👥 Users & Roles</span>
+    </button>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = "unified_command_center_v1";
+
+    const DEFAULT_STATE = {
+      currentUserId: "u_admin1",
+      users: [
+        { id: "u_admin1", name: "Admin 1 (You)", role: "admin" },
+        { id: "u_admin2", name: "Admin 2 (Co-Admin)", role: "admin" },
+        { id: "u_member1", name: "User 1 (Team Member)", role: "member" },
+        { id: "u_member2", name: "User 2 (Team Member)", role: "member" }
+      ],
+      tasks: [
+        {
+          id: "t_101",
+          title: "Text from Supplier: Confirm delivery window before 2:30 PM",
+          source: "SMS",
+          due: "Today 2:30 PM",
+          visibility: "triage",
+          assignedTo: null,
+          createdBy: "u_admin1",
+          completed: false,
+          completedBy: null,
+          completedAt: null
+        },
+        {
+          id: "t_102",
+          title: "Pick up hardware order & load trailer",
+          source: "SAMSUNG",
+          due: "Today 4:00 PM",
+          visibility: "assigned",
+          assignedTo: "u_member1",
+          createdBy: "u_admin1",
+          completed: false,
+          completedBy: null,
+          completedAt: null
+        },
+        {
+          id: "t_103",
+          title: "Submit weekly schedule check",
+          source: "CAL",
+          due: "Today 5:00 PM",
+          visibility: "assigned",
+          assignedTo: "u_member2",
+          createdBy: "u_admin2",
+          completed: true,
+          completedBy: "u_member2",
+          completedAt: "1:15 PM"
+        }
+      ],
+      lastNotification: null
+    };
+
+    let state = loadState();
+    let activeTab = "tasks";
+    let adminFilterUserId = "ALL";
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_STATE));
+          return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+        return JSON.parse(raw);
+      } catch (e) {
+        return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      }
+    }
+
+    function saveState(notifyTitle, notifyBody, targetUserId) {
+      if (notifyTitle && notifyBody) {
+        state.lastNotification = {
+          id: Date.now(),
+          title: notifyTitle,
+          body: notifyBody,
+          targetUserId: targetUserId || "ALL"
+        };
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+
+      if (notifyTitle && notifyBody) {
+        triggerDeviceNotification(notifyTitle, notifyBody);
+      }
+    }
+
+    async function triggerDeviceNotification(title, body) {
+      const banner = document.getElementById("push-banner");
+      document.getElementById("push-title").textContent = title;
+      document.getElementById("push-body").textContent = body;
+      banner.style.display = "flex";
+      clearTimeout(window._pushTimer);
+      window._pushTimer = setTimeout(hidePush, 5000);
+
+      try {
+        const LocalNotifications = window.Capacitor?.Plugins?.LocalNotifications;
+        if (LocalNotifications) {
+          await LocalNotifications.schedule({
+            notifications: [{
+              title: title,
+              body: body,
+              id: Math.floor(Math.random() * 100000),
+              schedule: { at: new Date(Date.now() + 200) }
+            }]
+          });
+          return;
+        }
+      } catch (err) {}
+    }
+
+    function hidePush() {
+      document.getElementById("push-banner").style.display = "none";
+    }
+
+    function getCurrentUser() {
+      return state.users.find(u => u.id === state.currentUserId) || state.users[0];
+    }
+
+    function switchUser(userId) {
+      state.currentUserId = userId;
+      const user = getCurrentUser();
+      if (user.role !== "admin") activeTab = "tasks";
+      saveState();
+    }
+
+    function showLoginScreen() {
+      document.getElementById("app-header").classList.add("hidden");
+      document.getElementById("bottom-nav").classList.add("hidden");
+      document.getElementById("tab-triage").classList.add("hidden");
+      document.getElementById("tab-tasks").classList.add("hidden");
+      document.getElementById("tab-team").classList.add("hidden");
+      document.getElementById("login-screen").classList.remove("hidden");
+    }
+
+    function handleLogin() {
+      const selectedId = document.getElementById("login-user-select").value;
+      document.getElementById("login-screen").classList.add("hidden");
+      switchUser(selectedId);
+    }
+
+    function switchTab(tabName) {
+      const user = getCurrentUser();
+      if (user.role !== "admin" && tabName !== "tasks") return;
+      activeTab = tabName;
+      renderAll();
+    }
+
+    function simulateCapture(sourceType) {
+      const samples = {
+        SMS: [
+          "Text from Client: Need someone to drop off keys at the office before 3:30 PM",
+          "SMS: Don't forget to pick up replacement hydraulic fittings today"
+        ],
+        SAMSUNG: [
+          "Samsung Reminder: Call insurance agent back at 1:00 PM",
+          "Samsung Reminder: Order supplies before 4:00 PM cutoff"
+        ],
+        CAL: [
+          "Google Calendar: Afternoon site walk & inspection @ 2:00 PM"
+        ]
+      };
+      const list = samples[sourceType] || samples.SMS;
+      const randomTitle = list[Math.floor(Math.random() * list.length)];
+
+      state.tasks.unshift({
+        id: "t_" + Date.now(),
+        title: randomTitle,
+        source: sourceType,
+        due: "Today",
+        visibility: "triage",
+        assignedTo: null,
+        createdBy: getCurrentUser().id,
+        completed: false,
+        completedBy: null,
+        completedAt: null
+      });
+
+      saveState(`📥 Captured ${sourceType} Item`, `"${randomTitle}" added to Admin Triage.`);
+    }
+
+    function assignTriageItem(taskId, selectElemId) {
+      const targetUserId = document.getElementById(selectElemId).value;
+      const task = state.tasks.find(t => t.id === taskId);
+      const targetUser = state.users.find(u => u.id === targetUserId);
+      const adminUser = getCurrentUser();
+      if (!task || !targetUser) return;
+
+      task.visibility = "assigned";
+      task.assignedTo = targetUser.id;
+      saveState(`📲 Push Sent to ${targetUser.name}`, `${adminUser.name} assigned: "${task.title}"`, targetUser.id);
+    }
+
+    function dismissTriageItem(taskId) {
+      state.tasks = state.tasks.filter(t => t.id !== taskId);
+      saveState();
+    }
+
+    function createAndAssignTask() {
+      const titleInput = document.getElementById("new-task-title");
+      const dueInput = document.getElementById("new-task-due");
+      const assigneeId = document.getElementById("new-task-assignee").value;
+      const title = titleInput.value.trim();
+      if (!title) return;
+
+      const targetUser = state.users.find(u => u.id === assigneeId);
+      const adminUser = getCurrentUser();
+      const due = dueInput.value.trim() || "Today";
+
+      state.tasks.unshift({
+        id: "t_" + Date.now(),
+        title,
+        source: "MANUAL",
+        due,
+        visibility: "assigned",
+        assignedTo: assigneeId,
+        createdBy: adminUser.id,
+        completed: false,
+        completedBy: null,
+        completedAt: null
+      });
+
+      titleInput.value = "";
+      dueInput.value = "";
+      saveState(`📲 Push Alert → ${targetUser.name}`, `New Task from ${adminUser.name}: "${title}"`, targetUser.id);
+    }
+
+    function toggleTaskCompletion(taskId) {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const actor = getCurrentUser();
+      task.completed = !task.completed;
+
+      if (task.completed) {
+        const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        task.completedBy = actor.id;
+        task.completedAt = nowStr;
+        saveState(`✅ Completed by ${actor.name}`, `"${task.title}" marked DONE at ${nowStr}.`, "ADMINS");
+      } else {
+        task.completedBy = null;
+        task.completedAt = null;
+        saveState(`🔄 Task Re-Opened`, `${actor.name} unmarked "${task.title}".`, "ADMINS");
+      }
+    }
+
+    function deleteTask(taskId) {
+      state.tasks = state.tasks.filter(t => t.id !== taskId);
+      saveState();
+    }
+
+    function addNewUser() {
+      const nameInput = document.getElementById("new-user-name");
+      const roleSelect = document.getElementById("new-user-role");
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      state.users.push({ id: "u_" + Date.now(), name, role: roleSelect.value });
+      nameInput.value = "";
+      saveState("👤 Account Added", `${name} added to Command Center.`);
+    }
+
+    function getSourceBadge(source) {
+      const map = {
+        SMS: { cls: "src-sms", label: "💬 SMS Text" },
+        SAMSUNG: { cls: "src-samsung", label: "🔔 Samsung Rem" },
+        GTASK: { cls: "src-gtask", label: "✓ Google Task" },
+        CAL: { cls: "src-cal", label: "📅 Google Cal" },
+        MANUAL: { cls: "src-manual", label: "📌 Assigned" }
+      };
+      const item = map[source] || map.MANUAL;
+      return `<span class="badge ${item.cls}">${item.label}</span>`;
+    }
+
+    function getUserName(userId) {
+      const u = state.users.find(x => x.id === userId);
+      return u ? u.name : "Unassigned";
+    }
+
+    function renderAll() {
+      const user = getCurrentUser();
+      const isAdmin = user.role === "admin";
+
+      const switcher = document.getElementById("quick-user-switch");
+      const loginSelect = document.getElementById("login-user-select");
+      const assigneeSelect = document.getElementById("new-task-assignee");
+
+      const userOptionsHtml = state.users.map(u =>
+        `<option value="${u.id}" ${u.id === user.id ? "selected" : ""}>${u.name} [${u.role.toUpperCase()}]</option>`
+      ).join("");
+
+      switcher.innerHTML = userOptionsHtml;
+      loginSelect.innerHTML = userOptionsHtml;
+
+      const prevAssignee = assigneeSelect.value;
+      assigneeSelect.innerHTML = state.users.map(u => `<option value="${u.id}">Assign to: ${u.name}</option>`).join("");
+      if (prevAssignee && state.users.some(u => u.id === prevAssignee)) assigneeSelect.value = prevAssignee;
+
+      document.getElementById("app-header").classList.remove("hidden");
+      document.getElementById("bottom-nav").classList.remove("hidden");
+      document.getElementById("header-username").textContent = user.name;
+      const roleBadge = document.getElementById("header-role-badge");
+      roleBadge.textContent = isAdmin ? "Administrator" : "Team Member";
+      roleBadge.className = "role-badge " + (isAdmin ? "role-admin" : "role-member");
+
+      document.getElementById("nav-triage").classList.toggle("hidden", !isAdmin);
+      document.getElementById("nav-team").classList.toggle("hidden", !isAdmin);
+      document.getElementById("admin-task-creator").classList.toggle("hidden", !isAdmin);
+      document.getElementById("admin-filter-bar").classList.toggle("hidden", !isAdmin);
+
+      document.getElementById("tab-triage").classList.toggle("hidden", !(isAdmin && activeTab === "triage"));
+      document.getElementById("tab-tasks").classList.toggle("hidden", activeTab !== "tasks");
+      document.getElementById("tab-team").classList.toggle("hidden", !(isAdmin && activeTab === "team"));
+
+      document.getElementById("nav-triage").classList.toggle("active", activeTab === "triage");
+      document.getElementById("nav-tasks").classList.toggle("active", activeTab === "tasks");
+      document.getElementById("nav-team").classList.toggle("active", activeTab === "team");
+
+      const triageItems = state.tasks.filter(t => t.visibility === "triage");
+      document.getElementById("triage-count").textContent = `${triageItems.length} items`;
+      const badgeTriage = document.getElementById("badge-triage");
+      badgeTriage.textContent = triageItems.length;
+      badgeTriage.classList.toggle("hidden", triageItems.length === 0);
+
+      const triageListEl = document.getElementById("triage-list");
+      triageListEl.innerHTML = triageItems.length === 0
+        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px;">All incoming items have been triaged!</div>`
+        : triageItems.map(t => `
+          <div class="card">
+            <div class="task-meta">${getSourceBadge(t.source)} <span class="task-sub">Due: ${t.due}</span></div>
+            <div class="task-title" style="margin:6px 0 10px;">${t.title}</div>
+            <div class="row" style="align-items:center;">
+              <select id="assign-sel-${t.id}" style="margin-bottom:0;">
+                ${state.users.map(u => `<option value="${u.id}">Assign → ${u.name}</option>`).join("")}
+              </select>
+              <button class="btn btn-sm" onclick="assignTriageItem('${t.id}', 'assign-sel-${t.id}')">Assign</button>
+              <button class="btn btn-sm btn-outline" onclick="dismissTriageItem('${t.id}')">✕</button>
+            </div>
+          </div>
+        `).join("");
+
+      if (isAdmin) {
+        const chips = [{ id: "ALL", label: "All Users" }, ...state.users.map(u => ({ id: u.id, label: u.name }))];
+        document.getElementById("admin-filter-bar").innerHTML = chips.map(c => `
+          <button class="chip ${adminFilterUserId === c.id ? "active" : ""}" onclick="setAdminFilter('${c.id}')">${c.label}</button>
+        `).join("");
+      }
+
+      let visibleTasks = state.tasks.filter(t => t.visibility === "assigned");
+      if (!isAdmin) {
+        visibleTasks = visibleTasks.filter(t => t.assignedTo === user.id);
+        document.getElementById("tasks-heading").textContent = "My Assigned Tasks";
+      } else {
+        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Team Tasks" : `Tasks for ${getUserName(adminFilterUserId)}`;
+        if (adminFilterUserId !== "ALL") visibleTasks = visibleTasks.filter(t => t.assignedTo === adminFilterUserId);
+      }
+
+      const pendingCount = visibleTasks.filter(t => !t.completed).length;
+      const badgeTasks = document.getElementById("badge-tasks");
+      badgeTasks.textContent = pendingCount;
+      badgeTasks.classList.toggle("hidden", pendingCount === 0);
+      document.getElementById("tasks-stats").textContent = `${visibleTasks.length - pendingCount} / ${visibleTasks.length} Done`;
+
+      document.getElementById("tasks-list").innerHTML = visibleTasks.length === 0
+        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px;">No tasks assigned here yet.</div>`
+        : visibleTasks.map(t => `
+          <div class="card task-card ${t.completed ? "completed" : ""}">
+            <button class="checkbox" onclick="toggleTaskCompletion('${t.id}')">${t.completed ? "✓" : ""}</button>
+            <div class="task-content">
+              <div class="task-meta">
+                ${getSourceBadge(t.source)}
+                <span class="assignee-pill">👤 ${getUserName(t.assignedTo)}</span>
+                <span class="task-sub">⏰ ${t.due}</span>
+              </div>
+              <div class="task-title">${t.title}</div>
+              ${t.completed
+                ? `<div class="done-stamp">✓ Marked Done by ${getUserName(t.completedBy)} at ${t.completedAt}</div>`
+                : `<div class="task-sub">Assigned by ${getUserName(t.createdBy)}</div>`
+              }
+            </div>
+            ${isAdmin ? `<button class="btn-logout" onclick="deleteTask('${t.id}')">🗑</button>` : ""}
+          </div>
+        `).join("");
+
+      if (isAdmin) {
+        document.getElementById("team-list").innerHTML = state.users.map(u => `
+          <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:600; font-size:15px;">${u.name}</div>
+              <div style="font-size:12px; color:var(--muted);">ID: ${u.id}</div>
+            </div>
+            <span class="role-badge ${u.role === "admin" ? "role-admin" : "role-member"}">${u.role.toUpperCase()}</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    function setAdminFilter(userId) {
+      adminFilterUserId = userId;
+      renderAll();
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
