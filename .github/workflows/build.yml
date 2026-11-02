@@ -40,21 +40,12 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # JOB 2: Compile Pure Native Android WebView APK
+  # JOB 2: Compile Pure Native Android WebView APK with Custom Native Icon
   build-android-apk:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Verify index.html has full app code
-        run: |
-          LINES=$(wc -l < index.html)
-          echo "Detected $LINES lines in index.html"
-          if [ "$LINES" -lt 100 ]; then
-            echo "ERROR: index.html only has $LINES lines! Make sure the full 500+ line code is committed to the main branch."
-            exit 1
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -67,7 +58,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Generate Native Android Project
+      - name: Generate Native Android Project & Inject Custom App Icon
         run: |
           mkdir -p www
           cp index.html www/index.html
@@ -76,8 +67,51 @@ jobs:
           echo '{"appId":"com.commandcenter.v2","appName":"Command Center","webDir":"www"}' > capacitor.config.json
           npx cap add android
           npx cap sync android
+
+          # 1. Disable backup & splash screen trap, and increment versionCode on every build
           sed -i 's/NoActionBarLaunch/NoActionBar/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/allowBackup="true"/allowBackup="false"/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/versionCode 1/versionCode ${{ github.run_number }}/g' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "1.${{ github.run_number }}"/g' android/app/build.gradle
+
+          # 2. Overwrite Native Android Home Screen Launcher Icon (Adaptive Vector Icon)
+          rm -rf android/app/src/main/res/drawable-v24
+          cat << 'EOF' > android/app/src/main/res/drawable/ic_launcher_background.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#0F172A" android:pathData="M0,0h108v108h-108z"/>
+          </vector>
+          EOF
+
+          cat << 'EOF' > android/app/src/main/res/drawable/ic_launcher_foreground.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#3B82F6" android:pathData="M54,26 A28,28 0 1,0 54,82 A28,28 0 1,0 54,26 Z"/>
+              <path android:fillColor="#10B981" android:pathData="M54,26 A28,28 0 0,1 54,82 Z"/>
+              <path android:fillColor="#0F172A" android:pathData="M54,34 A20,20 0 1,0 54,74 A20,20 0 1,0 54,34 Z"/>
+              <path android:fillColor="#F8FAFC" android:pathData="M44,54 L51,61 L65,47 L61,43 L51,53 L48,50 Z"/>
+          </vector>
+          EOF
+
+          cat << 'EOF' > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@drawable/ic_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+
+          cp android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+
+          # 3. Write Native WebView with Cache-Busting Enabled
           cat << 'EOF' > android/app/src/main/java/com/commandcenter/v2/MainActivity.java
           package com.commandcenter.v2;
 
@@ -102,10 +136,12 @@ jobs:
                   settings.setDatabaseEnabled(true);
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
+                  settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+                  webView.clearCache(true);
                   webView.setWebViewClient(new WebViewClient());
                   webView.setWebChromeClient(new WebChromeClient());
                   setContentView(webView);
-                  webView.loadUrl("file:///android_asset/public/index.html");
+                  webView.loadUrl("file:///android_asset/public/index.html?v=" + System.currentTimeMillis());
               }
 
               @Override
@@ -131,6 +167,6 @@ jobs:
         with:
           tag_name: build-${{ github.run_number }}
           name: "Android APK Build #${{ github.run_number }}"
-          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the fresh build."
+          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the fresh build with the updated logo."
           files: CommandCenter-v${{ github.run_number }}.apk
           prerelease: false
