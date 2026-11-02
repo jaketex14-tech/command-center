@@ -62,6 +62,7 @@ jobs:
         run: |
           mkdir -p www
           cp index.html www/index.html
+          sed -i "s|YOUR-GITHUB-USERNAME.github.io/command-center/|${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/|g" www/index.html
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           echo '{"appId":"com.commandcenter.v2","appName":"Command Center","webDir":"www"}' > capacitor.config.json
