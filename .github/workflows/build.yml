@@ -21,13 +21,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Prepare Web App folder
+        run: |
+          mkdir -p www
+          cp index.html www/
+          cp manifest.json www/ 2>/dev/null || true
+          cp sw.js www/ 2>/dev/null || true
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Web App files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: './www'
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -51,27 +58,19 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Create Capacitor Android Project on the Fly
         run: |
           mkdir -p www
-          cp index.html manifest.json sw.js www/
-          cat << 'EOF' > package.json
-          {
-            "name": "command-center",
-            "version": "1.0.0",
-            "private": true
-          }
-          EOF
+          cp index.html www/
+          cp manifest.json www/ 2>/dev/null || true
+          cp sw.js www/ 2>/dev/null || true
+          npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/local-notifications@6
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.commandcenter.unified",
             "appName": "Command Center",
-            "webDir": "www",
-            "bundledWebRuntime": false
+            "webDir": "www"
           }
           EOF
           npx cap add android
