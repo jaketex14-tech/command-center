@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Unified Command Center</title>
+  <title>Command Center</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,15 +15,15 @@
   </script>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --card-border: #334155;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --accent: #3b82f6;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --bg: #0b0f19;
+      --card: #131d31;
+      --card-border: #22324f;
+      --text: #f1f5f9;
+      --muted: #8a9bb8;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success: #059669;
+      --danger: #dc2626;
     }
 
     * {
@@ -38,32 +38,35 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 90px;
+      padding-bottom: 100px;
     }
 
-    /* Cloud Status Bar */
+    /* Sleek Status Bar */
     .sync-bar {
-      background: #020617;
+      background: #070a12;
       border-bottom: 1px solid var(--card-border);
-      padding: 7px 14px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
     }
-    .sync-dot {
+    .sync-indicator {
       display: inline-block;
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      margin-right: 6px;
-      background: var(--warning);
+      margin-right: 8px;
+      background: var(--muted);
     }
-    .sync-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .sync-indicator.online { background: var(--success); box-shadow: 0 0 10px rgba(5, 150, 105, 0.5); }
 
+    /* Modern Header */
     header {
-      padding: 14px 16px;
-      background: rgba(30, 41, 59, 0.95);
+      padding: 16px 20px;
+      background: rgba(19, 29, 49, 0.95);
       border-bottom: 1px solid var(--card-border);
       position: sticky;
       top: 0;
@@ -71,166 +74,212 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      backdrop-filter: blur(12px);
     }
-    .brand-wrap {
+    .brand-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
     .app-logo {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
       flex-shrink: 0;
     }
     .user-info h1 {
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
     }
-    .role-badge {
+    .role-tag {
       display: inline-block;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.8px;
       padding: 2px 8px;
-      border-radius: 999px;
-      margin-top: 3px;
+      border-radius: 6px;
+      margin-top: 4px;
     }
-    .role-admin { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
-    .role-member { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+    .role-admin { background: rgba(37, 99, 235, 0.2); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.4); }
+    .role-member { background: rgba(5, 150, 105, 0.2); color: #34d399; border: 1px solid rgba(5, 150, 105, 0.4); }
 
-    .btn-logout {
+    .btn-text {
       background: transparent;
       border: 1px solid var(--card-border);
       color: var(--muted);
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
     }
+    .btn-text:active { background: rgba(255,255,255,0.05); }
 
+    /* Notification Banner */
     #push-banner {
       position: fixed;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      background: #1e293b;
-      border-left: 5px solid var(--accent);
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      background: var(--card);
+      border: 1px solid var(--accent);
       border-radius: 12px;
-      padding: 14px 16px;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.65);
+      padding: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
       z-index: 999;
       display: none;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
     }
-    .push-title { font-size: 13px; font-weight: 700; color: #60a5fa; margin-bottom: 3px; }
-    .push-body { font-size: 13px; color: var(--text); }
+    .push-title { font-size: 14px; font-weight: 600; color: #60a5fa; margin-bottom: 4px; }
+    .push-body { font-size: 14px; color: var(--text); line-height: 1.4; }
 
     main {
-      padding: 16px;
-      max-width: 600px;
+      padding: 20px;
+      max-width: 540px;
       margin: 0 auto;
     }
 
+    /* Login Screen */
     #login-screen {
       max-width: 400px;
-      margin: 30px auto;
+      margin: 40px auto;
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 20px;
+      padding: 32px 24px;
       text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    #login-screen h2 { margin: 12px 0 6px; font-size: 20px; }
-    #login-screen p { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+    #login-screen h2 { margin: 16px 0 8px; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+    #login-screen p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
 
+    /* Cards & Form Layouts */
     .card {
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 12px;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .section-title {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 16px 0 10px;
+      letter-spacing: 1px;
+      margin: 24px 0 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
+    /* Large, Spacious Form Inputs */
+    label.form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     input, select, textarea {
       width: 100%;
-      background: #0f172a;
+      background: #080c14;
       border: 1px solid var(--card-border);
       color: var(--text);
-      padding: 11px 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      margin-bottom: 10px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border-color 0.2s;
     }
-    .row {
-      display: flex;
-      gap: 8px;
+    input:focus, select:focus {
+      border-color: var(--accent);
     }
-    .row > * { flex: 1; }
+    select[multiple] {
+      height: 120px;
+      padding: 10px;
+    }
+    select[multiple] option {
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 2px;
+    }
+    select[multiple] option:checked {
+      background: var(--accent) !important;
+      color: #fff;
+    }
 
+    /* Stacked Buttons for Generous Touch Targets */
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
     .btn {
       background: var(--accent);
       color: #fff;
       border: none;
-      padding: 11px 16px;
-      border-radius: 10px;
+      padding: 15px 20px;
+      border-radius: 12px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 15px;
       cursor: pointer;
       width: 100%;
+      text-align: center;
+      transition: background 0.15s;
     }
-    .btn-sm {
-      padding: 7px 12px;
-      font-size: 12px;
-      width: auto;
-      border-radius: 8px;
-    }
-    .btn-outline {
+    .btn:active { background: var(--accent-hover); }
+    .btn-secondary {
       background: transparent;
       border: 1px solid var(--card-border);
       color: var(--text);
     }
+    .btn-secondary:active { background: rgba(255,255,255,0.05); }
+    .btn-danger {
+      background: transparent;
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      color: #ef4444;
+      padding: 8px 12px;
+      font-size: 13px;
+      width: auto;
+    }
 
+    /* Clean Source Badges */
     .badge {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 7px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
       border-radius: 6px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .src-sms { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-    .src-samsung { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-    .src-gtask { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-    .src-cal { background: rgba(139, 92, 246, 0.2); color: #c084fc; }
-    .src-manual { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+    .src-sms { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .src-samsung { background: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); }
+    .src-cal { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .src-manual { background: rgba(100, 116, 139, 0.15); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.3); }
 
+    /* Task Card Layout */
     .task-card {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
+      gap: 14px;
     }
-    .task-card.completed { opacity: 0.6; }
+    .task-card.completed { opacity: 0.5; }
     .task-card.completed .task-title {
       text-decoration: line-through;
       color: var(--muted);
     }
-    .checkbox {
-      width: 26px;
-      height: 26px;
+    .checkbox-container {
+      width: 28px;
+      height: 28px;
       border-radius: 8px;
       border: 2px solid var(--accent);
       display: flex;
@@ -243,7 +292,7 @@
       color: #fff;
       font-weight: bold;
     }
-    .task-card.completed .checkbox {
+    .task-card.completed .checkbox-container {
       background: var(--success);
       border-color: var(--success);
     }
@@ -251,46 +300,50 @@
     .task-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 8px;
       align-items: center;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
     .task-title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
-      margin-bottom: 4px;
-      line-height: 1.35;
+      margin-bottom: 6px;
+      line-height: 1.4;
     }
-    .task-sub { font-size: 12px; color: var(--muted); }
+    .task-sub { font-size: 13px; color: var(--muted); }
     .assignee-pill {
       font-size: 11px;
-      background: #0f172a;
+      background: #080c14;
       border: 1px solid var(--card-border);
-      padding: 2px 8px;
-      border-radius: 999px;
-      color: #e2e8f0;
+      padding: 3px 10px;
+      border-radius: 6px;
+      color: #cbd5e1;
+      font-weight: 500;
     }
     .done-stamp {
-      font-size: 11px;
+      font-size: 12px;
       color: #34d399;
-      margin-top: 5px;
+      margin-top: 6px;
       font-weight: 500;
     }
 
+    /* Filter Chips */
     .filter-bar {
       display: flex;
       gap: 8px;
       overflow-x: auto;
       padding-bottom: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      scrollbar-width: none;
     }
+    .filter-bar::-webkit-scrollbar { display: none; }
     .chip {
       background: var(--card);
       border: 1px solid var(--card-border);
       color: var(--muted);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
@@ -301,23 +354,24 @@
       border-color: var(--accent);
     }
 
+    /* Bottom Navigation */
     nav.bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: #020617;
+      background: #070a12;
       border-top: 1px solid var(--card-border);
       display: flex;
       justify-content: space-around;
-      padding: 10px 0 14px;
+      padding: 12px 0 20px;
       z-index: 30;
     }
     .nav-item {
       background: none;
       border: none;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       display: flex;
       flex-direction: column;
@@ -325,17 +379,19 @@
       gap: 4px;
       cursor: pointer;
       position: relative;
+      padding: 4px 16px;
     }
     .nav-item.active { color: var(--accent); }
     .nav-badge {
       position: absolute;
-      top: -4px;
-      right: -10px;
+      top: 0;
+      right: 6px;
       background: var(--danger);
       color: #fff;
       font-size: 10px;
-      padding: 1px 5px;
-      border-radius: 999px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
     }
 
     .hidden { display: none !important; }
@@ -343,95 +399,102 @@
 </head>
 <body>
 
-  <!-- Top Live Sync Status Bar -->
+  <!-- Top Sync Status Bar -->
   <div class="sync-bar">
     <div>
-      <span id="sync-dot" class="sync-dot"></span>
-      <span id="sync-status-text">Connecting to Live Cloud...</span>
+      <span id="sync-dot" class="sync-indicator"></span>
+      <span id="sync-status-text">Connecting...</span>
     </div>
     <span id="sync-time" style="color:var(--muted);"></span>
   </div>
 
-  <!-- Heads-Up Notification Banner -->
+  <!-- Notification Banner -->
   <div id="push-banner">
     <div>
-      <div class="push-title" id="push-title">New Notification</div>
+      <div class="push-title" id="push-title">Notification</div>
       <div class="push-body" id="push-body"></div>
     </div>
-    <button class="btn-logout" onclick="hidePush()">Dismiss</button>
+    <button class="btn-text" onclick="hidePush()">Dismiss</button>
   </div>
 
-  <!-- App Header with Custom Vector Emblem -->
+  <!-- App Header -->
   <header id="app-header" class="hidden">
-    <div class="brand-wrap">
+    <div class="brand-group">
       <svg class="app-logo" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
-        <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#334155" stroke-width="3"/>
-        <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#3b82f6"/>
-        <path d="M54,22 A32,32 0 0,1 54,86 Z" fill="#10b981"/>
+        <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#22324f" stroke-width="3"/>
+        <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#2563eb"/>
+        <path d="M54,22 A32,32 0 0,1 54,86 Z" fill="#059669"/>
         <circle cx="54" cy="54" r="22" fill="#0f172a"/>
-        <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f8fafc" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <div class="user-info">
         <h1 id="header-username">Command Center</h1>
-        <span id="header-role-badge" class="role-badge role-admin">ADMIN</span>
+        <span id="header-role-badge" class="role-tag role-admin">Admin</span>
       </div>
     </div>
-    <button class="btn-logout" onclick="logoutUser()">Sign Out</button>
+    <button class="btn-text" onclick="logoutUser()">Sign Out</button>
   </header>
 
   <main>
-    <!-- PIN-Protected Login Screen -->
+    <!-- Login Screen -->
     <section id="login-screen" class="hidden">
-      <svg width="72" height="72" viewBox="0 0 108 108" style="border-radius:18px; margin: 0 auto; display:block; box-shadow: 0 4px 14px rgba(0,0,0,0.5);">
-        <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#3b82f6" stroke-width="3"/>
-        <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#3b82f6"/>
-        <path d="M54,22 A32,32 0 0,1 54,86 Z" fill="#10b981"/>
+      <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block; box-shadow: 0 4px 14px rgba(0,0,0,0.5);">
+        <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#2563eb" stroke-width="3"/>
+        <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#2563eb"/>
+        <path d="M54,22 A32,32 0 0,1 54,86 Z" fill="#059669"/>
         <circle cx="54" cy="54" r="22" fill="#0f172a"/>
-        <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f8fafc" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <h2>Command Center</h2>
-      <p>Select your account and enter your PIN (Default: 1234)</p>
+      <p>Select your profile and enter your PIN</p>
+      
+      <label class="form-label" style="text-align: left;">User Account</label>
       <select id="login-user-select"></select>
-      <input type="password" id="login-pin" inputmode="numeric" placeholder="Enter 4-Digit PIN" />
-      <div id="login-error" style="color:var(--danger); font-size:12px; margin-bottom:10px; display:none;">Incorrect PIN. Please try again.</div>
+
+      <label class="form-label" style="text-align: left;">Security PIN</label>
+      <input type="password" id="login-pin" inputmode="numeric" placeholder="Enter PIN" />
+
+      <div id="login-error" style="color:var(--danger); font-size:13px; margin-bottom:14px; display:none;">Incorrect PIN. Please try again.</div>
+      
       <button class="btn" onclick="handleLogin()">Sign In</button>
     </section>
 
-    <!-- TAB 1: ADMIN TRIAGE QUEUE -->
+    <!-- TAB 1: Triage Queue -->
     <section id="tab-triage" class="hidden">
       <div class="card" style="border-color: var(--accent);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <strong style="font-size:14px;">📥 Quick Triage / Schedule Entry</strong>
-          <span style="font-size:11px; color:var(--muted);">Admin Private Feed</span>
-        </div>
-        <input type="text" id="triage-manual-input" placeholder="Paste message, reminder, or schedule item..." />
-        <div class="row">
-          <button class="btn btn-sm" onclick="addTriageManual('SMS')">+ Add as SMS</button>
-          <button class="btn btn-sm btn-outline" onclick="addTriageManual('SAMSUNG')">+ Reminder</button>
-          <button class="btn btn-sm btn-outline" onclick="addTriageManual('CAL')">+ Calendar</button>
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Quick Triage Entry</div>
+        <label class="form-label">Item Description</label>
+        <input type="text" id="triage-manual-input" placeholder="Enter message, task, or schedule item..." />
+        
+        <div class="btn-stack">
+          <button class="btn btn-secondary" onclick="addTriageManual('SMS')">Add as Text Message</button>
+          <button class="btn btn-secondary" onclick="addTriageManual('SAMSUNG')">Add as Reminder</button>
+          <button class="btn btn-secondary" onclick="addTriageManual('CAL')">Add as Calendar Event</button>
         </div>
       </div>
 
       <div class="section-title">
-        <span>Unassigned Triage Queue</span>
+        <span>Triage Queue</span>
         <span id="triage-count">0 items</span>
       </div>
       <div id="triage-list"></div>
     </section>
 
-    <!-- TAB 2: TASK BOARD -->
+    <!-- TAB 2: Task Board -->
     <section id="tab-tasks" class="hidden">
       <div id="admin-task-creator" class="card">
-        <strong style="font-size:14px; display:block; margin-bottom:10px;">➕ Create & Assign Task</strong>
-        <input type="text" id="new-task-title" placeholder="What needs to get done?" />
-        <div class="row">
-          <select id="new-task-assignee" multiple style="height: 90px;" title="Hold Ctrl/Cmd or tap multiple to select several users">
-            <!-- Populated dynamically -->
-          </select>
-          <input type="text" id="new-task-due" placeholder="Due (e.g. Today 3:00 PM)" />
-        </div>
-        <div style="font-size:11px; color:var(--muted); margin-top:4px; margin-bottom:10px;">💡 Tip: Tap multiple names to assign to several team members at once.</div>
-        <button class="btn" onclick="createAndAssignTask()">Assign & Send Push Alert</button>
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 14px;">Create New Task</div>
+        
+        <label class="form-label">Task Details</label>
+        <input type="text" id="new-task-title" placeholder="What needs to be done?" />
+
+        <label class="form-label">Assign To Team Members (Hold Ctrl/Cmd or tap multiple)</label>
+        <select id="new-task-assignee" multiple></select>
+
+        <label class="form-label">Due Time / Deadline</label>
+        <input type="text" id="new-task-due" placeholder="e.g. Today 3:00 PM" />
+
+        <button class="btn" onclick="createAndAssignTask()">Publish & Notify Assignees</button>
       </div>
 
       <div id="admin-filter-bar" class="filter-bar"></div>
@@ -443,54 +506,59 @@
       <div id="tasks-list"></div>
     </section>
 
-    <!-- TAB 3: CLOUD SYNC & USER MANAGEMENT (ADMINS ONLY) -->
+    <!-- TAB 3: Team Management -->
     <section id="tab-team" class="hidden">
       <div class="card" style="border-color: var(--success);">
-        <strong style="font-size:14px; display:block; margin-bottom:6px;">☁️ Live Multi-Phone Cloud Sync</strong>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
-          Your Firebase database is securely baked in via GitHub Secrets. All devices connect automatically.
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">Cloud Connection Status</div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">
+          Database synchronization is active and secured via environment settings.
         </p>
-        <button class="btn btn-sm btn-outline" onclick="copyInviteLink()">📋 Copy Team Link</button>
+        <button class="btn btn-secondary" onclick="copyInviteLink()">Copy Team Access Link</button>
       </div>
 
       <div class="card">
-        <strong style="font-size:14px; display:block; margin-bottom:10px;">👤 Add / Update User Account</strong>
-        <input type="text" id="new-user-name" placeholder="Full Name (e.g. Kaylee, Ronnie, Terry)" />
-        <div class="row">
-          <select id="new-user-role">
-            <option value="member">Sub-User (Member)</option>
-            <option value="admin">Administrator</option>
-          </select>
-          <input type="text" id="new-user-pin" inputmode="numeric" placeholder="4-Digit PIN (1234)" value="1234" />
-        </div>
-        <button class="btn" onclick="addNewUser()">Add Account</button>
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 14px;">Add User Account</div>
+        
+        <label class="form-label">Full Name</label>
+        <input type="text" id="new-user-name" placeholder="e.g. John Doe" />
+
+        <label class="form-label">Permission Role</label>
+        <select id="new-user-role">
+          <option value="member">Team Member (Assigned Tasks Only)</option>
+          <option value="admin">Administrator (Full Access)</option>
+        </select>
+
+        <label class="form-label">4-Digit PIN</label>
+        <input type="text" id="new-user-pin" inputmode="numeric" placeholder="1234" value="1234" />
+
+        <button class="btn" onclick="addNewUser()">Create Account</button>
       </div>
 
-      <div class="section-title">Registered Accounts</div>
+      <div class="section-title">Active Team Accounts</div>
       <div id="team-list"></div>
     </section>
   </main>
 
+  <!-- Bottom Navigation -->
   <nav id="bottom-nav" class="bottom-nav hidden">
     <button id="nav-triage" class="nav-item" onclick="switchTab('triage')">
-      <span>📥 Inbox & Schedule</span>
+      <span>Inbox & Schedule</span>
       <span id="badge-triage" class="nav-badge hidden">0</span>
     </button>
     <button id="nav-tasks" class="nav-item active" onclick="switchTab('tasks')">
-      <span>✅ Task Board</span>
+      <span>Task Board</span>
       <span id="badge-tasks" class="nav-badge hidden">0</span>
     </button>
     <button id="nav-team" class="nav-item" onclick="switchTab('team')">
-      <span>👥 Cloud & Users</span>
+      <span>Team & Settings</span>
     </button>
   </nav>
 
   <script>
-    const STORAGE_KEY = "unified_command_center_v3";
+    const STORAGE_KEY = "unified_command_center_v4";
     const SESSION_USER_KEY = "command_center_logged_in_user";
     const FIREBASE_URL_KEY = "command_center_firebase_url";
     const LAST_NOTIF_KEY = "command_center_last_notif_id";
-
     const INJECTED_CLOUD_URL = "PLACEHOLDER_FIREBASE_URL";
 
     function getFirebaseUrl() {
@@ -503,31 +571,19 @@
 
     const DEFAULT_SHARED_STATE = {
       users: [
-        { id: "u_admin1", name: "Admin 1 (You)", role: "admin", pin: "1234" },
-        { id: "u_admin2", name: "Admin 2 (Co-Admin)", role: "admin", pin: "1234" },
-        { id: "u_member1", name: "User 1 (Team Member)", role: "member", pin: "1234" },
-        { id: "u_member2", name: "User 2 (Team Member)", role: "member", pin: "1234" }
+        { id: "u_admin1", name: "Admin 1", role: "admin", pin: "1234" },
+        { id: "u_admin2", name: "Admin 2", role: "admin", pin: "1234" },
+        { id: "u_member1", name: "Team Member 1", role: "member", pin: "1234" },
+        { id: "u_member2", name: "Team Member 2", role: "member", pin: "1234" }
       ],
       tasks: [
         {
           id: "t_101",
-          title: "Text from Supplier: Confirm delivery window before 2:30 PM",
+          title: "Confirm delivery window with supplier",
           source: "SMS",
           due: "Today 2:30 PM",
           visibility: "triage",
           assignedTo: [],
-          createdBy: "u_admin1",
-          completed: false,
-          completedBy: null,
-          completedAt: null
-        },
-        {
-          id: "t_102",
-          title: "Pick up hardware order & load trailer",
-          source: "SAMSUNG",
-          due: "Today 4:00 PM",
-          visibility: "assigned",
-          assignedTo: ["u_member1"],
           createdBy: "u_admin1",
           completed: false,
           completedBy: null,
@@ -561,9 +617,9 @@
 
     function copyInviteLink() {
       const dbUrl = getFirebaseUrl();
-      const shareUrl = `https://${location.hostname.includes("github.io") ? location.host + location.pathname : "github.io/"}?db=${encodeURIComponent(dbUrl)}`;
+      const shareUrl = `https://${location.hostname.includes("github.io") ? location.host + location.pathname : ""}?db=${encodeURIComponent(dbUrl)}`;
       navigator.clipboard?.writeText(shareUrl);
-      alert("Invite link copied!");
+      alert("Team access link copied to clipboard.");
     }
 
     async function pushStateToCloud(notifyTitle, notifyBody, targetAudience) {
@@ -649,12 +705,12 @@
       const timeEl = document.getElementById("sync-time");
       const dbUrl = getFirebaseUrl();
       if (isOnline && dbUrl && !dbUrl.includes("PLACEHOLDER")) {
-        dot.className = "sync-dot online";
-        txt.textContent = "Live Cloud Sync Active";
-        timeEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        dot.className = "sync-indicator online";
+        txt.textContent = "Cloud Synchronized";
+        timeEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       } else {
-        dot.className = "sync-dot";
-        txt.textContent = "Offline / Local Mode";
+        dot.className = "sync-indicator";
+        txt.textContent = "Offline Mode";
       }
     }
 
@@ -681,7 +737,7 @@
       document.getElementById("push-body").textContent = notifObj.body;
       banner.style.display = "flex";
       clearTimeout(window._pushTimer);
-      window._pushTimer = setTimeout(hidePush, 5000);
+      window._pushTimer = setTimeout(hidePush, 6000);
 
       try {
         if (window.AndroidNative && typeof window.AndroidNative.sendNotification === "function") {
@@ -762,7 +818,7 @@
       });
 
       inputEl.value = "";
-      pushStateToCloud(`📥 Added to Triage (${sourceType})`, `"${text}" added to Admin Triage Queue.`, "ADMINS");
+      pushStateToCloud(`New Item Added`, `"${text}" added to Triage Queue.`, "ADMINS");
     }
 
     function assignTriageItem(taskId, selectElemId) {
@@ -778,8 +834,8 @@
 
       const names = selectedOptions.map(id => getUserName(id)).join(", ");
       pushStateToCloud(
-        `📲 Task Assigned to ${names}`,
-        `${adminUser.name} assigned: "${task.title}"`,
+        `Task Assigned`,
+        `Assigned to ${names}: "${task.title}"`,
         selectedOptions
       );
     }
@@ -818,8 +874,8 @@
       titleInput.value = "";
       dueInput.value = "";
       pushStateToCloud(
-        `📲 Group Task → ${names}`,
-        `New Task from ${adminUser.name}: "${title}" (Due: ${due})`,
+        `New Task Assignment`,
+        `Assigned to ${names}: "${title}" (Due: ${due})`,
         selectedOptions
       );
     }
@@ -836,16 +892,16 @@
         task.completedBy = actor.id;
         task.completedAt = nowStr;
         pushStateToCloud(
-          `✅ Completed by ${actor.name}`,
-          `"${task.title}" marked DONE at ${nowStr}.`,
+          `Task Completed`,
+          `"${task.title}" completed by ${actor.name} at ${nowStr}.`,
           "ADMINS"
         );
       } else {
         task.completedBy = null;
         task.completedAt = null;
         pushStateToCloud(
-          `🔄 Task Re-Opened`,
-          `${actor.name} unmarked "${task.title}".`,
+          `Task Re-Opened`,
+          `"${task.title}" reopened by ${actor.name}.`,
           "ADMINS"
         );
       }
@@ -871,7 +927,7 @@
         pin
       });
       nameInput.value = "";
-      pushStateToCloud("👤 Account Added", `${name} added to Command Center.`, "ADMINS");
+      pushStateToCloud("Account Created", `New account created for ${name}.`, "ADMINS");
     }
 
     function removeUser(userId) {
@@ -882,11 +938,10 @@
 
     function getSourceBadge(source) {
       const map = {
-        SMS: { cls: "src-sms", label: "💬 SMS Text" },
-        SAMSUNG: { cls: "src-samsung", label: "🔔 Samsung Rem" },
-        GTASK: { cls: "src-gtask", label: "✓ Google Task" },
-        CAL: { cls: "src-cal", label: "📅 Google Cal" },
-        MANUAL: { cls: "src-manual", label: "📌 Assigned" }
+        SMS: { cls: "src-sms", label: "Text Message" },
+        SAMSUNG: { cls: "src-samsung", label: "Reminder" },
+        CAL: { cls: "src-cal", label: "Calendar" },
+        MANUAL: { cls: "src-manual", label: "Direct Task" }
       };
       const item = map[source] || map.MANUAL;
       return `<span class="badge ${item.cls}">${item.label}</span>`;
@@ -899,8 +954,8 @@
 
     function getAssigneeBadges(assignedToField) {
       const ids = Array.isArray(assignedToField) ? assignedToField : (assignedToField ? [assignedToField] : []);
-      if (ids.length === 0) return '<span class="assignee-pill">👤 Unassigned</span>';
-      return ids.map(id => `<span class="assignee-pill">👤 ${getUserName(id)}</span>`).join(" ");
+      if (ids.length === 0) return '<span class="assignee-pill">Unassigned</span>';
+      return ids.map(id => `<span class="assignee-pill">${getUserName(id)}</span>`).join(" ");
     }
 
     function renderAll() {
@@ -940,8 +995,8 @@
       document.getElementById("bottom-nav").classList.remove("hidden");
       document.getElementById("header-username").textContent = user.name;
       const roleBadge = document.getElementById("header-role-badge");
-      roleBadge.textContent = isAdmin ? "Administrator" : "Team Member";
-      roleBadge.className = "role-badge " + (isAdmin ? "role-admin" : "role-member");
+      roleBadge.textContent = isAdmin ? "Admin" : "Member";
+      roleBadge.className = "role-tag " + (isAdmin ? "role-admin" : "role-member");
 
       document.getElementById("nav-triage").classList.toggle("hidden", !isAdmin);
       document.getElementById("nav-team").classList.toggle("hidden", !isAdmin);
@@ -956,7 +1011,6 @@
       document.getElementById("nav-tasks").classList.toggle("active", activeTab === "tasks");
       document.getElementById("nav-team").classList.toggle("active", activeTab === "team");
 
-      // Render Triage Queue
       const triageItems = state.tasks.filter(t => t.visibility === "triage");
       document.getElementById("triage-count").textContent = `${triageItems.length} items`;
       const badgeTriage = document.getElementById("badge-triage");
@@ -966,17 +1020,20 @@
       if (!document.activeElement || !document.activeElement.id.startsWith("assign-sel-")) {
         const triageListEl = document.getElementById("triage-list");
         triageListEl.innerHTML = triageItems.length === 0
-          ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px;">All incoming items have been triaged!</div>`
+          ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px; padding:24px;">No items in triage queue.</div>`
           : triageItems.map(t => `
             <div class="card">
               <div class="task-meta">${getSourceBadge(t.source)} <span class="task-sub">Due: ${t.due}</span></div>
-              <div class="task-title" style="margin:6px 0 10px;">${t.title}</div>
-              <div class="row" style="align-items:center;">
-                <select id="assign-sel-${t.id}" multiple style="height:50px; margin-bottom:0;">
-                  ${state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join("")}
-                </select>
-                <button class="btn btn-sm" onclick="assignTriageItem('${t.id}', 'assign-sel-${t.id}')">Assign</button>
-                <button class="btn btn-sm btn-outline" onclick="dismissTriageItem('${t.id}')">✕</button>
+              <div class="task-title" style="margin:8px 0 14px;">${t.title}</div>
+              
+              <label class="form-label">Assign To</label>
+              <select id="assign-sel-${t.id}" multiple style="height:100px; margin-bottom:12px;">
+                ${state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join("")}
+              </select>
+
+              <div class="btn-stack">
+                <button class="btn" onclick="assignTriageItem('${t.id}', 'assign-sel-${t.id}')">Assign Task</button>
+                <button class="btn btn-secondary btn-danger" onclick="dismissTriageItem('${t.id}')" style="width:100%;">Dismiss Item</button>
               </div>
             </div>
           `).join("");
@@ -997,7 +1054,7 @@
         });
         document.getElementById("tasks-heading").textContent = "My Assigned Tasks";
       } else {
-        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Team Tasks" : `Tasks for ${getUserName(adminFilterUserId)}`;
+        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Tasks" : `Tasks for ${getUserName(adminFilterUserId)}`;
         if (adminFilterUserId !== "ALL") {
           visibleTasks = visibleTasks.filter(t => {
             const list = Array.isArray(t.assignedTo) ? t.assignedTo : (t.assignedTo ? [t.assignedTo] : []);
@@ -1010,39 +1067,39 @@
       const badgeTasks = document.getElementById("badge-tasks");
       badgeTasks.textContent = pendingCount;
       badgeTasks.classList.toggle("hidden", pendingCount === 0);
-      document.getElementById("tasks-stats").textContent = `${visibleTasks.length - pendingCount} / ${visibleTasks.length} Done`;
+      document.getElementById("tasks-stats").textContent = `${visibleTasks.length - pendingCount} / ${visibleTasks.length} Completed`;
 
       document.getElementById("tasks-list").innerHTML = visibleTasks.length === 0
-        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px;">No tasks assigned here yet.</div>`
+        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px; padding:24px;">No tasks available.</div>`
         : visibleTasks.map(t => `
           <div class="card task-card ${t.completed ? "completed" : ""}">
-            <button class="checkbox" onclick="toggleTaskCompletion('${t.id}')">${t.completed ? "✓" : ""}</button>
+            <div class="checkbox-container" onclick="toggleTaskCompletion('${t.id}')">${t.completed ? "✓" : ""}</div>
             <div class="task-content">
               <div class="task-meta">
                 ${getSourceBadge(t.source)}
                 ${getAssigneeBadges(t.assignedTo)}
-                <span class="task-sub">⏰ ${t.due}</span>
+                <span class="task-sub">Due: ${t.due}</span>
               </div>
               <div class="task-title">${t.title}</div>
               ${t.completed
-                ? `<div class="done-stamp">✓ Marked Done by ${getUserName(t.completedBy)} at ${t.completedAt}</div>`
+                ? `<div class="done-stamp">Completed by ${getUserName(t.completedBy)} at ${t.completedAt}</div>`
                 : `<div class="task-sub">Assigned by ${getUserName(t.createdBy)}</div>`
               }
             </div>
-            ${isAdmin ? `<button class="btn-logout" onclick="deleteTask('${t.id}')">🗑</button>` : ""}
+            ${isAdmin ? `<button class="btn btn-secondary btn-danger" onclick="deleteTask('${t.id}')">Delete</button>` : ""}
           </div>
         `).join("");
 
       if (isAdmin) {
         document.getElementById("team-list").innerHTML = state.users.map(u => `
-          <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: 14px 18px;">
             <div>
-              <div style="font-weight:600; font-size:15px;">${u.name}</div>
-              <div style="font-size:12px; color:var(--muted);">PIN: ${u.pin || "1234"} • Role: ${u.role.toUpperCase()}</div>
+              <div style="font-weight:600; font-size:15px; margin-bottom:2px;">${u.name}</div>
+              <div style="font-size:12px; color:var(--muted);">PIN: ${u.pin || "1234"}</div>
             </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <span class="role-badge ${u.role === "admin" ? "role-admin" : "role-member"}">${u.role.toUpperCase()}</span>
-              ${u.id !== user.id ? `<button class="btn-logout" onclick="removeUser('${u.id}')">✕</button>` : ""}
+            <div style="display:flex; gap:10px; align-items:center;">
+              <span class="role-tag ${u.role === "admin" ? "role-admin" : "role-member"}">${u.role.toUpperCase()}</span>
+              ${u.id !== user.id ? `<button class="btn btn-secondary btn-danger" onclick="removeUser('${u.id}')">Remove</button>` : ""}
             </div>
           </div>
         `).join("");
