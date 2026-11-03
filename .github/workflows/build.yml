@@ -41,7 +41,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # JOB 2: Compile Native Android APK with Notification, SMS & Calendar Listeners
+  # JOB 2: Compile Native Android APK with Notification, Calendar & Photo Picker Support
   build-android-apk:
     runs-on: ubuntu-latest
     steps:
@@ -191,7 +191,7 @@ jobs:
           }
           EOF
 
-          # 4. Write MainActivity with Notification Bridge, Listener Settings & Calendar Reader
+          # 4. Write MainActivity with Notification Bridge, File/Photo Chooser & Calendar Reader
           cat << 'EOF' > android/app/src/main/java/com/commandcenter/v2/MainActivity.java
           package com.commandcenter.v2;
 
@@ -210,6 +210,7 @@ jobs:
           import android.provider.CalendarContract;
           import android.provider.Settings;
           import android.webkit.JavascriptInterface;
+          import android.webkit.ValueCallback;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
@@ -224,6 +225,8 @@ jobs:
 
           public class MainActivity extends AppCompatActivity {
               private WebView webView;
+              private ValueCallback<Uri[]> filePathCallback;
+              private static final int FILE_CHOOSER_RESULT_CODE = 105;
               private static final String CHANNEL_ID = "command_center_alerts";
 
               @Override
@@ -246,9 +249,45 @@ jobs:
                   webView.clearCache(true);
                   webView.addJavascriptInterface(new AndroidBridge(this), "AndroidNative");
                   webView.setWebViewClient(new WebViewClient());
-                  webView.setWebChromeClient(new WebChromeClient());
+                  webView.setWebChromeClient(new WebChromeClient() {
+                      @Override
+                      public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                          if (MainActivity.this.filePathCallback != null) {
+                              MainActivity.this.filePathCallback.onReceiveValue(null);
+                          }
+                          MainActivity.this.filePathCallback = filePathCallback;
+                          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                          intent.addCategory(Intent.CATEGORY_OPENABLE);
+                          intent.setType("image/*");
+                          intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                          startActivityForResult(Intent.createChooser(intent, "Select Photo"), FILE_CHOOSER_RESULT_CODE);
+                          return true;
+                      }
+                  });
                   setContentView(webView);
                   webView.loadUrl("file:///android_asset/public/index.html?v=" + System.currentTimeMillis());
+              }
+
+              @Override
+              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+                  super.onActivityResult(requestCode, resultCode, data);
+                  if (requestCode == FILE_CHOOSER_RESULT_CODE) {
+                      if (filePathCallback == null) return;
+                      Uri[] results = null;
+                      if (resultCode == RESULT_OK && data != null) {
+                          if (data.getClipData() != null) {
+                              int count = data.getClipData().getItemCount();
+                              results = new Uri[count];
+                              for (int i = 0; i < count; i++) {
+                                  results[i] = data.getClipData().getItemAt(i).getUri();
+                              }
+                          } else if (data.getData() != null) {
+                              results = new Uri[]{ data.getData() };
+                          }
+                      }
+                      filePathCallback.onReceiveValue(results);
+                      filePathCallback = null;
+                  }
               }
 
               private void requestRuntimePermissions() {
@@ -404,6 +443,6 @@ jobs:
         with:
           tag_name: build-${{ github.run_number }}
           name: "Android APK Build #${{ github.run_number }}"
-          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the intelligent auto-capture build."
+          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the photo-attachment & field-notes build."
           files: CommandCenter-v${{ github.run_number }}.apk
           prerelease: false
