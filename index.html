@@ -310,6 +310,11 @@
       border-color: var(--accent);
       color: #fff;
     }
+    .user-pick-row.urgent-toggle-row.selected {
+      background: rgba(220, 38, 38, 0.2);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
     .pick-indicator {
       width: 22px;
       height: 22px;
@@ -324,6 +329,11 @@
     .user-pick-row.selected .pick-indicator {
       background: var(--accent);
       border-color: var(--accent);
+      color: #fff;
+    }
+    .user-pick-row.urgent-toggle-row.selected .pick-indicator {
+      background: var(--danger);
+      border-color: #ef4444;
       color: #fff;
     }
 
@@ -357,6 +367,11 @@
       border: 1px solid rgba(220, 38, 38, 0.45);
       color: #f87171;
     }
+    .btn-urgent-active {
+      background: rgba(220, 38, 38, 0.18);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+    }
 
     .badge {
       font-size: 11px;
@@ -365,6 +380,13 @@
       border-radius: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+    }
+    .badge-urgent {
+      background: rgba(220, 38, 38, 0.25);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      font-weight: 700;
+      letter-spacing: 0.7px;
     }
     .src-sms { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
     .src-samsung { background: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); }
@@ -376,7 +398,11 @@
       flex-direction: column;
       gap: 14px;
     }
-    .task-card.completed { opacity: 0.58; }
+    .task-card.urgent-card {
+      border-color: #ef4444;
+      box-shadow: 0 0 18px rgba(220, 38, 38, 0.18);
+    }
+    .task-card.completed { opacity: 0.68; }
     .task-card.completed .task-title {
       text-decoration: line-through;
       color: var(--muted);
@@ -730,13 +756,19 @@
     <div class="edit-modal-inner">
       <div class="card">
         <div class="card-title" style="font-size:18px; margin-bottom:6px;">Edit Task, Checklist &amp; Photos</div>
-        <div class="card-desc">Update task details, modify or remove existing checklist items, add new items, or manage attached photos.</div>
+        <div class="card-desc">Update task details, priority level, checklist items, or attached photos.</div>
 
         <label class="form-label">Task Title</label>
         <input type="text" id="edit-task-title" placeholder="Task title" />
 
         <label class="form-label">Due Time / Deadline</label>
         <input type="text" id="edit-task-due" placeholder="e.g. Today 3:00 PM" />
+
+        <label class="form-label">Priority Level</label>
+        <div id="edit-urgent-row" class="user-pick-row urgent-toggle-row" style="margin-bottom:16px;" onclick="toggleEditUrgent()">
+          <span>Urgent / High-Priority (Pin to Top)</span>
+          <div id="edit-urgent-ind" class="pick-indicator"></div>
+        </div>
 
         <label class="form-label">Attached Photos</label>
         <div id="edit-photos-container" class="photo-grid"></div>
@@ -812,6 +844,12 @@
         <label class="form-label">Message, Reminder, or Extracted Material List</label>
         <textarea id="triage-manual-input" placeholder="All 6 ft forms for Bingham.&#10;• 20 - 2'x6'&#10;• 8 - 14&quot;&#10;• 4 - outside corners"></textarea>
 
+        <label class="form-label">Priority Level</label>
+        <div id="triage-urgent-row" class="user-pick-row urgent-toggle-row" style="margin-bottom:16px;" onclick="toggleTriageCreatorUrgent()">
+          <span>Urgent / High-Priority (Pin to Top)</span>
+          <div id="triage-urgent-ind" class="pick-indicator"></div>
+        </div>
+
         <label class="form-label">Source Type</label>
         <select id="triage-source-select">
           <option value="SMS">Text / Picture Message</option>
@@ -834,7 +872,7 @@
       <div id="triage-list"></div>
     </section>
 
-    <!-- TAB 2: TASK BOARD -->
+    <!-- TAB 2: TASK BOARD (ACTIVE TASKS AT TOP, COLLAPSIBLE COMPLETED TASKS AT BOTTOM) -->
     <section id="tab-tasks" class="hidden">
       <div id="admin-task-creator-wrap" class="hidden">
         <button id="btn-toggle-task-create" class="dropdown-trigger primary-trigger" onclick="toggleDropdownPanel('taskCreator')">
@@ -847,6 +885,12 @@
 
           <label class="form-label">Task Title</label>
           <input type="text" id="new-task-title" placeholder="e.g. All 6 ft forms for Bingham" />
+
+          <label class="form-label">Priority Level</label>
+          <div id="creator-urgent-row" class="user-pick-row urgent-toggle-row" style="margin-bottom:16px;" onclick="toggleCreatorUrgent()">
+            <span>Urgent / High-Priority (Pin to Top)</span>
+            <div id="creator-urgent-ind" class="pick-indicator"></div>
+          </div>
 
           <label class="form-label">Task Photos / Material List Pictures (AI Vision Scanner)</label>
           <div id="creator-photo-preview" class="photo-grid"></div>
@@ -877,6 +921,26 @@
         <span id="tasks-stats"></span>
       </div>
       <div id="tasks-list"></div>
+
+      <!-- COLLAPSIBLE COMPLETED TASKS SECTION -->
+      <div id="completed-tasks-wrap" style="margin-top: 24px;">
+        <button id="btn-toggle-completed" class="dropdown-trigger" onclick="toggleDropdownPanel('completedTasks')">
+          <span id="completed-trigger-label">Completed Tasks (0)</span>
+          <span id="chev-completedTasks" class="dropdown-chevron">Open</span>
+        </button>
+
+        <div id="panel-completedTasks" class="dropdown-panel hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px;">
+            <span style="font-size:12px; color:var(--muted); line-height:1.4;">
+              Attached photos are cleared 3 days after completion to save storage, and completed tasks auto-delete after 14 days.
+            </span>
+          </div>
+          <button id="btn-clear-completed" class="btn btn-danger-outline hidden" style="margin-bottom:16px; padding:12px;" onclick="clearAllCompletedTasks()">
+            Clear All Completed Tasks Now
+          </button>
+          <div id="completed-tasks-list"></div>
+        </div>
+      </div>
     </section>
 
     <!-- TAB 3: SETTINGS (ORDERED: 1. Active Users, 2. Add User Dropdown, 3. Auto Capture, 4. Gemini API Key Dropdown) -->
@@ -1003,6 +1067,9 @@
     const SCAN_LOG_KEY = "command_center_scan_log_v1";
     const INJECTED_CLOUD_URL = "PLACEHOLDER_FIREBASE_URL";
 
+    const PHOTO_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
+    const TASK_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+
     const DEFAULT_FILTER_SETTINGS = {
       captureSms: true,
       captureReminders: true,
@@ -1092,6 +1159,8 @@
     let activeTab = "tasks";
     let adminFilterUserId = "ALL";
     let creatorSelectedUsers = [];
+    let creatorUrgent = false;
+    let triageCreatorUrgent = false;
     let triageSelections = {};
     let cloudPollTimer = null;
     let activePhotoScanPromise = null;
@@ -1104,10 +1173,12 @@
     let editDraftChecklist = [];
     let editDraftAssignees = [];
     let editDraftPhotos = [];
+    let editDraftUrgent = false;
 
     let dropdownState = {
       triageCreator: false,
       taskCreator: false,
+      completedTasks: false,
       addUser: false,
       geminiKey: false,
       captureRules: false,
@@ -1142,6 +1213,104 @@
       return Object.assign({}, DEFAULT_FILTER_SETTINGS, state.filterSettings || {});
     }
 
+    /********************************************************************
+     * URGENT PRIORITY TOGGLE CONTROLS
+     ********************************************************************/
+    function syncUrgentToggleUI() {
+      const cRow = document.getElementById("creator-urgent-row");
+      const cInd = document.getElementById("creator-urgent-ind");
+      if (cRow && cInd) {
+        cRow.classList.toggle("selected", creatorUrgent);
+        cInd.textContent = creatorUrgent ? "✓" : "";
+      }
+
+      const tRow = document.getElementById("triage-urgent-row");
+      const tInd = document.getElementById("triage-urgent-ind");
+      if (tRow && tInd) {
+        tRow.classList.toggle("selected", triageCreatorUrgent);
+        tInd.textContent = triageCreatorUrgent ? "✓" : "";
+      }
+
+      const eRow = document.getElementById("edit-urgent-row");
+      const eInd = document.getElementById("edit-urgent-ind");
+      if (eRow && eInd) {
+        eRow.classList.toggle("selected", editDraftUrgent);
+        eInd.textContent = editDraftUrgent ? "✓" : "";
+      }
+    }
+
+    function toggleCreatorUrgent() {
+      creatorUrgent = !creatorUrgent;
+      syncUrgentToggleUI();
+    }
+
+    function toggleTriageCreatorUrgent() {
+      triageCreatorUrgent = !triageCreatorUrgent;
+      syncUrgentToggleUI();
+    }
+
+    function toggleEditUrgent() {
+      editDraftUrgent = !editDraftUrgent;
+      syncUrgentToggleUI();
+    }
+
+    function toggleTaskUrgentDirect(taskId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      task.urgent = !task.urgent;
+
+      if (task.urgent && task.visibility === "assigned") {
+        const targets = normalizeArray(task.assignedTo);
+        pushStateToCloud(
+          "[URGENT] Priority Escalated",
+          actor.name + " pinned \"" + task.title + "\" as Urgent / High-Priority.",
+          targets.length > 0 ? targets : "ALL"
+        );
+      } else {
+        pushStateToCloud();
+      }
+    }
+
+    function runCompletedTasksMaintenance(tasksList) {
+      const now = Date.now();
+      let changed = false;
+      const kept = [];
+
+      const list = normalizeArray(tasksList);
+      for (let i = 0; i < list.length; i++) {
+        const t = list[i];
+        if (!t.completed) {
+          kept.push(t);
+          continue;
+        }
+
+        if (!t.completedTimestamp) {
+          t.completedTimestamp = now;
+          changed = true;
+        }
+
+        const ageMs = now - Number(t.completedTimestamp);
+
+        if (ageMs > TASK_RETENTION_MS) {
+          changed = true;
+          continue;
+        }
+
+        const imgs = normalizeArray(t.images);
+        if (ageMs > PHOTO_RETENTION_MS && imgs.length > 0) {
+          t.images = [];
+          t.photosPurged = true;
+          changed = true;
+        }
+
+        kept.push(t);
+      }
+
+      return { tasks: kept, changed: changed };
+    }
+
     function loadLocalState() {
       try {
         let raw = localStorage.getItem(STORAGE_KEY);
@@ -1165,19 +1334,21 @@
         }
         const parsed = JSON.parse(raw);
         const users = normalizeArray(parsed.users);
-        const tasks = normalizeArray(parsed.tasks).map(function(t) {
+        const rawTasks = normalizeArray(parsed.tasks).map(function(t) {
           return Object.assign({}, t, {
+            urgent: Boolean(t.urgent),
             assignedTo: normalizeArray(t.assignedTo),
             checklist: normalizeArray(t.checklist),
             images: normalizeArray(t.images),
             notes: normalizeArray(t.notes)
           });
         });
+        const maint = runCompletedTasksMaintenance(rawTasks);
         return {
           geminiApiKey: parsed.geminiApiKey || recoveredKey || "",
           filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, parsed.filterSettings || {}),
           users: users.length > 0 ? users : DEFAULT_SHARED_STATE.users,
-          tasks: tasks,
+          tasks: maint.tasks,
           lastNotification: parsed.lastNotification || null
         };
       } catch (e) {
@@ -1232,7 +1403,6 @@
         return { ok: false, error: "No Gemini API Key configured in Settings." };
       }
 
-      // Strictly use the active GA Gemini 3 Flash models (no legacy temperature param, low thinking latency)
       const modelsToTry = [];
       if (preferredWorkingModel) modelsToTry.push(preferredWorkingModel);
       const activeModels = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"];
@@ -1254,7 +1424,6 @@
           statusCallback("Scanning photo with " + modelName + "...");
         }
 
-        // First try with LOW thinkingLevel for fast 2-3 second turnaround; fallback to bare payload if needed
         const payloadVariants = [
           {
             contents: [{ role: "user", parts: requestParts }],
@@ -1284,13 +1453,11 @@
               const msg = (errData && errData.error && errData.error.message) ? errData.error.message : ("HTTP " + response.status);
               lastErrorMsg = msg;
 
-              // If Google specifies a replacement model ID in the 404 message, queue it immediately next
               const redirectMatch = msg.match(/use\s+models\/([a-zA-Z0-9.\-_]+)/i);
               if (redirectMatch && redirectMatch[1] && !tried[redirectMatch[1]]) {
                 modelsToTry.splice(m + 1, 0, redirectMatch[1]);
               }
 
-              // If 400 validation error on thinkingConfig variant 0, immediately try bare variant 1 on the same model
               if (response.status === 400 && v === 0) {
                 continue;
               }
@@ -1357,6 +1524,7 @@
         title: parsed.title,
         source: item.source || "SMS",
         due: parsed.due || "Today",
+        urgent: false,
         checklist: parsed.checklist || [],
         images: [],
         notes: [],
@@ -1365,7 +1533,8 @@
         createdBy: currentUserId,
         completed: false,
         completedBy: null,
-        completedAt: null
+        completedAt: null,
+        completedTimestamp: null
       });
 
       item.accepted = true;
@@ -1707,7 +1876,12 @@
 
     function renderTaskPhotosHtml(task) {
       const images = normalizeArray(task.images);
-      if (images.length === 0) return "";
+      if (images.length === 0) {
+        if (task.photosPurged) {
+          return '<div style="font-size:12px; color:var(--muted); font-style:italic;">Attached photo cleared after 3-day retention period.</div>';
+        }
+        return "";
+      }
 
       return '<div class="photo-grid">' +
         images.map(function(src, idx) {
@@ -1801,6 +1975,7 @@
       document.getElementById("edit-task-due").value = task.due || "Today";
       document.getElementById("edit-new-items-input").value = "";
 
+      editDraftUrgent = Boolean(task.urgent);
       editDraftChecklist = normalizeArray(task.checklist).map(function(item) {
         return {
           id: item.id || ("chk_" + Date.now() + "_" + Math.floor(Math.random() * 1000)),
@@ -1813,6 +1988,7 @@
       editDraftAssignees = normalizeArray(task.assignedTo).slice();
       editDraftPhotos = normalizeArray(task.images).slice();
 
+      syncUrgentToggleUI();
       renderEditModalContents(task);
       document.getElementById("edit-modal").classList.remove("hidden");
     }
@@ -1822,6 +1998,7 @@
       editDraftChecklist = [];
       editDraftAssignees = [];
       editDraftPhotos = [];
+      editDraftUrgent = false;
       document.getElementById("edit-modal").classList.add("hidden");
     }
 
@@ -1938,6 +2115,7 @@
 
       task.title = newTitle;
       task.due = newDue;
+      task.urgent = Boolean(editDraftUrgent);
       task.images = editDraftPhotos.slice();
       task.checklist = editDraftChecklist.map(function(item) {
         return {
@@ -1954,8 +2132,9 @@
         task.assignedTo = editDraftAssignees.slice();
       }
 
+      const prefix = task.urgent ? "[URGENT] " : "";
       const notifyTargets = task.visibility === "assigned" ? task.assignedTo.slice() : "ADMINS";
-      const notifyHeading = task.visibility === "assigned" ? "Assigned Task Updated" : "Triage Task Updated";
+      const notifyHeading = prefix + (task.visibility === "assigned" ? "Assigned Task Updated" : "Triage Task Updated");
       const notifyMsg = actor.name + " updated \"" + task.title + "\" (Due: " + task.due + "). Review the latest details.";
 
       closeEditModal();
@@ -2009,6 +2188,10 @@
       }
 
       return { ignored: false };
+    }
+
+    function detectUrgentKeyword(text) {
+      return /\b(?:urgent|asap|emergency|immediately|right away|right now|critical|rush)\b/i.test(String(text || ""));
     }
 
     function extractTitleAndChecklist(text, defaultDue, senderName) {
@@ -2087,6 +2270,7 @@
       return {
         title: cleanTitle,
         due: due,
+        urgent: detectUrgentKeyword(text),
         checklist: checklist
       };
     }
@@ -2110,6 +2294,7 @@
             isWorkRelated: true,
             title: scanRes.title || "Material List",
             due: defaultDue || "Today",
+            urgent: false,
             reason: "Scanned " + scanRes.items.length + " items from photo",
             checklist: scanRes.items.map(function(item, idx) {
               return { id: "chk_" + Date.now() + "_" + idx, text: item, done: false };
@@ -2120,6 +2305,7 @@
           isWorkRelated: true,
           title: "Material List (Photo Attached)",
           due: defaultDue || "Today",
+          urgent: false,
           reason: "Photo material list attached",
           checklist: []
         };
@@ -2132,6 +2318,7 @@
           isWorkRelated: true,
           title: extracted.title,
           due: extracted.due,
+          urgent: extracted.urgent,
           reason: "Multi-line work checklist",
           checklist: extracted.checklist
         };
@@ -2149,8 +2336,9 @@
             "DECISION RULES FOR isWorkRelated:\n" +
             "- Set isWorkRelated = true ONLY if this is an actionable work task, material/form/equipment request, pickup/delivery instruction, machine repair/maintenance issue, or job site schedule item.\n" +
             "- Set isWorkRelated = false if this is personal/family chat (dinner, groceries, kids, casual check-ins), a non-actionable status reply ('I am here', 'Just left', 'Sounds good'), a greeting, or spam.\n" +
+            "- urgent: true if the message indicates urgent, ASAP, emergency, or immediate priority.\n" +
             "- checklist: If there are multiple materials/items, extract each line keeping ALL quantities, dashes, feet ('), and inches (\") intact.\n" +
-            "Return ONLY valid JSON: {\"isWorkRelated\": boolean, \"title\": string, \"due\": string, \"reason\": string, \"checklist\": string[]}";
+            "Return ONLY valid JSON: {\"isWorkRelated\": boolean, \"urgent\": boolean, \"title\": string, \"due\": string, \"reason\": string, \"checklist\": string[]}";
 
           const genResult = await callGeminiGenerateContent([{ text: prompt }]);
           if (genResult.ok && genResult.text) {
@@ -2165,6 +2353,7 @@
             }
             return {
               isWorkRelated: Boolean(parsed.isWorkRelated),
+              urgent: Boolean(parsed.urgent) || detectUrgentKeyword(text),
               title: finalTitle,
               due: parsed.due || defaultDue || "Today",
               reason: parsed.reason || (parsed.isWorkRelated ? "AI matched work task" : "AI filtered non-work message"),
@@ -2239,6 +2428,7 @@
       const extracted = extractTitleAndChecklist(text, defaultDue, senderName);
       return {
         isWorkRelated: true,
+        urgent: extracted.urgent,
         title: extracted.title,
         due: extracted.due,
         reason: reasons.join(" + ") || "Work reminder/event",
@@ -2320,6 +2510,7 @@
               title: result.title,
               source: src,
               due: result.due,
+              urgent: Boolean(result.urgent),
               checklist: result.checklist || [],
               images: [],
               notes: [],
@@ -2328,7 +2519,8 @@
               createdBy: user.id,
               completed: false,
               completedBy: null,
-              completedAt: null
+              completedAt: null,
+              completedTimestamp: null
             });
             addedCount++;
           }
@@ -2357,6 +2549,7 @@
               title: result.title,
               source: "CAL",
               due: ev.due || result.due,
+              urgent: Boolean(result.urgent),
               checklist: result.checklist || [],
               images: [],
               notes: [],
@@ -2365,7 +2558,8 @@
               createdBy: user.id,
               completed: false,
               completedBy: null,
-              completedAt: null
+              completedAt: null,
+              completedTimestamp: null
             });
             addedCount++;
           }
@@ -2418,11 +2612,14 @@
         return;
       }
 
+      const isUrgent = Boolean(triageCreatorUrgent || result.urgent);
+
       state.tasks.unshift({
         id: "t_" + Date.now(),
         title: result.title,
         source: sourceEl.value,
         due: result.due,
+        urgent: isUrgent,
         checklist: result.checklist || [],
         images: attachedPhotos,
         notes: [],
@@ -2431,11 +2628,14 @@
         createdBy: currentUserId,
         completed: false,
         completedBy: null,
-        completedAt: null
+        completedAt: null,
+        completedTimestamp: null
       });
 
       inputEl.value = "";
       triagePendingPhotos = [];
+      triageCreatorUrgent = false;
+      syncUrgentToggleUI();
       renderStagingPhotos();
       toggleDropdownPanel("triageCreator", false);
 
@@ -2443,7 +2643,8 @@
       feedbackEl.style.color = "#34d399";
       feedbackEl.textContent = "Created task \"" + result.title + "\" (" + (result.checklist ? result.checklist.length : 0) + " checklist items, " + attachedPhotos.length + " photo(s)).";
 
-      pushStateToCloud("New Work Item Ready", result.title + " added to Triage Queue.", "ADMINS");
+      const prefix = isUrgent ? "[URGENT] " : "";
+      pushStateToCloud(prefix + "New Work Item Ready", result.title + " added to Triage Queue.", "ADMINS");
     }
 
     async function pushStateToCloud(notifyTitle, notifyBody, targetAudience) {
@@ -2496,8 +2697,9 @@
         }
 
         const remoteUsers = normalizeArray(remoteData.users);
-        const remoteTasks = normalizeArray(remoteData.tasks).map(function(t) {
+        const rawRemoteTasks = normalizeArray(remoteData.tasks).map(function(t) {
           return Object.assign({}, t, {
+            urgent: Boolean(t.urgent),
             assignedTo: normalizeArray(t.assignedTo),
             checklist: normalizeArray(t.checklist),
             images: normalizeArray(t.images),
@@ -2505,19 +2707,20 @@
           });
         });
 
+        const maint = runCompletedTasksMaintenance(rawRemoteTasks);
         const preservedKey = remoteData.geminiApiKey || state.geminiApiKey || "";
 
         state = {
           geminiApiKey: preservedKey,
           filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, remoteData.filterSettings || state.filterSettings || {}),
           users: remoteUsers.length > 0 ? remoteUsers : DEFAULT_SHARED_STATE.users,
-          tasks: remoteTasks,
+          tasks: maint.tasks,
           lastNotification: remoteData.lastNotification || null
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         updateSyncIndicator(true);
 
-        if (preservedKey && !remoteData.geminiApiKey) {
+        if ((preservedKey && !remoteData.geminiApiKey) || maint.changed) {
           pushStateToCloud();
         }
 
@@ -2712,8 +2915,9 @@
       task.assignedTo = selectedIds;
       delete triageSelections[taskId];
 
+      const prefix = task.urgent ? "[URGENT] " : "";
       const names = selectedIds.map(function(id) { return getUserName(id); }).join(", ");
-      pushStateToCloud("Task Assigned", "Assigned to " + names + ": " + task.title, selectedIds);
+      pushStateToCloud(prefix + "Task Assigned", "Assigned to " + names + ": " + task.title, selectedIds);
     }
 
     function dismissTriageItem(taskId) {
@@ -2764,6 +2968,7 @@
 
       if (!title) title = "Material List Task";
 
+      const isUrgent = Boolean(creatorUrgent || detectUrgentKeyword(title));
       const adminUser = getCurrentUser();
       const due = dueInput.value.trim() || "Today";
       const assignedIds = creatorSelectedUsers.slice();
@@ -2774,6 +2979,7 @@
         title: title,
         source: "MANUAL",
         due: due,
+        urgent: isUrgent,
         checklist: checklist,
         images: attachedPhotos,
         notes: [],
@@ -2782,19 +2988,23 @@
         createdBy: adminUser.id,
         completed: false,
         completedBy: null,
-        completedAt: null
+        completedAt: null,
+        completedTimestamp: null
       });
 
       titleInput.value = "";
       checklistInput.value = "";
       dueInput.value = "";
       creatorSelectedUsers = [];
+      creatorUrgent = false;
       creatorPendingPhotos = [];
+      syncUrgentToggleUI();
       renderStagingPhotos();
       createBtn.textContent = "Publish & Notify Assignees";
       toggleDropdownPanel("taskCreator", false);
 
-      pushStateToCloud("New Task Assignment", "Assigned to " + names + ": " + title + " (Due: " + due + ", " + checklist.length + " items)", assignedIds);
+      const prefix = isUrgent ? "[URGENT] " : "";
+      pushStateToCloud(prefix + "New Task Assignment", "Assigned to " + names + ": " + title + " (Due: " + due + ", " + checklist.length + " items)", assignedIds);
     }
 
     function toggleChecklistItem(taskId, itemId) {
@@ -2834,15 +3044,26 @@
       task.completed = !task.completed;
 
       if (task.completed) {
-        const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const now = new Date();
+        const nowStr = now.toLocaleDateString([], { month: "short", day: "numeric" }) + " " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         task.completedBy = actor.id;
         task.completedAt = nowStr;
+        task.completedTimestamp = Date.now();
         pushStateToCloud("Task Delivered & Completed", "\"" + task.title + "\" marked complete by " + actor.name + " at " + nowStr + ".", "ADMINS");
       } else {
         task.completedBy = null;
         task.completedAt = null;
+        task.completedTimestamp = null;
         pushStateToCloud("Task Re-Opened", "\"" + task.title + "\" reopened by " + actor.name + ".", "ADMINS");
       }
+    }
+
+    function clearAllCompletedTasks() {
+      const completedCount = state.tasks.filter(function(t) { return t.visibility === "assigned" && t.completed; }).length;
+      if (completedCount === 0) return;
+      state.tasks = state.tasks.filter(function(t) { return !(t.visibility === "assigned" && t.completed); });
+      toggleDropdownPanel("completedTasks", false);
+      pushStateToCloud("Completed Tasks Cleared", "Removed " + completedCount + " completed task(s) from the archive.", "ADMINS");
     }
 
     function deleteTask(taskId) {
@@ -2896,6 +3117,11 @@
       return '<span class="badge ' + item.cls + '">' + item.label + '</span>';
     }
 
+    function getUrgentBadge(isUrgent) {
+      if (!isUrgent) return "";
+      return '<span class="badge badge-urgent">URGENT</span>';
+    }
+
     function getUserName(userId) {
       const list = normalizeArray(state.users);
       for (let i = 0; i < list.length; i++) {
@@ -2937,6 +3163,41 @@
         '<div class="checklist-header"><span>Item Checklist</span><span>' + doneCount + ' / ' + list.length + ' Checked</span></div>' +
         bannerHtml +
         rowsHtml +
+      '</div>';
+    }
+
+    function renderTaskCardHtml(t, isAdmin) {
+      const hasChecklist = normalizeArray(t.checklist).length > 0;
+      const completeBtnText = t.completed
+        ? "Re-Open Task"
+        : (hasChecklist ? "Mark Entire Task Delivered & Complete" : "Mark Task Complete");
+      const urgentCls = (t.urgent && !t.completed) ? " urgent-card" : "";
+      const cardCls = (t.completed ? "card task-card completed" : "card task-card") + urgentCls;
+      const btnCls = t.completed ? "btn btn-secondary" : "btn btn-success";
+      const statusHtml = t.completed
+        ? ('<div class="done-stamp">Completed by ' + escapeHtmlAttr(getUserName(t.completedBy)) + ' (' + escapeHtmlAttr(t.completedAt || "Done") + ')</div>')
+        : ('<div class="task-sub">Assigned by ' + escapeHtmlAttr(getUserName(t.createdBy)) + '</div>');
+
+      const urgentToggleBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
+      const urgentToggleBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
+
+      const adminButtonsHtml = isAdmin
+        ? ((!t.completed ? ('<button class="' + urgentToggleBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentToggleBtnText + '</button>') : "") +
+           '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Checklist &amp; Photos</button>' +
+           '<button class="btn btn-danger-outline" onclick="deleteTask(\'' + t.id + '\')">Delete Task</button>')
+        : "";
+
+      return '<div class="' + cardCls + '">' +
+        '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' <span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
+        '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+        renderTaskPhotosHtml(t) +
+        renderChecklistHtml(t) +
+        renderTaskNotesHtml(t, isAdmin) +
+        statusHtml +
+        '<div class="btn-stack" style="margin-top: 4px;">' +
+          '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
+          adminButtonsHtml +
+        '</div>' +
       '</div>';
     }
 
@@ -2994,6 +3255,7 @@
 
       if (isAdmin) {
         renderCreatorUserGrid();
+        syncUrgentToggleUI();
 
         const keyTriggerLabel = document.getElementById("gemini-key-trigger-label");
         if (keyTriggerLabel) {
@@ -3014,7 +3276,14 @@
         }
       }
 
-      const triageItems = state.tasks.filter(function(t) { return t.visibility === "triage"; });
+      // Sort Triage Items so Urgent items stay pinned at the top
+      const triageItems = state.tasks
+        .filter(function(t) { return t.visibility === "triage"; })
+        .slice()
+        .sort(function(a, b) {
+          return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
+        });
+
       document.getElementById("triage-count").textContent = triageItems.length + " items";
       const badgeTriage = document.getElementById("badge-triage");
       badgeTriage.textContent = triageItems.length;
@@ -3035,8 +3304,12 @@
             '</div>';
           }).join("");
 
-          return '<div class="card task-card">' +
-            '<div class="task-meta">' + getSourceBadge(t.source) + '<span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
+          const cardCls = t.urgent ? "card task-card urgent-card" : "card task-card";
+          const urgentBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
+          const urgentBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
+
+          return '<div class="' + cardCls + '">' +
+            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + '<span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
             '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
             renderTaskPhotosHtml(t) +
             renderChecklistHtml(t) +
@@ -3045,6 +3318,7 @@
             '<div class="user-select-grid">' + userRows + '</div>' +
             '<div class="btn-stack">' +
               '<button class="btn" onclick="assignTriageItem(\'' + t.id + '\')">Assign Selected &amp; Send Notification</button>' +
+              '<button class="' + urgentBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentBtnText + '</button>' +
               '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Checklist &amp; Photos</button>' +
               '<button class="btn btn-danger-outline" onclick="dismissTriageItem(\'' + t.id + '\')">Dismiss Item</button>' +
             '</div>' +
@@ -3068,9 +3342,9 @@
           const list = normalizeArray(t.assignedTo);
           return list.indexOf(user.id) !== -1;
         });
-        document.getElementById("tasks-heading").textContent = "My Assigned Tasks";
+        document.getElementById("tasks-heading").textContent = "My Active Tasks";
       } else {
-        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Active Tasks" : ("Tasks for " + getUserName(adminFilterUserId));
+        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Active Tasks" : ("Active Tasks for " + getUserName(adminFilterUserId));
         if (adminFilterUserId !== "ALL") {
           visibleTasks = visibleTasks.filter(function(t) {
             const list = normalizeArray(t.assignedTo);
@@ -3079,44 +3353,51 @@
         }
       }
 
-      const pendingCount = visibleTasks.filter(function(t) { return !t.completed; }).length;
+      // Sort Active Tasks so Urgent tasks always stay pinned to the very top
+      const activeTasks = visibleTasks
+        .filter(function(t) { return !t.completed; })
+        .slice()
+        .sort(function(a, b) {
+          return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
+        });
+
+      const completedTasks = visibleTasks.filter(function(t) { return Boolean(t.completed); });
+      const urgentCount = activeTasks.filter(function(t) { return Boolean(t.urgent); }).length;
+
       const badgeTasks = document.getElementById("badge-tasks");
-      badgeTasks.textContent = pendingCount;
-      badgeTasks.classList.toggle("hidden", pendingCount === 0);
-      document.getElementById("tasks-stats").textContent = (visibleTasks.length - pendingCount) + " / " + visibleTasks.length + " Completed";
+      badgeTasks.textContent = activeTasks.length;
+      badgeTasks.classList.toggle("hidden", activeTasks.length === 0);
+      document.getElementById("tasks-stats").textContent = urgentCount > 0
+        ? (activeTasks.length + " Active (" + urgentCount + " Urgent)")
+        : (activeTasks.length + " Active");
 
       const tasksListEl = document.getElementById("tasks-list");
-      if (visibleTasks.length === 0) {
-        tasksListEl.innerHTML = '<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No tasks assigned.</div>';
+      if (activeTasks.length === 0) {
+        tasksListEl.innerHTML = '<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No active tasks pending.</div>';
       } else {
-        tasksListEl.innerHTML = visibleTasks.map(function(t) {
-          const hasChecklist = normalizeArray(t.checklist).length > 0;
-          const completeBtnText = t.completed
-            ? "Re-Open Task"
-            : (hasChecklist ? "Mark Entire Task Delivered & Complete" : "Mark Task Complete");
-          const cardCls = t.completed ? "card task-card completed" : "card task-card";
-          const btnCls = t.completed ? "btn btn-secondary" : "btn btn-success";
-          const statusHtml = t.completed
-            ? ('<div class="done-stamp">Completed by ' + escapeHtmlAttr(getUserName(t.completedBy)) + ' at ' + escapeHtmlAttr(t.completedAt) + '</div>')
-            : ('<div class="task-sub">Assigned by ' + escapeHtmlAttr(getUserName(t.createdBy)) + '</div>');
-          const adminButtonsHtml = isAdmin
-            ? ('<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Checklist &amp; Photos</button>' +
-               '<button class="btn btn-danger-outline" onclick="deleteTask(\'' + t.id + '\')">Delete Task</button>')
-            : "";
-
-          return '<div class="' + cardCls + '">' +
-            '<div class="task-meta">' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' <span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
-            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
-            renderTaskPhotosHtml(t) +
-            renderChecklistHtml(t) +
-            renderTaskNotesHtml(t, isAdmin) +
-            statusHtml +
-            '<div class="btn-stack" style="margin-top: 4px;">' +
-              '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
-              adminButtonsHtml +
-            '</div>' +
-          '</div>';
+        tasksListEl.innerHTML = activeTasks.map(function(t) {
+          return renderTaskCardHtml(t, isAdmin);
         }).join("");
+      }
+
+      const completedLabelEl = document.getElementById("completed-trigger-label");
+      if (completedLabelEl) {
+        completedLabelEl.textContent = "Completed Tasks (" + completedTasks.length + ")";
+      }
+      const clearBtnEl = document.getElementById("btn-clear-completed");
+      if (clearBtnEl) {
+        clearBtnEl.classList.toggle("hidden", !(isAdmin && completedTasks.length > 0));
+      }
+
+      const completedListEl = document.getElementById("completed-tasks-list");
+      if (completedListEl) {
+        if (completedTasks.length === 0) {
+          completedListEl.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:13px; padding:14px 0;">No completed tasks in archive.</div>';
+        } else {
+          completedListEl.innerHTML = completedTasks.map(function(t) {
+            return renderTaskCardHtml(t, isAdmin);
+          }).join("");
+        }
       }
 
       if (isAdmin) {
