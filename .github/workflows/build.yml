@@ -24,7 +24,8 @@ jobs:
       - name: Prepare Web App folder
         run: |
           mkdir -p www
-          cp index.html www/
+          cp index.html www/index.html
+          sed -i "s|PLACEHOLDER_FIREBASE_URL|${{ secrets.FIREBASE_URL }}|g" www/index.html
           cp manifest.json www/ 2>/dev/null || true
           cp sw.js www/ 2>/dev/null || true
 
@@ -40,7 +41,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # JOB 2: Compile Native Android APK with Native Notification Bridge
+  # JOB 2: Compile Native Android APK with Notification, SMS & Calendar Listeners
   build-android-apk:
     runs-on: ubuntu-latest
     steps:
@@ -58,30 +59,28 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Generate Native Android Project & Notification Bridge
+      - name: Generate Native Android Project & Background Harvesters
         run: |
           mkdir -p www
           cp index.html www/index.html
           sed -i "s|PLACEHOLDER_FIREBASE_URL|${{ secrets.FIREBASE_URL }}|g" www/index.html
-          sed -i "s|PASTE_FIREBASE_SECRET|${{ secrets.FIREBASE_URL }}|g" www/index.html
-          sed -i "s|YOUR-GITHUB-USERNAME.github.io/command-center/|${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/|g" www/index.html
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           echo '{"appId":"com.commandcenter.v2","appName":"Command Center","webDir":"www"}' > capacitor.config.json
           npx cap add android
           npx cap sync android
 
-          # 1. Configure AndroidManifest permissions & versionCode
+          # 1. Configure AndroidManifest permissions, NotificationListenerService & versionCode
           sed -i 's/NoActionBarLaunch/NoActionBar/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/allowBackup="true"/allowBackup="false"/g' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<application/<uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <application/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.READ_CALENDAR" \/>\n    <application/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<\/application>/    <service android:name=".CaptureService" android:label="Command Center Auto-Capture" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="true">\n            <intent-filter>\n                <action android:name="android.service.notification.NotificationListenerService" \/>\n            <\/intent-filter>\n        <\/service>\n    <\/application>/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/versionCode 1/versionCode ${{ github.run_number }}/g' android/app/build.gradle
           sed -i 's/versionName "1.0"/versionName "1.${{ github.run_number }}"/g' android/app/build.gradle
 
           # 2. Inject Custom Adaptive Launcher Icon
           rm -rf android/app/src/main/res/drawable-v24
           cat << 'EOF' > android/app/src/main/res/drawable/ic_launcher_background.xml
-          <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp"
               android:height="108dp"
@@ -92,7 +91,6 @@ jobs:
           EOF
 
           cat << 'EOF' > android/app/src/main/res/drawable/ic_launcher_foreground.xml
-          <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp"
               android:height="108dp"
@@ -106,7 +104,6 @@ jobs:
           EOF
 
           cat << 'EOF' > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
               <background android:drawable="@drawable/ic_launcher_background"/>
               <foreground android:drawable="@drawable/ic_launcher_foreground"/>
@@ -114,18 +111,104 @@ jobs:
           EOF
           cp android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
 
-          # 3. Write Native WebView + Real Android Status-Bar Notification Bridge
+          # 3. Create Background Notification Listener for SMS, Samsung Reminders & Google Tasks
+          cat << 'EOF' > android/app/src/main/java/com/commandcenter/v2/CaptureService.java
+          package com.commandcenter.v2;
+
+          import android.app.Notification;
+          import android.content.SharedPreferences;
+          import android.os.Bundle;
+          import android.service.notification.NotificationListenerService;
+          import android.service.notification.StatusBarNotification;
+          import org.json.JSONArray;
+          import org.json.JSONObject;
+
+          public class CaptureService extends NotificationListenerService {
+              @Override
+              public void onNotificationPosted(StatusBarNotification sbn) {
+                  try {
+                      if (sbn == null || sbn.isOngoing()) return;
+                      String pkg = sbn.getPackageName();
+                      if (pkg == null) return;
+
+                      Notification notif = sbn.getNotification();
+                      if (notif == null) return;
+                      if ((notif.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
+
+                      String sourceType = null;
+                      if (pkg.contains("messaging") || pkg.contains("mms") || pkg.equals("com.samsung.android.messaging")) {
+                          sourceType = "SMS";
+                      } else if (pkg.contains("reminder") || pkg.contains("tasks") || pkg.contains("todos")) {
+                          sourceType = "SAMSUNG";
+                      } else if (pkg.contains("calendar")) {
+                          sourceType = "CAL";
+                      }
+
+                      if (sourceType == null) return;
+
+                      Bundle extras = notif.extras;
+                      if (extras == null) return;
+
+                      CharSequence titleCs = extras.getCharSequence(Notification.EXTRA_TITLE);
+                      CharSequence bigTextCs = extras.getCharSequence(Notification.EXTRA_BIG_TEXT);
+                      CharSequence textCs = extras.getCharSequence(Notification.EXTRA_TEXT);
+
+                      String title = titleCs != null ? titleCs.toString().trim() : "";
+                      String body = bigTextCs != null ? bigTextCs.toString().trim() : (textCs != null ? textCs.toString().trim() : "");
+
+                      if (body.isEmpty() && title.isEmpty()) return;
+
+                      String combined = title.isEmpty() ? body : (body.isEmpty() ? title : title + ": " + body);
+                      String sig = sourceType + "|" + combined;
+
+                      SharedPreferences prefs = getSharedPreferences("cc_captures", MODE_PRIVATE);
+                      String lastSig = prefs.getString("last_sig", "");
+                      long lastTime = prefs.getLong("last_time", 0);
+                      long now = System.currentTimeMillis();
+
+                      if (sig.equals(lastSig) && (now - lastTime) < 60000) return;
+
+                      String rawQueue = prefs.getString("queue", "[]");
+                      JSONArray arr = new JSONArray(rawQueue);
+
+                      JSONObject item = new JSONObject();
+                      item.put("id", "cap_" + now);
+                      item.put("source", sourceType);
+                      item.put("sender", title);
+                      item.put("text", body.isEmpty() ? title : body);
+                      item.put("combined", combined);
+                      item.put("timestamp", now);
+
+                      arr.put(item);
+
+                      prefs.edit()
+                          .putString("queue", arr.toString())
+                          .putString("last_sig", sig)
+                          .putLong("last_time", now)
+                          .apply();
+                  } catch (Exception ignored) {}
+              }
+          }
+          EOF
+
+          # 4. Write MainActivity with Notification Bridge, Listener Settings & Calendar Reader
           cat << 'EOF' > android/app/src/main/java/com/commandcenter/v2/MainActivity.java
           package com.commandcenter.v2;
 
           import android.app.NotificationChannel;
           import android.app.NotificationManager;
           import android.app.PendingIntent;
+          import android.content.ContentUris;
           import android.content.Context;
           import android.content.Intent;
+          import android.content.SharedPreferences;
           import android.content.pm.PackageManager;
+          import android.database.Cursor;
+          import android.net.Uri;
           import android.os.Build;
           import android.os.Bundle;
+          import android.provider.CalendarContract;
+          import android.provider.Settings;
           import android.webkit.JavascriptInterface;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
@@ -133,6 +216,11 @@ jobs:
           import android.webkit.WebViewClient;
           import androidx.appcompat.app.AppCompatActivity;
           import androidx.core.app.NotificationCompat;
+          import org.json.JSONArray;
+          import org.json.JSONObject;
+          import java.text.SimpleDateFormat;
+          import java.util.Date;
+          import java.util.Locale;
 
           public class MainActivity extends AppCompatActivity {
               private WebView webView;
@@ -142,10 +230,10 @@ jobs:
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   createNotificationChannel();
-                  requestNotificationPermission();
+                  requestRuntimePermissions();
 
                   webView = new WebView(this);
-                  webView.setBackgroundColor(0xFF0F172A);
+                  webView.setBackgroundColor(0xFF0B0F19);
                   WebSettings settings = webView.getSettings();
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
@@ -163,10 +251,10 @@ jobs:
                   webView.loadUrl("file:///android_asset/public/index.html?v=" + System.currentTimeMillis());
               }
 
-              private void requestNotificationPermission() {
+              private void requestRuntimePermissions() {
                   if (Build.VERSION.SDK_INT >= 33) {
                       if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
-                          requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 101);
+                          requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS", "android.permission.READ_CALENDAR"}, 101);
                       }
                   }
               }
@@ -214,6 +302,83 @@ jobs:
                           manager.notify((int) (System.currentTimeMillis() % 100000), builder.build());
                       }
                   }
+
+                  @JavascriptInterface
+                  public boolean isCaptureEnabled() {
+                      String flat = Settings.Secure.getString(mContext.getContentResolver(), "enabled_notification_listeners");
+                      return flat != null && flat.contains(mContext.getPackageName());
+                  }
+
+                  @JavascriptInterface
+                  public void openCaptureSettings() {
+                      Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                      mContext.startActivity(intent);
+                  }
+
+                  @JavascriptInterface
+                  public String getPendingCaptures() {
+                      SharedPreferences prefs = mContext.getSharedPreferences("cc_captures", MODE_PRIVATE);
+                      String queue = prefs.getString("queue", "[]");
+                      prefs.edit().putString("queue", "[]").apply();
+                      return queue;
+                  }
+
+                  @JavascriptInterface
+                  public String syncCalendarEvents() {
+                      JSONArray results = new JSONArray();
+                      try {
+                          if (Build.VERSION.SDK_INT >= 23 && mContext.checkSelfPermission("android.permission.READ_CALENDAR") != PackageManager.PERMISSION_GRANTED) {
+                              requestPermissions(new String[]{"android.permission.READ_CALENDAR"}, 102);
+                              return "[]";
+                          }
+
+                          SharedPreferences prefs = mContext.getSharedPreferences("cc_captures", MODE_PRIVATE);
+                          String seenIds = prefs.getString("seen_cal_ids", ",");
+
+                          long now = System.currentTimeMillis();
+                          long endWindow = now + (48L * 60L * 60L * 1000L);
+
+                          Uri.Builder builder = CalendarContract.Instances.CONTENT_URI.buildUpon();
+                          ContentUris.appendId(builder, now);
+                          ContentUris.appendId(builder, endWindow);
+
+                          String[] projection = new String[]{
+                              CalendarContract.Instances.EVENT_ID,
+                              CalendarContract.Instances.TITLE,
+                              CalendarContract.Instances.DESCRIPTION,
+                              CalendarContract.Instances.BEGIN
+                          };
+
+                          Cursor cursor = mContext.getContentResolver().query(builder.build(), projection, null, null, CalendarContract.Instances.BEGIN + " ASC");
+                          if (cursor != null) {
+                              SimpleDateFormat sdf = new SimpleDateFormat("EEE h:mm a", Locale.US);
+                              StringBuilder updatedSeen = new StringBuilder(seenIds);
+
+                              while (cursor.moveToNext()) {
+                                  long eventId = cursor.getLong(0);
+                                  String title = cursor.getString(1);
+                                  String desc = cursor.getString(2);
+                                  long begin = cursor.getLong(3);
+
+                                  String key = "," + eventId + "_" + begin + ",";
+                                  if (updatedSeen.indexOf(key) != -1) continue;
+                                  updatedSeen.append(eventId).append("_").append(begin).append(",");
+
+                                  JSONObject ev = new JSONObject();
+                                  ev.put("id", "cal_" + eventId + "_" + begin);
+                                  ev.put("source", "CAL");
+                                  ev.put("title", title != null ? title : "Calendar Event");
+                                  ev.put("text", desc != null ? desc : "");
+                                  ev.put("due", sdf.format(new Date(begin)));
+                                  results.put(ev);
+                              }
+                              cursor.close();
+                              prefs.edit().putString("seen_cal_ids", updatedSeen.toString()).apply();
+                          }
+                      } catch (Exception ignored) {}
+                      return results.toString();
+                  }
               }
 
               @Override
@@ -239,6 +404,6 @@ jobs:
         with:
           tag_name: build-${{ github.run_number }}
           name: "Android APK Build #${{ github.run_number }}"
-          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the live cloud-sync build."
+          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the intelligent auto-capture build."
           files: CommandCenter-v${{ github.run_number }}.apk
           prerelease: false
