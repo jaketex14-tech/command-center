@@ -18,11 +18,13 @@
       --bg: #0b0f19;
       --card: #131d31;
       --card-border: #22324f;
+      --surface: #080c14;
       --text: #f1f5f9;
       --muted: #8a9bb8;
       --accent: #2563eb;
       --accent-hover: #1d4ed8;
       --success: #059669;
+      --warning: #d97706;
       --danger: #dc2626;
     }
 
@@ -38,14 +40,13 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 100px;
+      padding-bottom: 110px;
     }
 
-    /* Sleek Status Bar */
     .sync-bar {
       background: #070a12;
       border-bottom: 1px solid var(--card-border);
-      padding: 10px 16px;
+      padding: 10px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -61,12 +62,14 @@
       margin-right: 8px;
       background: var(--muted);
     }
-    .sync-indicator.online { background: var(--success); box-shadow: 0 0 10px rgba(5, 150, 105, 0.5); }
+    .sync-indicator.online {
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(5, 150, 105, 0.6);
+    }
 
-    /* Modern Header */
     header {
       padding: 16px 20px;
-      background: rgba(19, 29, 49, 0.95);
+      background: rgba(19, 29, 49, 0.96);
       border-bottom: 1px solid var(--card-border);
       position: sticky;
       top: 0;
@@ -109,15 +112,13 @@
       background: transparent;
       border: 1px solid var(--card-border);
       color: var(--muted);
-      padding: 8px 14px;
+      padding: 9px 15px;
       border-radius: 8px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
     }
-    .btn-text:active { background: rgba(255,255,255,0.05); }
 
-    /* Notification Banner */
     #push-banner {
       position: fixed;
       top: 16px;
@@ -127,7 +128,7 @@
       border: 1px solid var(--accent);
       border-radius: 12px;
       padding: 16px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.75);
       z-index: 999;
       display: none;
       align-items: flex-start;
@@ -139,14 +140,13 @@
 
     main {
       padding: 20px;
-      max-width: 540px;
+      max-width: 560px;
       margin: 0 auto;
     }
 
-    /* Login Screen */
     #login-screen {
-      max-width: 400px;
-      margin: 40px auto;
+      max-width: 420px;
+      margin: 36px auto;
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 20px;
@@ -154,70 +154,114 @@
       text-align: center;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    #login-screen h2 { margin: 16px 0 8px; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+    #login-screen h2 { margin: 16px 0 8px; font-size: 22px; font-weight: 600; }
     #login-screen p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
 
-    /* Cards & Form Layouts */
     .card {
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 18px;
+      padding: 20px;
       margin-bottom: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
     .section-title {
       font-size: 12px;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin: 24px 0 12px;
+      margin: 26px 0 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    /* Large, Spacious Form Inputs */
     label.form-label {
       display: block;
       font-size: 12px;
       font-weight: 600;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
     }
+
     input, select, textarea {
       width: 100%;
-      background: #080c14;
+      background: var(--surface);
       border: 1px solid var(--card-border);
       color: var(--text);
-      padding: 14px 16px;
+      padding: 15px 16px;
       border-radius: 12px;
       font-size: 15px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       outline: none;
-      transition: border-color 0.2s;
     }
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: var(--accent);
     }
-    select[multiple] {
-      height: 120px;
-      padding: 10px;
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.45;
     }
-    select[multiple] option {
-      padding: 8px 12px;
+
+    /* Spacious Tap-To-Select User List (Replaces cramped multi-select dropdowns) */
+    .user-select-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .user-pick-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      padding: 14px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 500;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .user-pick-row.selected {
+      background: rgba(37, 99, 235, 0.18);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .pick-indicator {
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
-      margin-bottom: 2px;
+      border: 2px solid var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
     }
-    select[multiple] option:checked {
-      background: var(--accent) !important;
+    .user-pick-row.selected .pick-indicator {
+      background: var(--accent);
+      border-color: var(--accent);
       color: #fff;
     }
 
-    /* Stacked Buttons for Generous Touch Targets */
     .btn-stack {
       display: flex;
       flex-direction: column;
@@ -227,32 +271,27 @@
       background: var(--accent);
       color: #fff;
       border: none;
-      padding: 15px 20px;
+      padding: 16px 20px;
       border-radius: 12px;
       font-weight: 600;
       font-size: 15px;
       cursor: pointer;
       width: 100%;
       text-align: center;
-      transition: background 0.15s;
     }
     .btn:active { background: var(--accent-hover); }
+    .btn-success { background: var(--success); }
     .btn-secondary {
-      background: transparent;
+      background: var(--surface);
       border: 1px solid var(--card-border);
       color: var(--text);
     }
-    .btn-secondary:active { background: rgba(255,255,255,0.05); }
-    .btn-danger {
+    .btn-danger-outline {
       background: transparent;
-      border: 1px solid rgba(220, 38, 38, 0.4);
-      color: #ef4444;
-      padding: 8px 12px;
-      font-size: 13px;
-      width: auto;
+      border: 1px solid rgba(220, 38, 38, 0.45);
+      color: #f87171;
     }
 
-    /* Clean Source Badges */
     .badge {
       font-size: 11px;
       font-weight: 600;
@@ -266,68 +305,116 @@
     .src-cal { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
     .src-manual { background: rgba(100, 116, 139, 0.15); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.3); }
 
-    /* Task Card Layout */
     .task-card {
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
       gap: 14px;
     }
-    .task-card.completed { opacity: 0.5; }
+    .task-card.completed {
+      opacity: 0.55;
+    }
     .task-card.completed .task-title {
       text-decoration: line-through;
       color: var(--muted);
     }
-    .checkbox-container {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      border: 2px solid var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      margin-top: 2px;
-      background: transparent;
-      color: #fff;
-      font-weight: bold;
-    }
-    .task-card.completed .checkbox-container {
-      background: var(--success);
-      border-color: var(--success);
-    }
-    .task-content { flex: 1; }
     .task-meta {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
-      margin-bottom: 8px;
     }
     .task-title {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 600;
-      margin-bottom: 6px;
       line-height: 1.4;
     }
-    .task-sub { font-size: 13px; color: var(--muted); }
+    .task-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
     .assignee-pill {
       font-size: 11px;
-      background: #080c14;
+      background: var(--surface);
       border: 1px solid var(--card-border);
-      padding: 3px 10px;
+      padding: 4px 10px;
       border-radius: 6px;
       color: #cbd5e1;
-      font-weight: 500;
-    }
-    .done-stamp {
-      font-size: 12px;
-      color: #34d399;
-      margin-top: 6px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
-    /* Filter Chips */
+    /* Interactive Sub-Checklist Box Inside Task Cards */
+    .checklist-box {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .checklist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .checklist-ready-banner {
+      background: rgba(5, 150, 105, 0.15);
+      border: 1px solid rgba(5, 150, 105, 0.4);
+      color: #34d399;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .checklist-item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 10px;
+      border-top: 1px solid rgba(34, 50, 79, 0.6);
+      cursor: pointer;
+    }
+    .checklist-item-row:first-of-type {
+      border-top: none;
+    }
+    .sub-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .checklist-item-row.item-done .sub-check {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .checklist-item-text {
+      font-size: 15px;
+      flex: 1;
+      line-height: 1.35;
+    }
+    .checklist-item-row.item-done .checklist-item-text {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .done-stamp {
+      font-size: 13px;
+      color: #34d399;
+      font-weight: 600;
+    }
+
     .filter-bar {
       display: flex;
       gap: 8px;
@@ -341,7 +428,7 @@
       background: var(--card);
       border: 1px solid var(--card-border);
       color: var(--muted);
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: 20px;
       font-size: 13px;
       font-weight: 600;
@@ -354,7 +441,6 @@
       border-color: var(--accent);
     }
 
-    /* Bottom Navigation */
     nav.bottom-nav {
       position: fixed;
       bottom: 0;
@@ -364,33 +450,32 @@
       border-top: 1px solid var(--card-border);
       display: flex;
       justify-content: space-around;
-      padding: 12px 0 20px;
+      padding: 14px 0 22px;
       z-index: 30;
     }
     .nav-item {
       background: none;
       border: none;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
       cursor: pointer;
       position: relative;
-      padding: 4px 16px;
+      padding: 6px 18px;
     }
     .nav-item.active { color: var(--accent); }
     .nav-badge {
       position: absolute;
-      top: 0;
-      right: 6px;
+      top: -2px;
+      right: 2px;
       background: var(--danger);
       color: #fff;
       font-size: 10px;
       font-weight: 700;
-      padding: 1px 6px;
+      padding: 2px 6px;
       border-radius: 10px;
     }
 
@@ -399,16 +484,14 @@
 </head>
 <body>
 
-  <!-- Top Sync Status Bar -->
   <div class="sync-bar">
     <div>
       <span id="sync-dot" class="sync-indicator"></span>
       <span id="sync-status-text">Connecting...</span>
     </div>
-    <span id="sync-time" style="color:var(--muted);"></span>
+    <span id="sync-time"></span>
   </div>
 
-  <!-- Notification Banner -->
   <div id="push-banner">
     <div>
       <div class="push-title" id="push-title">Notification</div>
@@ -417,7 +500,6 @@
     <button class="btn-text" onclick="hidePush()">Dismiss</button>
   </div>
 
-  <!-- App Header -->
   <header id="app-header" class="hidden">
     <div class="brand-group">
       <svg class="app-logo" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
@@ -436,9 +518,9 @@
   </header>
 
   <main>
-    <!-- Login Screen -->
+    <!-- LOGIN SCREEN -->
     <section id="login-screen" class="hidden">
-      <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block; box-shadow: 0 4px 14px rgba(0,0,0,0.5);">
+      <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block;">
         <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#2563eb" stroke-width="3"/>
         <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#2563eb"/>
         <path d="M54,22 A32,32 0 0,1 54,86 Z" fill="#059669"/>
@@ -447,7 +529,7 @@
       </svg>
       <h2>Command Center</h2>
       <p>Select your profile and enter your PIN</p>
-      
+
       <label class="form-label" style="text-align: left;">User Account</label>
       <select id="login-user-select"></select>
 
@@ -455,44 +537,68 @@
       <input type="password" id="login-pin" inputmode="numeric" placeholder="Enter PIN" />
 
       <div id="login-error" style="color:var(--danger); font-size:13px; margin-bottom:14px; display:none;">Incorrect PIN. Please try again.</div>
-      
+
       <button class="btn" onclick="handleLogin()">Sign In</button>
     </section>
 
-    <!-- TAB 1: Triage Queue -->
+    <!-- TAB 1: INTELLIGENT INBOX & TRIAGE -->
     <section id="tab-triage" class="hidden">
-      <div class="card" style="border-color: var(--accent);">
-        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Quick Triage Entry</div>
-        <label class="form-label">Item Description</label>
-        <input type="text" id="triage-manual-input" placeholder="Enter message, task, or schedule item..." />
-        
+      <!-- Android Native Auto-Capture Control Card -->
+      <div id="native-listener-card" class="card hidden">
+        <div class="card-title">Automatic Phone Capture</div>
+        <div id="native-listener-desc" class="card-desc">
+          Checking background listener permissions for incoming text messages, reminders, and calendar events...
+        </div>
         <div class="btn-stack">
-          <button class="btn btn-secondary" onclick="addTriageManual('SMS')">Add as Text Message</button>
-          <button class="btn btn-secondary" onclick="addTriageManual('SAMSUNG')">Add as Reminder</button>
-          <button class="btn btn-secondary" onclick="addTriageManual('CAL')">Add as Calendar Event</button>
+          <button id="btn-enable-listener" class="btn" onclick="openNativeCaptureSettings()">Enable Notification Access</button>
+          <button class="btn btn-secondary" onclick="pollNativePhoneCaptures(true)">Scan Phone Calendar & Messages Now</button>
         </div>
       </div>
 
+      <!-- Intelligent Message / List Analyzer -->
+      <div class="card">
+        <div class="card-title">Intelligent Task & List Analyzer</div>
+        <div class="card-desc">
+          Incoming text messages, reminders, and calendar events are evaluated automatically. Work items are converted into tasks, and material or item lists are converted into interactive checklists. You can also paste or test any message below.
+        </div>
+
+        <label class="form-label">Message, Reminder, or Material List</label>
+        <textarea id="triage-manual-input" placeholder="Example: Need 12 bags of concrete, 4 trench plates, tie wire, and the large grinder delivered to Boice before 2:30 PM"></textarea>
+
+        <label class="form-label">Source Type</label>
+        <select id="triage-source-select">
+          <option value="SMS">Text Message</option>
+          <option value="SAMSUNG">Reminder</option>
+          <option value="CAL">Calendar Event</option>
+        </select>
+
+        <button id="btn-analyze" class="btn" onclick="handleManualAnalyze()">Analyze & Generate Work Task</button>
+        <div id="analyze-feedback" style="font-size:13px; color:var(--muted); margin-top:12px; display:none;"></div>
+      </div>
+
       <div class="section-title">
-        <span>Triage Queue</span>
+        <span>Work Triage Queue</span>
         <span id="triage-count">0 items</span>
       </div>
       <div id="triage-list"></div>
     </section>
 
-    <!-- TAB 2: Task Board -->
+    <!-- TAB 2: TASK BOARD -->
     <section id="tab-tasks" class="hidden">
       <div id="admin-task-creator" class="card">
-        <div style="font-size: 14px; font-weight: 600; margin-bottom: 14px;">Create New Task</div>
-        
-        <label class="form-label">Task Details</label>
-        <input type="text" id="new-task-title" placeholder="What needs to be done?" />
+        <div class="card-title" style="margin-bottom: 14px;">Create & Assign Task</div>
 
-        <label class="form-label">Assign To Team Members (Hold Ctrl/Cmd or tap multiple)</label>
-        <select id="new-task-assignee" multiple></select>
+        <label class="form-label">Task Title</label>
+        <input type="text" id="new-task-title" placeholder="e.g. Deliver materials to job site" />
+
+        <label class="form-label">Checklist Items (Optional — One item per line or comma-separated)</label>
+        <textarea id="new-task-checklist" placeholder="e.g.&#10;10 bags concrete&#10;4 trench plates&#10;Rebar ties"></textarea>
 
         <label class="form-label">Due Time / Deadline</label>
         <input type="text" id="new-task-due" placeholder="e.g. Today 3:00 PM" />
+
+        <label class="form-label">Tap Team Members to Assign</label>
+        <div id="creator-user-grid" class="user-select-grid"></div>
 
         <button class="btn" onclick="createAndAssignTask()">Publish & Notify Assignees</button>
       </div>
@@ -506,21 +612,24 @@
       <div id="tasks-list"></div>
     </section>
 
-    <!-- TAB 3: Team Management -->
+    <!-- TAB 3: TEAM & AI SETTINGS -->
     <section id="tab-team" class="hidden">
-      <div class="card" style="border-color: var(--success);">
-        <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">Cloud Connection Status</div>
-        <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">
-          Database synchronization is active and secured via environment settings.
-        </p>
-        <button class="btn btn-secondary" onclick="copyInviteLink()">Copy Team Access Link</button>
+      <div class="card">
+        <div class="card-title">AI Task & Checklist Intelligence</div>
+        <div class="card-desc">
+          The built-in work and checklist parser runs automatically. For advanced AI classification on incoming messages, enter a Gemini API Key below (stored across your team database).
+        </div>
+        <label class="form-label">Gemini API Key (Optional)</label>
+        <input type="password" id="gemini-key-input" placeholder="AIzaSy..." />
+        <button class="btn btn-secondary" onclick="saveGeminiKey()">Save AI Configuration</button>
       </div>
 
       <div class="card">
-        <div style="font-size: 14px; font-weight: 600; margin-bottom: 14px;">Add User Account</div>
-        
+        <div class="card-title">Add User Account</div>
+        <div class="card-desc">Create an account for an Administrator or Team Member.</div>
+
         <label class="form-label">Full Name</label>
-        <input type="text" id="new-user-name" placeholder="e.g. John Doe" />
+        <input type="text" id="new-user-name" placeholder="e.g. Ronnie" />
 
         <label class="form-label">Permission Role</label>
         <select id="new-user-role">
@@ -539,23 +648,22 @@
     </section>
   </main>
 
-  <!-- Bottom Navigation -->
   <nav id="bottom-nav" class="bottom-nav hidden">
     <button id="nav-triage" class="nav-item" onclick="switchTab('triage')">
-      <span>Inbox & Schedule</span>
+      <span>Inbox</span>
       <span id="badge-triage" class="nav-badge hidden">0</span>
     </button>
     <button id="nav-tasks" class="nav-item active" onclick="switchTab('tasks')">
-      <span>Task Board</span>
+      <span>Tasks</span>
       <span id="badge-tasks" class="nav-badge hidden">0</span>
     </button>
     <button id="nav-team" class="nav-item" onclick="switchTab('team')">
-      <span>Team & Settings</span>
+      <span>Settings</span>
     </button>
   </nav>
 
   <script>
-    const STORAGE_KEY = "unified_command_center_v4";
+    const STORAGE_KEY = "unified_command_center_v5";
     const SESSION_USER_KEY = "command_center_logged_in_user";
     const FIREBASE_URL_KEY = "command_center_firebase_url";
     const LAST_NOTIF_KEY = "command_center_last_notif_id";
@@ -570,26 +678,14 @@
     }
 
     const DEFAULT_SHARED_STATE = {
+      geminiApiKey: "",
       users: [
         { id: "u_admin1", name: "Admin 1", role: "admin", pin: "1234" },
         { id: "u_admin2", name: "Admin 2", role: "admin", pin: "1234" },
         { id: "u_member1", name: "Team Member 1", role: "member", pin: "1234" },
         { id: "u_member2", name: "Team Member 2", role: "member", pin: "1234" }
       ],
-      tasks: [
-        {
-          id: "t_101",
-          title: "Confirm delivery window with supplier",
-          source: "SMS",
-          due: "Today 2:30 PM",
-          visibility: "triage",
-          assignedTo: [],
-          createdBy: "u_admin1",
-          completed: false,
-          completedBy: null,
-          completedAt: null
-        }
-      ],
+      tasks: [],
       lastNotification: null
     };
 
@@ -597,6 +693,8 @@
     let currentUserId = localStorage.getItem(SESSION_USER_KEY) || null;
     let activeTab = "tasks";
     let adminFilterUserId = "ALL";
+    let creatorSelectedUsers = [];
+    let triageSelections = {}; // { taskId: [userId1, userId2] }
     let cloudPollTimer = null;
 
     function loadLocalState() {
@@ -615,13 +713,184 @@
       }
     }
 
-    function copyInviteLink() {
-      const dbUrl = getFirebaseUrl();
-      const shareUrl = `https://${location.hostname.includes("github.io") ? location.host + location.pathname : ""}?db=${encodeURIComponent(dbUrl)}`;
-      navigator.clipboard?.writeText(shareUrl);
-      alert("Team access link copied to clipboard.");
+    /********************************************************************
+     * INTELLIGENT WORK FILTER & CHECKLIST EXTRACTOR (AI + SMART PARSER)
+     ********************************************************************/
+    async function evaluateIncomingMessage(rawText, sourceType, defaultDue) {
+      const text = (rawText || "").trim();
+      if (!text) return null;
+
+      const apiKey = (state.geminiApiKey || "").trim();
+
+      // 1. If Gemini API Key is configured, use Gemini 2.5 Flash for structured JSON extraction
+      if (apiKey) {
+        try {
+          const prompt = `You are an operations task extractor for a construction, fleet, and field management team.
+Analyze this incoming ${sourceType} message/event:
+"""${text}"""
+
+Decide:
+1. isWorkRelated: true if it involves work, tasks, materials, supplies, equipment, repairs, deliveries, job sites, schedules, meetings, or errands. false if it is a bank OTP code, spam, advertisement, or purely casual non-actionable chat.
+2. title: A clean, concise executable task title (e.g., "Deliver materials to Boice job site").
+3. due: Any mentioned due time/date (or "${defaultDue || "Today"}" if none mentioned).
+4. checklist: If the message contains multiple items, materials, tools, or sub-tasks to gather/deliver/complete, return them as an array of individual strings. Otherwise return an empty array [].
+
+Return ONLY valid JSON matching:
+{"isWorkRelated": boolean, "title": string, "due": string, "checklist": string[]}`;
+
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json" }
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (jsonText) {
+              const parsed = JSON.parse(jsonText);
+              return {
+                isWorkRelated: Boolean(parsed.isWorkRelated),
+                title: parsed.title || text,
+                due: parsed.due || defaultDue || "Today",
+                checklist: Array.isArray(parsed.checklist)
+                  ? parsed.checklist.map((item, idx) => ({ id: "chk_" + Date.now() + "_" + idx, text: String(item).trim(), done: false })).filter(i => i.text)
+                  : []
+              };
+            }
+          }
+        } catch (err) {
+          console.warn("AI fallback to built-in parser:", err);
+        }
+      }
+
+      // 2. Built-in Intelligent Heuristic Parser (Works immediately without an API key)
+      return runBuiltInIntelligentParser(text, sourceType, defaultDue);
     }
 
+    function runBuiltInIntelligentParser(text, sourceType, defaultDue) {
+      const lower = text.toLowerCase();
+
+      // Filter out obvious non-work noise (2FA codes, promos, carrier texts)
+      const noisePatterns = [
+        /\b(verification code|security code|one-time passcode|otp|unsubscribe|reply stop)\b/i,
+        /\b(your package has shipped|out for delivery from amazon)\b/i
+      ];
+      for (const pat of noisePatterns) {
+        if (pat.test(text)) {
+          return { isWorkRelated: false, reason: "Filtered non-work notification" };
+        }
+      }
+
+      // Work / Action relevance check for SMS (Reminders & Calendar events are treated as actionable unless noise)
+      const workKeywords = /\b(need|needs|bring|pick up|pickup|drop off|deliver|delivery|load|unload|check|fix|repair|service|install|concrete|rebar|lumber|trench|plate|plates|grinder|excavator|skid steer|trailer|truck|fuel|hydraulic|job|site|footing|pour|forms|crew|schedule|meeting|appointment|order|supplies|materials|hardware|bolts|fittings|call|confirm|before|today|tomorrow|am|pm)\b/i;
+
+      if (sourceType === "SMS" && !workKeywords.test(lower) && text.split(/\s+/).length < 5) {
+        return { isWorkRelated: false, reason: "Casual message without actionable task keywords" };
+      }
+
+      // Extract due time if mentioned (e.g. "before 2:30 PM", "at 3pm", "tomorrow")
+      let due = defaultDue || "Today";
+      const timeMatch = text.match(/\b((?:before|by|at)\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?|\d{1,2}:\d{2}\s*(?:am|pm)|tomorrow(?:\s+morning|\s+afternoon)?)\b/i);
+      if (timeMatch) {
+        due = timeMatch[1];
+      }
+
+      // Detect if the message contains a list of items/materials
+      let extractedItems = [];
+      const lines = text.split(/\r?\n/).map(l => l.replace(/^[-*•\d.)+\s]+/, "").trim()).filter(Boolean);
+
+      if (lines.length >= 2) {
+        // Multi-line list
+        extractedItems = lines;
+      } else {
+        // Check for comma-separated list (e.g., "Need 10 bags concrete, 4 trench plates, tie wire, and the big grinder")
+        let listBody = text;
+        const listTrigger = text.match(/(?:need|bring|pick up|get|load|deliver|include|items|materials|list)\s*:?\s*(.+)/i);
+        if (listTrigger && listTrigger[1]) {
+          listBody = listTrigger[1];
+        }
+        // Strip trailing time/location clause like "delivered to Boice before 2:30 PM"
+        listBody = listBody.replace(/\s+(?:delivered|brought|taken)\s+to\s+.+$/i, "")
+                           .replace(/\s+(?:before|by|at)\s+\d{1,2}.*$/i, "");
+
+        if (listBody.includes(",")) {
+          const parts = listBody
+            .split(/,|(?:\s+and\s+)/i)
+            .map(p => p.trim().replace(/\.$/, ""))
+            .filter(p => p.length > 1 && p.length < 70);
+          if (parts.length >= 2) {
+            extractedItems = parts;
+          }
+        }
+      }
+
+      // Create clean task title
+      let cleanTitle = text.split(/\r?\n/)[0].trim();
+      if (extractedItems.length >= 2) {
+        const locMatch = text.match(/\b(?:to|at|for)\s+([A-Z][a-zA-Z0-9\s]{2,20}?)(?:\s+before|\s+by|\s+today|\.|$)/);
+        if (locMatch) {
+          cleanTitle = `Prepare & Deliver Materials (${locMatch[1].trim()})`;
+        } else if (cleanTitle.length > 65) {
+          cleanTitle = `Material & Item Checklist (${extractedItems.length} items)`; } }  const checklist = extractedItems.map((itemText, idx) => ({ id: "chk_" + Date.now() + "_" + idx, text: itemText, done: false }));  return { isWorkRelated: true, title: cleanTitle, due: due, checklist: checklist }; }  function parseManualChecklistText(rawChecklistText) { if (!rawChecklistText \vert{}\vert{} !rawChecklistText.trim()) return []; const raw = rawChecklistText.trim(); const parts = raw.includes("\n") ? raw.split(/\r?\n/) : raw.split(","); return parts .map(p => p.replace(/^[-*•\d.)+\s]+/, "").trim()) .filter(Boolean) .map((text, idx) => ({ id: "chk_" + Date.now() + "_" + idx, text, done: false })); }  /******************************************************************** * NATIVE ANDROID PHONE AUTO-CAPTURE POLLING ********************************************************************/ function hasNativeBridge() { return typeof window.AndroidNative !== "undefined" && typeof window.AndroidNative.isCaptureEnabled === "function"; }  function openNativeCaptureSettings() { if (hasNativeBridge()) { window.AndroidNative.openCaptureSettings(); } }  async function pollNativePhoneCaptures(manualTrigger) { if (!hasNativeBridge()) return; const user = getCurrentUser(); if (!user \vert{}\vert{} user.role !== "admin") return;  // Update listener permission card status const enabled = window.AndroidNative.isCaptureEnabled(); const descEl = document.getElementById("native-listener-desc"); const btnEl = document.getElementById("btn-enable-listener"); if (descEl && btnEl) { if (enabled) { descEl.textContent = "Automatic background capture is active for incoming text messages, Samsung Reminders, and Google Calendar."; btnEl.textContent = "Notification Access Enabled (Tap to Manage)"; btnEl.className = "btn btn-secondary"; } else { descEl.textContent = "Enable Notification Access once so Command Center can automatically read incoming work text messages and reminders."; btnEl.textContent = "Enable Notification Access"; btnEl.className = "btn"; } }  let addedCount = 0;  // 1. Pull pending SMS & Reminder notifications try { const rawJson = window.AndroidNative.getPendingCaptures(); const items = JSON.parse(rawJson \vert{}\vert{} "[]"); for (const item of items) { const result = await evaluateIncomingMessage(item.combined \vert{}\vert{} item.text, item.source \vert{}\vert{} "SMS", "Today"); if (result && result.isWorkRelated) { state.tasks.unshift({ id: "t_" + Date.now() + "_" + Math.floor(Math.random() * 1000), title: result.title, rawSource: item.combined \vert{}\vert{} item.text, source: item.source \vert{}\vert{} "SMS", due: result.due, checklist: result.checklist \vert{}\vert{} [], visibility: "triage", assignedTo: [], createdBy: user.id, completed: false, completedBy: null, completedAt: null }); addedCount++; } } } catch (e) {}  // 2. Pull upcoming phone Calendar events try { const calJson = window.AndroidNative.syncCalendarEvents(); const calEvents = JSON.parse(calJson \vert{}\vert{} "[]"); for (const ev of calEvents) { const fullText = ev.text ? `${ev.title}: ${ev.text}` : ev.title; const result = await evaluateIncomingMessage(fullText, "CAL", ev.due \vert{}\vert{} "Upcoming"); if (result && result.isWorkRelated) { state.tasks.unshift({ id: "t_" + Date.now() + "_" + Math.floor(Math.random() * 1000), title: result.title, rawSource: fullText, source: "CAL", due: ev.due \vert{}\vert{} result.due, checklist: result.checklist \vert{}\vert{} [], visibility: "triage", assignedTo: [], createdBy: user.id, completed: false, completedBy: null, completedAt: null }); addedCount++; } } } catch (e) {}  if (addedCount > 0) { pushStateToCloud("Work Items Captured", `${addedCount} new work item(s) added to your Triage Queue.`, "ADMINS");
+      } else if (manualTrigger) {
+        showBanner("Scan Complete", "No new uncaptured work messages or calendar events found.");
+      }
+    }
+
+    async function handleManualAnalyze() {
+      const inputEl = document.getElementById("triage-manual-input");
+      const sourceEl = document.getElementById("triage-source-select");
+      const feedbackEl = document.getElementById("analyze-feedback");
+      const btnEl = document.getElementById("btn-analyze");
+
+      const rawText = inputEl.value.trim();
+      if (!rawText) return;
+
+      btnEl.textContent = "Analyzing...";
+      feedbackEl.style.display = "none";
+
+      const result = await evaluateIncomingMessage(rawText, sourceEl.value, "Today");
+      btnEl.textContent = "Analyze & Generate Work Task";
+
+      if (!result || !result.isWorkRelated) {
+        feedbackEl.style.display = "block";
+        feedbackEl.style.color = "#f87171";
+        feedbackEl.textContent = "Filtered Out: Message was determined to be non-work-related or non-actionable.";
+        return;
+      }
+
+      state.tasks.unshift({
+        id: "t_" + Date.now(),
+        title: result.title,
+        rawSource: rawText,
+        source: sourceEl.value,
+        due: result.due,
+        checklist: result.checklist || [],
+        visibility: "triage",
+        assignedTo: [],
+        createdBy: currentUserId,
+        completed: false,
+        completedBy: null,
+        completedAt: null
+      });
+
+      inputEl.value = "";
+      feedbackEl.style.display = "block";
+      feedbackEl.style.color = "#34d399";
+      feedbackEl.textContent = result.checklist.length > 0
+        ? `Created work task with ${result.checklist.length} individual checklist items in Triage Queue.`
+        : `Created work task in Triage Queue.`;
+
+      pushStateToCloud("New Work Item Ready", `"${result.title}" added to Triage Queue.`, "ADMINS");
+    }
+
+    /********************************************************************
+     * CLOUD SYNCHRONIZATION ENGINE
+     ********************************************************************/
     async function pushStateToCloud(notifyTitle, notifyBody, targetAudience) {
       if (notifyTitle && notifyBody) {
         state.lastNotification = {
@@ -672,8 +941,12 @@
         }
 
         state = {
+          geminiApiKey: remoteData.geminiApiKey || state.geminiApiKey || "",
           users: remoteData.users || DEFAULT_SHARED_STATE.users,
-          tasks: remoteData.tasks || [],
+          tasks: (remoteData.tasks || []).map(t => ({
+            ...t,
+            checklist: Array.isArray(t.checklist) ? t.checklist : []
+          })),
           lastNotification: remoteData.lastNotification || null
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -693,7 +966,10 @@
       const dbUrl = getFirebaseUrl();
       if (dbUrl && !dbUrl.includes("PLACEHOLDER")) {
         pullStateFromCloud();
-        cloudPollTimer = setInterval(pullStateFromCloud, 2500);
+        cloudPollTimer = setInterval(() => {
+          pullStateFromCloud();
+          pollNativePhoneCaptures(false);
+        }, 3000);
       } else {
         updateSyncIndicator(false);
       }
@@ -714,6 +990,18 @@
       }
     }
 
+    /********************************************************************
+     * NOTIFICATIONS
+     ********************************************************************/
+    function showBanner(title, body) {
+      const banner = document.getElementById("push-banner");
+      document.getElementById("push-title").textContent = title;
+      document.getElementById("push-body").textContent = body;
+      banner.style.display = "flex";
+      clearTimeout(window._pushTimer);
+      window._pushTimer = setTimeout(hidePush, 6000);
+    }
+
     function checkAndFireNotification(notifObj, isLocalAction) {
       if (!notifObj || !notifObj.id) return;
       const lastSeenId = Number(localStorage.getItem(LAST_NOTIF_KEY) || 0);
@@ -732,12 +1020,7 @@
 
       if (!isTargetedToMe && !isLocalAction) return;
 
-      const banner = document.getElementById("push-banner");
-      document.getElementById("push-title").textContent = notifObj.title;
-      document.getElementById("push-body").textContent = notifObj.body;
-      banner.style.display = "flex";
-      clearTimeout(window._pushTimer);
-      window._pushTimer = setTimeout(hidePush, 6000);
+      showBanner(notifObj.title, notifObj.body);
 
       try {
         if (window.AndroidNative && typeof window.AndroidNative.sendNotification === "function") {
@@ -755,6 +1038,9 @@
       document.getElementById("push-banner").style.display = "none";
     }
 
+    /********************************************************************
+     * AUTH & ROLES
+     ********************************************************************/
     function getCurrentUser() {
       if (!currentUserId) return null;
       return state.users.find(u => u.id === currentUserId) || null;
@@ -780,10 +1066,8 @@
       document.getElementById("login-pin").value = "";
 
       if (userAccount.role !== "admin") activeTab = "tasks";
-      if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
-      }
       renderAll();
+      pollNativePhoneCaptures(false);
     }
 
     function logoutUser() {
@@ -799,72 +1083,85 @@
       renderAll();
     }
 
-    function addTriageManual(sourceType) {
-      const inputEl = document.getElementById("triage-manual-input");
-      const text = inputEl.value.trim();
-      if (!text) return;
-
-      state.tasks.unshift({
-        id: "t_" + Date.now(),
-        title: text,
-        source: sourceType,
-        due: "Today",
-        visibility: "triage",
-        assignedTo: [],
-        createdBy: currentUserId,
-        completed: false,
-        completedBy: null,
-        completedAt: null
-      });
-
-      inputEl.value = "";
-      pushStateToCloud(`New Item Added`, `"${text}" added to Triage Queue.`, "ADMINS");
+    /********************************************************************
+     * MULTI-USER SELECTION & TWO-STAGE CHECKLIST / TASK COMPLETION
+     ********************************************************************/
+    function toggleCreatorUser(userId) {
+      if (creatorSelectedUsers.includes(userId)) {
+        creatorSelectedUsers = creatorSelectedUsers.filter(id => id !== userId);
+      } else {
+        creatorSelectedUsers.push(userId);
+      }
+      renderAll();
     }
 
-    function assignTriageItem(taskId, selectElemId) {
-      const selectElem = document.getElementById(selectElemId);
-      const selectedOptions = Array.from(selectElem.selectedOptions).map(opt => opt.value);
-      
+    function toggleTriageUser(taskId, userId) {
+      const current = triageSelections[taskId] || [];
+      if (current.includes(userId)) {
+        triageSelections[taskId] = current.filter(id => id !== userId);
+      } else {
+        triageSelections[taskId] = [...current, userId];
+      }
+      renderAll();
+    }
+
+    function assignTriageItem(taskId) {
+      const selectedIds = triageSelections[taskId] || [];
       const task = state.tasks.find(t => t.id === taskId);
       const adminUser = getCurrentUser();
-      if (!task || selectedOptions.length === 0 || !adminUser) return;
+
+      if (!task || selectedIds.length === 0 || !adminUser) {
+        showBanner("Select Assignee", "Tap at least one team member before assigning.");
+        return;
+      }
 
       task.visibility = "assigned";
-      task.assignedTo = selectedOptions;
+      task.assignedTo = selectedIds;
+      delete triageSelections[taskId];
 
-      const names = selectedOptions.map(id => getUserName(id)).join(", ");
+      const names = selectedIds.map(id => getUserName(id)).join(", ");
       pushStateToCloud(
         `Task Assigned`,
         `Assigned to ${names}: "${task.title}"`,
-        selectedOptions
+        selectedIds
       );
     }
 
     function dismissTriageItem(taskId) {
       state.tasks = state.tasks.filter(t => t.id !== taskId);
+      delete triageSelections[taskId];
       pushStateToCloud();
     }
 
     function createAndAssignTask() {
       const titleInput = document.getElementById("new-task-title");
+      const checklistInput = document.getElementById("new-task-checklist");
       const dueInput = document.getElementById("new-task-due");
-      const selectElem = document.getElementById("new-task-assignee");
-      
-      const selectedOptions = Array.from(selectElem.selectedOptions).map(opt => opt.value);
+
       const title = titleInput.value.trim();
-      if (!title || selectedOptions.length === 0) return;
+      if (!title) {
+        showBanner("Missing Title", "Enter a task description first.");
+        return;
+      }
+      if (creatorSelectedUsers.length === 0) {
+        showBanner("Select Assignee", "Tap at least one team member to assign this task.");
+        return;
+      }
 
       const adminUser = getCurrentUser();
       const due = dueInput.value.trim() || "Today";
-      const names = selectedOptions.map(id => getUserName(id)).join(", ");
+      const checklist = parseManualChecklistText(checklistInput.value);
+      const assignedIds = [...creatorSelectedUsers];
+      const names = assignedIds.map(id => getUserName(id)).join(", ");
 
       state.tasks.unshift({
         id: "t_" + Date.now(),
         title,
         source: "MANUAL",
         due,
+        checklist,
         visibility: "assigned",
-        assignedTo: selectedOptions,
+        assignedTo: assignedIds,
         createdBy: adminUser.id,
         completed: false,
         completedBy: null,
@@ -872,14 +1169,44 @@
       });
 
       titleInput.value = "";
+      checklistInput.value = "";
       dueInput.value = "";
+      creatorSelectedUsers = [];
+
       pushStateToCloud(
         `New Task Assignment`,
         `Assigned to ${names}: "${title}" (Due: ${due})`,
-        selectedOptions
+        assignedIds
       );
     }
 
+    // Stage 1: Check off individual material / checklist items without completing the whole task
+    function toggleChecklistItem(taskId, itemId) {
+      const task = state.tasks.find(t => t.id === taskId);
+      const actor = getCurrentUser();
+      if (!task || !Array.isArray(task.checklist) || !actor) return;
+
+      const item = task.checklist.find(i => i.id === itemId);
+      if (!item) return;
+
+      item.done = !item.done;
+      item.doneBy = item.done ? actor.name : null;
+
+      const total = task.checklist.length;
+      const doneCount = task.checklist.filter(i => i.done).length;
+
+      if (item.done && doneCount === total) {
+        pushStateToCloud(
+          `Checklist Items Ready`,
+          `All ${total} items checked for "${task.title}" by ${actor.name}. Awaiting final delivery/completion.`,
+          "ADMINS"
+        );
+      } else {
+        pushStateToCloud();
+      }
+    }
+
+    // Stage 2: Mark the overall task delivered / complete separately
     function toggleTaskCompletion(taskId) {
       const task = state.tasks.find(t => t.id === taskId);
       const actor = getCurrentUser();
@@ -892,8 +1219,8 @@
         task.completedBy = actor.id;
         task.completedAt = nowStr;
         pushStateToCloud(
-          `Task Completed`,
-          `"${task.title}" completed by ${actor.name} at ${nowStr}.`,
+          `Task Delivered & Completed`,
+          `"${task.title}" marked complete by ${actor.name} at${nowStr}.`,
           "ADMINS"
         );
       } else {
@@ -910,6 +1237,12 @@
     function deleteTask(taskId) {
       state.tasks = state.tasks.filter(t => t.id !== taskId);
       pushStateToCloud();
+    }
+
+    function saveGeminiKey() {
+      const keyInput = document.getElementById("gemini-key-input");
+      state.geminiApiKey = keyInput.value.trim();
+      pushStateToCloud("AI Settings Updated", "Gemini AI key saved for automatic work & list extraction.", "ADMINS");
     }
 
     function addNewUser() {
@@ -936,6 +1269,9 @@
       pushStateToCloud();
     }
 
+    /********************************************************************
+     * UI RENDERING
+     ********************************************************************/
     function getSourceBadge(source) {
       const map = {
         SMS: { cls: "src-sms", label: "Text Message" },
@@ -956,6 +1292,33 @@
       const ids = Array.isArray(assignedToField) ? assignedToField : (assignedToField ? [assignedToField] : []);
       if (ids.length === 0) return '<span class="assignee-pill">Unassigned</span>';
       return ids.map(id => `<span class="assignee-pill">${getUserName(id)}</span>`).join(" ");
+    }
+
+    function renderChecklistHtml(task, allowToggle) {
+      const list = Array.isArray(task.checklist) ? task.checklist : [];
+      if (list.length === 0) return "";
+
+      const doneCount = list.filter(i => i.done).length;
+      const allItemsChecked = doneCount === list.length;
+
+      return `
+        <div class="checklist-box">
+          <div class="checklist-header">
+            <span>Item Checklist</span>
+            <span>${doneCount} /${list.length} Checked</span>
+          </div>
+          ${allItemsChecked && !task.completed
+            ? `<div class="checklist-ready-banner">All Items Checked — Ready for Delivery / Final Completion</div>`
+            : ""
+          }
+          ${list.map(item => `
+            <div class="checklist-item-row ${item.done ? "item-done" : ""}" ${allowToggle ? `onclick="toggleChecklistItem('${task.id}', '${item.id}')"` : ""}>
+              <div class="sub-check">${item.done ? "✓" : ""}</div>
+              <div class="checklist-item-text">${item.text}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
     }
 
     function renderAll() {
@@ -982,15 +1345,6 @@
       document.getElementById("login-screen").classList.add("hidden");
       const isAdmin = user.role === "admin";
 
-      const assigneeSelect = document.getElementById("new-task-assignee");
-      const prevSelected = Array.from(assigneeSelect.selectedOptions).map(o => o.value);
-      if (document.activeElement !== assigneeSelect) {
-        assigneeSelect.innerHTML = state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join("");
-        Array.from(assigneeSelect.options).forEach(opt => {
-          if (prevSelected.includes(opt.value)) opt.selected = true;
-        });
-      }
-
       document.getElementById("app-header").classList.remove("hidden");
       document.getElementById("bottom-nav").classList.remove("hidden");
       document.getElementById("header-username").textContent = user.name;
@@ -1002,6 +1356,7 @@
       document.getElementById("nav-team").classList.toggle("hidden", !isAdmin);
       document.getElementById("admin-task-creator").classList.toggle("hidden", !isAdmin);
       document.getElementById("admin-filter-bar").classList.toggle("hidden", !isAdmin);
+      document.getElementById("native-listener-card").classList.toggle("hidden", !(isAdmin && hasNativeBridge()));
 
       document.getElementById("tab-triage").classList.toggle("hidden", !(isAdmin && activeTab === "triage"));
       document.getElementById("tab-tasks").classList.toggle("hidden", activeTab !== "tasks");
@@ -1011,33 +1366,64 @@
       document.getElementById("nav-tasks").classList.toggle("active", activeTab === "tasks");
       document.getElementById("nav-team").classList.toggle("active", activeTab === "team");
 
+      // Render Spacious Tap-to-Select User List in Task Creator
+      if (isAdmin) {
+        document.getElementById("creator-user-grid").innerHTML = state.users.map(u => {
+          const isSel = creatorSelectedUsers.includes(u.id);
+          return `
+            <div class="user-pick-row ${isSel ? "selected" : ""}" onclick="toggleCreatorUser('${u.id}')">
+              <span>${u.name} (${u.role.toUpperCase()})</span>
+              <div class="pick-indicator">${isSel ? "✓" : ""}</div>
+            </div>
+          `;
+        }).join("");
+
+        const keyInput = document.getElementById("gemini-key-input");
+        if (document.activeElement !== keyInput && state.geminiApiKey) {
+          keyInput.value = state.geminiApiKey;
+        }
+      }
+
+      // Render Triage Queue
       const triageItems = state.tasks.filter(t => t.visibility === "triage");
       document.getElementById("triage-count").textContent = `${triageItems.length} items`;
       const badgeTriage = document.getElementById("badge-triage");
       badgeTriage.textContent = triageItems.length;
       badgeTriage.classList.toggle("hidden", triageItems.length === 0);
 
-      if (!document.activeElement || !document.activeElement.id.startsWith("assign-sel-")) {
-        const triageListEl = document.getElementById("triage-list");
-        triageListEl.innerHTML = triageItems.length === 0
-          ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px; padding:24px;">No items in triage queue.</div>`
-          : triageItems.map(t => `
-            <div class="card">
-              <div class="task-meta">${getSourceBadge(t.source)} <span class="task-sub">Due: ${t.due}</span></div>
-              <div class="task-title" style="margin:8px 0 14px;">${t.title}</div>
-              
-              <label class="form-label">Assign To</label>
-              <select id="assign-sel-${t.id}" multiple style="height:100px; margin-bottom:12px;">
-                ${state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join("")}
-              </select>
+      const triageListEl = document.getElementById("triage-list");
+      triageListEl.innerHTML = triageItems.length === 0
+        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No pending work items in triage queue.</div>`
+        : triageItems.map(t => {
+            const selectedForThis = triageSelections[t.id] || [];
+            return `
+              <div class="card task-card">
+                <div class="task-meta">
+                  ${getSourceBadge(t.source)}
+                  <span class="task-sub">Due: ${t.due}</span>
+                </div>
+                <div class="task-title">${t.title}</div>${renderChecklistHtml(t, true)}
 
-              <div class="btn-stack">
-                <button class="btn" onclick="assignTriageItem('${t.id}', 'assign-sel-${t.id}')">Assign Task</button>
-                <button class="btn btn-secondary btn-danger" onclick="dismissTriageItem('${t.id}')" style="width:100%;">Dismiss Item</button>
+                <label class="form-label" style="margin-top:6px;">Tap Team Members to Assign</label>
+                <div class="user-select-grid">
+                  ${state.users.map(u => {
+                    const isSel = selectedForThis.includes(u.id);
+                    return `
+                      <div class="user-pick-row ${isSel ? "selected" : ""}" onclick="toggleTriageUser('${t.id}', '${u.id}')">
+                        <span>${u.name}</span>
+                        <div class="pick-indicator">${isSel ? "✓" : ""}</div>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+
+                <div class="btn-stack">
+                  <button class="btn" onclick="assignTriageItem('${t.id}')">Assign Selected & Send Notification</button>
+                  <button class="btn btn-danger-outline" onclick="dismissTriageItem('${t.id}')">Dismiss Item</button>
+                </div>
               </div>
-            </div>
-          `).join("");
-      }
+            `;
+          }).join("");
 
       if (isAdmin) {
         const chips = [{ id: "ALL", label: "All Users" }, ...state.users.map(u => ({ id: u.id, label: u.name }))];
@@ -1054,7 +1440,7 @@
         });
         document.getElementById("tasks-heading").textContent = "My Assigned Tasks";
       } else {
-        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Tasks" : `Tasks for ${getUserName(adminFilterUserId)}`;
+        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Active Tasks" : `Tasks for ${getUserName(adminFilterUserId)}`;
         if (adminFilterUserId !== "ALL") {
           visibleTasks = visibleTasks.filter(t => {
             const list = Array.isArray(t.assignedTo) ? t.assignedTo : (t.assignedTo ? [t.assignedTo] : []);
@@ -1067,52 +1453,48 @@
       const badgeTasks = document.getElementById("badge-tasks");
       badgeTasks.textContent = pendingCount;
       badgeTasks.classList.toggle("hidden", pendingCount === 0);
-      document.getElementById("tasks-stats").textContent = `${visibleTasks.length - pendingCount} / ${visibleTasks.length} Completed`;
+      document.getElementById("tasks-stats").textContent = `${visibleTasks.length - pendingCount} /${visibleTasks.length} Completed`;
 
       document.getElementById("tasks-list").innerHTML = visibleTasks.length === 0
-        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:13px; padding:24px;">No tasks available.</div>`
-        : visibleTasks.map(t => `
-          <div class="card task-card ${t.completed ? "completed" : ""}">
-            <div class="checkbox-container" onclick="toggleTaskCompletion('${t.id}')">${t.completed ? "✓" : ""}</div>
-            <div class="task-content">
-              <div class="task-meta">
-                ${getSourceBadge(t.source)}
-                ${getAssigneeBadges(t.assignedTo)}
-                <span class="task-sub">Due: ${t.due}</span>
+        ? `<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No tasks assigned.</div>`
+        : visibleTasks.map(t => {
+            const hasChecklist = Array.isArray(t.checklist) && t.checklist.length > 0;
+            const completeBtnText = t.completed
+              ? "Re-Open Task"
+              : (hasChecklist ? "Mark Entire Task Delivered & Complete" : "Mark Task Complete");
+
+            return `
+              <div class="card task-card ${t.completed ? "completed" : ""}">
+                <div class="task-meta">
+                  ${getSourceBadge(t.source)}${getAssigneeBadges(t.assignedTo)}
+                  <span class="task-sub">Due: ${t.due}</span>
+                </div>
+
+                <div class="task-title">${t.title}</div>
+
+                ${renderChecklistHtml(t, true)}
+
+                ${t.completed
+                  ? `<div class="done-stamp">Completed by ${getUserName(t.completedBy)} at ${t.completedAt}</div>`
+                  : `<div class="task-sub">Assigned by ${getUserName(t.createdBy)}</div>`
+                }
+
+                <div class="btn-stack" style="margin-top: 4px;">
+                  <button class="btn ${t.completed ? "btn-secondary" : "btn-success"}" onclick="toggleTaskCompletion('${t.id}')">
+                    ${completeBtnText}
+                  </button>
+                  ${isAdmin ? `<button class="btn btn-danger-outline" onclick="deleteTask('${t.id}')">Delete Task</button>` : ""}
+                </div>
               </div>
-              <div class="task-title">${t.title}</div>
-              ${t.completed
-                ? `<div class="done-stamp">Completed by ${getUserName(t.completedBy)} at ${t.completedAt}</div>`
-                : `<div class="task-sub">Assigned by ${getUserName(t.createdBy)}</div>`
-              }
-            </div>
-            ${isAdmin ? `<button class="btn btn-secondary btn-danger" onclick="deleteTask('${t.id}')">Delete</button>` : ""}
-          </div>
-        `).join("");
+            `;
+          }).join("");
 
       if (isAdmin) {
         document.getElementById("team-list").innerHTML = state.users.map(u => `
-          <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: 14px 18px;">
-            <div>
-              <div style="font-weight:600; font-size:15px; margin-bottom:2px;">${u.name}</div>
-              <div style="font-size:12px; color:var(--muted);">PIN: ${u.pin || "1234"}</div>
-            </div>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <span class="role-tag ${u.role === "admin" ? "role-admin" : "role-member"}">${u.role.toUpperCase()}</span>
-              ${u.id !== user.id ? `<button class="btn btn-secondary btn-danger" onclick="removeUser('${u.id}')">Remove</button>` : ""}
-            </div>
-          </div>
-        `).join("");
-      }
-    }
-
-    function setAdminFilter(userId) {
-      adminFilterUserId = userId;
-      renderAll();
-    }
-
-    renderAll();
-    startCloudSyncLoop();
-  </script>
-</body>
-</html>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div>
+                <div style="font-weight:600; font-size:16px; margin-bottom:4px;">${u.name}</div>
+                <div style="font-size:13px; color:var(--muted);">PIN: ${u.pin || "1234"}</div>
+              </div>
+              <span class="role-tag ${u.role === "admin" ? "role-admin" : "role
