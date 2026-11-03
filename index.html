@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Command Center</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -201,8 +201,11 @@
       margin-bottom: 16px;
       outline: none;
     }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
     textarea {
-      min-height: 110px;
+      min-height: 104px;
       resize: vertical;
       line-height: 1.45;
     }
@@ -263,6 +266,7 @@
       cursor: pointer;
       width: 100%;
       text-align: center;
+      display: block;
     }
     .btn-success { background: var(--success); }
     .btn-secondary {
@@ -294,7 +298,7 @@
       flex-direction: column;
       gap: 14px;
     }
-    .task-card.completed { opacity: 0.55; }
+    .task-card.completed { opacity: 0.58; }
     .task-card.completed .task-title {
       text-decoration: line-through;
       color: var(--muted);
@@ -321,6 +325,7 @@
       font-weight: 600;
     }
 
+    /* Checklist Styles */
     .checklist-box {
       background: var(--surface);
       border: 1px solid var(--card-border);
@@ -383,6 +388,136 @@
     .checklist-item-row.item-done .checklist-item-text {
       text-decoration: line-through;
       color: var(--muted);
+    }
+
+    /* Task Photo Gallery & Previews */
+    .photo-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .photo-card {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .photo-card img {
+      width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #05080f;
+      cursor: pointer;
+      display: block;
+    }
+    .photo-caption {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* Task Notes Section */
+    .notes-box {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .notes-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .note-item {
+      padding: 10px 0;
+      border-top: 1px solid rgba(34, 50, 79, 0.6);
+    }
+    .note-item:first-of-type {
+      border-top: none;
+      padding-top: 2px;
+    }
+    .note-meta {
+      font-size: 11px;
+      font-weight: 600;
+      color: #60a5fa;
+      margin-bottom: 4px;
+    }
+    .note-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .note-input-wrap {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(34, 50, 79, 0.6);
+    }
+    .note-input-wrap input {
+      background: var(--card);
+      margin-bottom: 10px;
+    }
+
+    /* Modals (Edit Task & Fullscreen Image Viewer) */
+    #edit-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg);
+      z-index: 200;
+      overflow-y: auto;
+      padding: 20px 20px 100px;
+    }
+    .edit-modal-inner {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .edit-item-card {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .edit-item-card input {
+      background: var(--card);
+      margin-bottom: 10px;
+    }
+
+    #image-viewer-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 8, 15, 0.96);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+    }
+    .viewer-img-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      margin-bottom: 16px;
+    }
+    .viewer-img-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
     }
 
     .done-stamp {
@@ -491,7 +626,54 @@
     <button class="btn-text" onclick="logoutUser()">Sign Out</button>
   </header>
 
+  <!-- FULL-SCREEN IMAGE VIEWER -->
+  <section id="image-viewer-modal" class="hidden">
+    <div class="viewer-img-wrap">
+      <img id="viewer-full-img" src="" alt="Task Attachment" />
+    </div>
+    <button class="btn btn-secondary" onclick="closeImageViewer()">Close Photo Viewer</button>
+  </section>
+
+  <!-- FULL-SCREEN TASK & CHECKLIST EDITOR -->
+  <section id="edit-modal" class="hidden">
+    <div class="edit-modal-inner">
+      <div class="card">
+        <div class="card-title" style="font-size:18px; margin-bottom:6px;">Edit Task, Checklist &amp; Photos</div>
+        <div class="card-desc">Update task details, modify or remove existing checklist items, add new items, or manage attached photos.</div>
+
+        <label class="form-label">Task Title</label>
+        <input type="text" id="edit-task-title" placeholder="Task title" />
+
+        <label class="form-label">Due Time / Deadline</label>
+        <input type="text" id="edit-task-due" placeholder="e.g. Today 3:00 PM" />
+
+        <label class="form-label">Attached Photos</label>
+        <div id="edit-photos-container" class="photo-grid"></div>
+        <input type="file" id="file-edit-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'edit')" />
+        <button class="btn btn-secondary" onclick="document.getElementById('file-edit-photo').click()" style="margin-bottom:20px;">Attach Additional Photo</button>
+
+        <label class="form-label">Current Checklist Items</label>
+        <div id="edit-checklist-container"></div>
+
+        <label class="form-label" style="margin-top:8px;">Add New Items to Checklist (One per line)</label>
+        <textarea id="edit-new-items-input" placeholder="e.g.&#10;6 - 12&quot; forms&#10;2 bundles stakes"></textarea>
+        <button class="btn btn-secondary" onclick="appendDraftItems()" style="margin-bottom:20px;">Add Items to Checklist Above</button>
+
+        <div id="edit-assignees-section">
+          <label class="form-label">Assigned Team Members (Tap to Toggle)</label>
+          <div id="edit-user-grid" class="user-select-grid"></div>
+        </div>
+
+        <div class="btn-stack" style="margin-top:12px;">
+          <button class="btn btn-success" onclick="saveTaskEdits()">Save Changes &amp; Notify Assignees</button>
+          <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <main>
+    <!-- LOGIN SCREEN -->
     <section id="login-screen">
       <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block;">
         <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#2563eb" stroke-width="3"/>
@@ -516,6 +698,7 @@
       <button class="btn" onclick="handleLogin()">Sign In</button>
     </section>
 
+    <!-- TAB 1: INBOX & TRIAGE -->
     <section id="tab-triage" class="hidden">
       <div id="native-listener-card" class="card hidden">
         <div class="card-title">Automatic Phone Capture</div>
@@ -529,17 +712,22 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Intelligent Task &amp; List Analyzer</div>
+        <div class="card-title">Intelligent Task, List &amp; Photo Analyzer</div>
         <div class="card-desc">
-          Incoming messages, reminders, and events are checked for work relevance. Material or item lists are automatically split into individual checklist items with all quantities and dimensions preserved.
+          Paste a message or attach a picture of a material list. Work items are converted into tasks, attached photos are included on the task card, and lists are split into individual checkboxes.
         </div>
 
-        <label class="form-label">Message, Reminder, or Material List</label>
-        <textarea id="triage-manual-input" placeholder="All 6 ft forms for Bingham.&#10;• 20 - 2'x6'&#10;• 8 - 14&quot;&#10;• 4 - 16&quot;&#10;• 4 - outside corners"></textarea>
+        <label class="form-label">Message, Reminder, or Material List (Optional if attaching a photo)</label>
+        <textarea id="triage-manual-input" placeholder="All 6 ft forms for Bingham.&#10;• 20 - 2'x6'&#10;• 8 - 14&quot;&#10;• 4 - outside corners"></textarea>
+
+        <label class="form-label">Photo of Material List or Job Site (Optional)</label>
+        <div id="triage-photo-preview" class="photo-grid"></div>
+        <input type="file" id="file-triage-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'triage')" />
+        <button class="btn btn-secondary" onclick="document.getElementById('file-triage-photo').click()" style="margin-bottom:16px;">Attach Photo of Material List / Site</button>
 
         <label class="form-label">Source Type</label>
         <select id="triage-source-select">
-          <option value="SMS">Text Message</option>
+          <option value="SMS">Text / Picture Message</option>
           <option value="SAMSUNG">Reminder</option>
           <option value="CAL">Calendar Event</option>
         </select>
@@ -555,6 +743,7 @@
       <div id="triage-list"></div>
     </section>
 
+    <!-- TAB 2: TASK BOARD -->
     <section id="tab-tasks" class="hidden">
       <div id="admin-task-creator" class="card">
         <div class="card-title" style="margin-bottom: 14px;">Create &amp; Assign Task</div>
@@ -564,6 +753,11 @@
 
         <label class="form-label">Checklist Items (Optional — One per line)</label>
         <textarea id="new-task-checklist" placeholder="20 - 2'x6'&#10;8 - 14&quot;&#10;4 - outside corners"></textarea>
+
+        <label class="form-label">Task Photos (Optional)</label>
+        <div id="creator-photo-preview" class="photo-grid"></div>
+        <input type="file" id="file-creator-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'creator')" />
+        <button class="btn btn-secondary" onclick="document.getElementById('file-creator-photo').click()" style="margin-bottom:16px;">Attach Photo to Task</button>
 
         <label class="form-label">Due Time / Deadline</label>
         <input type="text" id="new-task-due" placeholder="e.g. Today 3:00 PM" />
@@ -583,11 +777,12 @@
       <div id="tasks-list"></div>
     </section>
 
+    <!-- TAB 3: SETTINGS & USERS -->
     <section id="tab-team" class="hidden">
       <div class="card">
-        <div class="card-title">AI Task &amp; Checklist Intelligence</div>
+        <div class="card-title">AI Task &amp; Photo List Intelligence</div>
         <div class="card-desc">
-          The built-in work and checklist parser runs automatically. For advanced AI classification on incoming messages, enter a Gemini API Key below.
+          The built-in work and checklist parser runs automatically. Entering a Gemini API Key below also enables AI Vision to read handwritten or printed material lists straight from attached photos.
         </div>
         <label class="form-label">Gemini API Key (Optional)</label>
         <input type="password" id="gemini-key-input" placeholder="AIzaSy..." />
@@ -633,7 +828,7 @@
   </nav>
 
   <script>
-    const STORAGE_KEY = "unified_command_center_v7";
+    const STORAGE_KEY = "unified_command_center_v9";
     const SESSION_USER_KEY = "command_center_logged_in_user";
     const FIREBASE_URL_KEY = "command_center_firebase_url";
     const LAST_NOTIF_KEY = "command_center_last_notif_id";
@@ -646,8 +841,14 @@
       return [];
     }
 
-    // Safely strips ONLY leading bullet symbols (•, *, -) or explicit list numbers ("1. ", "2) ")
-    // NEVER strips item quantities or measurements like "20 - 2'x6'" or "8 - 14""
+    function escapeHtmlAttr(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
     function cleanBulletPrefix(line) {
       return String(line || "")
         .trim()
@@ -690,6 +891,16 @@
     let triageSelections = {};
     let cloudPollTimer = null;
 
+    // Staged Photo Arrays
+    let triagePendingPhotos = [];
+    let creatorPendingPhotos = [];
+
+    // Task Editor State
+    let editingTaskId = null;
+    let editDraftChecklist = [];
+    let editDraftAssignees = [];
+    let editDraftPhotos = [];
+
     function loadLocalState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -702,7 +913,9 @@
         const tasks = normalizeArray(parsed.tasks).map(function(t) {
           return Object.assign({}, t, {
             assignedTo: normalizeArray(t.assignedTo),
-            checklist: normalizeArray(t.checklist)
+            checklist: normalizeArray(t.checklist),
+            images: normalizeArray(t.images),
+            notes: normalizeArray(t.notes)
           });
         });
         return {
@@ -716,19 +929,407 @@
       }
     }
 
-    async function evaluateIncomingMessage(rawText, sourceType, defaultDue, senderName) {
+    /********************************************************************
+     * PHOTO COMPRESSION, STAGING & FULLSCREEN VIEWER
+     ********************************************************************/
+    function compressImageFile(file) {
+      return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const maxDim = 1200;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round(h * (maxDim / w));
+                w = maxDim;
+              } else {
+                w = Math.round(w * (maxDim / h));
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", 0.72));
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handlePhotoInput(inputElem, targetMode) {
+      const files = inputElem.files ? Array.from(inputElem.files) : [];
+      if (files.length === 0) return;
+
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const dataUrl = await compressImageFile(files[i]);
+          if (targetMode === "triage") {
+            triagePendingPhotos.push(dataUrl);
+          } else if (targetMode === "creator") {
+            creatorPendingPhotos.push(dataUrl);
+          } else if (targetMode === "edit") {
+            editDraftPhotos.push(dataUrl);
+          }
+        } catch (err) {
+          showBanner("Photo Error", "Could not process the selected image.");
+        }
+      }
+
+      inputElem.value = "";
+      if (targetMode === "edit") {
+        const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+        renderEditModalContents(task);
+      } else {
+        renderStagingPhotos();
+      }
+    }
+
+    function removeStagedPhoto(targetMode, index) {
+      if (targetMode === "triage") {
+        triagePendingPhotos.splice(index, 1);
+        renderStagingPhotos();
+      } else if (targetMode === "creator") {
+        creatorPendingPhotos.splice(index, 1);
+        renderStagingPhotos();
+      } else if (targetMode === "edit") {
+        editDraftPhotos.splice(index, 1);
+        const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+        renderEditModalContents(task);
+      }
+    }
+
+    function renderStagingPhotos() {
+      const triageContainer = document.getElementById("triage-photo-preview");
+      if (triageContainer) {
+        triageContainer.innerHTML = triagePendingPhotos.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Staged Photo" />' +
+            '<button class="btn btn-danger-outline" style="margin-top:10px; padding:10px;" onclick="removeStagedPhoto(\'triage\', ' + idx + ')">Remove Photo</button>' +
+          '</div>';
+        }).join("");
+      }
+
+      const creatorContainer = document.getElementById("creator-photo-preview");
+      if (creatorContainer) {
+        creatorContainer.innerHTML = creatorPendingPhotos.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Staged Photo" />' +
+            '<button class="btn btn-danger-outline" style="margin-top:10px; padding:10px;" onclick="removeStagedPhoto(\'creator\', ' + idx + ')">Remove Photo</button>' +
+          '</div>';
+        }).join("");
+      }
+    }
+
+    function openImageViewer(src) {
+      if (!src) return;
+      document.getElementById("viewer-full-img").src = src;
+      document.getElementById("image-viewer-modal").classList.remove("hidden");
+    }
+
+    function closeImageViewer() {
+      document.getElementById("viewer-full-img").src = "";
+      document.getElementById("image-viewer-modal").classList.add("hidden");
+    }
+
+    function renderTaskPhotosHtml(task) {
+      const images = normalizeArray(task.images);
+      if (images.length === 0) return "";
+
+      return '<div class="photo-grid">' +
+        images.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Task Photo ' + (idx + 1) + '" />' +
+            '<div class="photo-caption">Tap photo to view full screen</div>' +
+          '</div>';
+        }).join("") +
+      '</div>';
+    }
+
+    /********************************************************************
+     * TEAM MEMBER & ADMIN TASK NOTES
+     ********************************************************************/
+    function addTaskNote(taskId) {
+      const inputEl = document.getElementById("note-input-" + taskId);
+      if (!inputEl) return;
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      const notes = normalizeArray(task.notes);
+      const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      notes.push({
+        id: "n_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        authorId: actor.id,
+        authorName: actor.name,
+        text: text,
+        createdAt: timeStr
+      });
+      task.notes = notes;
+      inputEl.value = "";
+
+      // Notify Admins + Assignees when a note is added
+      const assignedIds = normalizeArray(task.assignedTo);
+      let targetAudience = "ADMINS";
+      if (actor.role === "admin" && assignedIds.length > 0) {
+        targetAudience = assignedIds.slice();
+      } else if (assignedIds.length > 0) {
+        const adminIds = normalizeArray(state.users)
+          .filter(function(u) { return u.role === "admin"; })
+          .map(function(u) { return u.id; });
+        targetAudience = adminIds.concat(assignedIds);
+      }
+
+      pushStateToCloud(
+        "New Note on \"" + task.title + "\"",
+        actor.name + ": \"" + text + "\"",
+        targetAudience
+      );
+    }
+
+    function deleteTaskNote(taskId, noteId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      if (!task) return;
+      task.notes = normalizeArray(task.notes).filter(function(n) { return n.id !== noteId; });
+      pushStateToCloud();
+    }
+
+    function renderTaskNotesHtml(task, isAdmin) {
+      const notes = normalizeArray(task.notes);
+      const notesListHtml = notes.length === 0
+        ? '<div style="font-size:13px; color:var(--muted); margin-bottom:6px;">No notes added yet.</div>'
+        : notes.map(function(n) {
+            const delBtn = isAdmin
+              ? (' <span style="color:#f87171; cursor:pointer; float:right;" onclick="deleteTaskNote(\'' + task.id + '\', \'' + n.id + '\')">Remove</span>')
+              : "";
+            return '<div class="note-item">' +
+              '<div class="note-meta">' + escapeHtmlAttr(n.authorName) + ' • ' + escapeHtmlAttr(n.createdAt) + delBtn + '</div>' +
+              '<div class="note-text">' + escapeHtmlAttr(n.text) + '</div>' +
+            '</div>';
+          }).join("");
+
+      return '<div class="notes-box">' +
+        '<div class="notes-header">Task Notes (' + notes.length + ')</div>' +
+        notesListHtml +
+        '<div class="note-input-wrap">' +
+          '<input type="text" id="note-input-' + task.id + '" placeholder="Write a note or update for this task..." />' +
+          '<button class="btn btn-secondary" style="padding:12px;" onclick="addTaskNote(\'' + task.id + '\')">Add Note &amp; Notify</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    /********************************************************************
+     * FULL TASK, CHECKLIST & PHOTO EDITOR
+     ********************************************************************/
+    function openEditModal(taskId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      if (!task) return;
+
+      editingTaskId = task.id;
+      document.getElementById("edit-task-title").value = task.title || "";
+      document.getElementById("edit-task-due").value = task.due || "Today";
+      document.getElementById("edit-new-items-input").value = "";
+
+      editDraftChecklist = normalizeArray(task.checklist).map(function(item) {
+        return {
+          id: item.id || ("chk_" + Date.now() + "_" + Math.floor(Math.random() * 1000)),
+          text: String(item.text || ""),
+          done: Boolean(item.done),
+          doneBy: item.doneBy || null
+        };
+      });
+
+      editDraftAssignees = normalizeArray(task.assignedTo).slice();
+      editDraftPhotos = normalizeArray(task.images).slice();
+
+      renderEditModalContents(task);
+      document.getElementById("edit-modal").classList.remove("hidden");
+    }
+
+    function closeEditModal() {
+      editingTaskId = null;
+      editDraftChecklist = [];
+      editDraftAssignees = [];
+      editDraftPhotos = [];
+      document.getElementById("edit-modal").classList.add("hidden");
+    }
+
+    function updateDraftItemText(index, newText) {
+      if (editDraftChecklist[index]) {
+        editDraftChecklist[index].text = newText;
+      }
+    }
+
+    function removeDraftItem(index) {
+      editDraftChecklist.splice(index, 1);
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      renderEditModalContents(task);
+    }
+
+    function appendDraftItems() {
+      const newItemsInput = document.getElementById("edit-new-items-input");
+      const raw = (newItemsInput.value || "").trim();
+      if (!raw) return;
+
+      const parsedItems = parseManualChecklistText(raw);
+      for (let i = 0; i < parsedItems.length; i++) {
+        editDraftChecklist.push(parsedItems[i]);
+      }
+      newItemsInput.value = "";
+
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      renderEditModalContents(task);
+    }
+
+    function toggleEditAssignee(userId) {
+      const idx = editDraftAssignees.indexOf(userId);
+      if (idx !== -1) {
+        editDraftAssignees.splice(idx, 1);
+      } else {
+        editDraftAssignees.push(userId);
+      }
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      renderEditModalContents(task);
+    }
+
+    function renderEditModalContents(task) {
+      const photoContainer = document.getElementById("edit-photos-container");
+      if (editDraftPhotos.length === 0) {
+        photoContainer.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:4px 0 8px;">No photos attached to this task.</div>';
+      } else {
+        photoContainer.innerHTML = editDraftPhotos.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Attached Photo" />' +
+            '<button class="btn btn-danger-outline" style="margin-top:10px; padding:10px;" onclick="removeStagedPhoto(\'edit\', ' + idx + ')">Remove Photo</button>' +
+          '</div>';
+        }).join("");
+      }
+
+      const container = document.getElementById("edit-checklist-container");
+      if (editDraftChecklist.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:12px 0 16px;">No checklist items yet. Add items below if needed.</div>';
+      } else {
+        container.innerHTML = editDraftChecklist.map(function(item, idx) {
+          return '<div class="edit-item-card">' +
+            '<label class="form-label">Item #' + (idx + 1) + (item.done ? " (Checked Off)" : "") + '</label>' +
+            '<input type="text" value="' + escapeHtmlAttr(item.text) + '" oninput="updateDraftItemText(' + idx + ', this.value)" />' +
+            '<button class="btn btn-danger-outline" style="padding:12px;" onclick="removeDraftItem(' + idx + ')">Remove Item</button>' +
+          '</div>';
+        }).join("");
+      }
+
+      const assigneesSection = document.getElementById("edit-assignees-section");
+      const userGrid = document.getElementById("edit-user-grid");
+      if (task && task.visibility === "assigned") {
+        assigneesSection.classList.remove("hidden");
+        userGrid.innerHTML = state.users.map(function(u) {
+          const isSel = editDraftAssignees.indexOf(u.id) !== -1;
+          const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
+          return '<div class="' + rowCls + '" onclick="toggleEditAssignee(\'' + u.id + '\')">' +
+            '<span>' + escapeHtmlAttr(u.name) + ' (' + (u.role || "member").toUpperCase() + ')</span>' +
+            '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
+          '</div>';
+        }).join("");
+      } else {
+        assigneesSection.classList.add("hidden");
+      }
+    }
+
+    function saveTaskEdits() {
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      const pendingNewText = (document.getElementById("edit-new-items-input").value || "").trim();
+      if (pendingNewText) {
+        const extraItems = parseManualChecklistText(pendingNewText);
+        for (let i = 0; i < extraItems.length; i++) {
+          editDraftChecklist.push(extraItems[i]);
+        }
+      }
+
+      const newTitle = document.getElementById("edit-task-title").value.trim();
+      const newDue = document.getElementById("edit-task-due").value.trim() || "Today";
+
+      if (!newTitle) {
+        showBanner("Missing Title", "Task title cannot be blank.");
+        return;
+      }
+
+      if (task.visibility === "assigned" && editDraftAssignees.length === 0) {
+        showBanner("Select Assignee", "An assigned task must have at least one team member selected.");
+        return;
+      }
+
+      task.title = newTitle;
+      task.due = newDue;
+      task.images = editDraftPhotos.slice();
+      task.checklist = editDraftChecklist.map(function(item) {
+        return {
+          id: item.id,
+          text: String(item.text || "").trim(),
+          done: Boolean(item.done),
+          doneBy: item.doneBy || null
+        };
+      }).filter(function(item) {
+        return item.text.length > 0;
+      });
+
+      if (task.visibility === "assigned") {
+        task.assignedTo = editDraftAssignees.slice();
+      }
+
+      const notifyTargets = task.visibility === "assigned" ? task.assignedTo.slice() : "ADMINS";
+      const notifyHeading = task.visibility === "assigned" ? "Assigned Task Updated" : "Triage Task Updated";
+      const notifyMsg = actor.name + " updated \"" + task.title + "\" (Due: " + task.due + "). Review the latest details.";
+
+      closeEditModal();
+      pushStateToCloud(notifyHeading, notifyMsg, notifyTargets);
+    }
+
+    /********************************************************************
+     * INTELLIGENT WORK FILTER, CHECKLIST & PHOTO VISION PARSER
+     ********************************************************************/
+    async function evaluateIncomingMessage(rawText, sourceType, defaultDue, senderName, attachedPhotos) {
       const text = (rawText || "").trim();
-      if (!text) return null;
+      const photos = normalizeArray(attachedPhotos);
+      if (!text && photos.length === 0) return null;
 
       const apiKey = (state.geminiApiKey || "").trim();
       if (apiKey) {
         try {
-          const prompt = "You are an operations task extractor for a construction and fleet team. Analyze this incoming " + sourceType + " message:\n" + text + "\nRules:\n1. isWorkRelated: true if related to work, forms, concrete, materials, equipment, job sites, schedules, or errands.\n2. title: If the message has a header line (e.g. 'All 6 ft forms for Bingham.'), use that as the title. Otherwise create a concise task title.\n3. checklist: Extract each individual item/material line into this array, keeping ALL quantities, numbers, dashes, feet ('), and inches (\") intact (e.g. \"20 - 2'x6'\", \"8 - 14\\\"\", \"8 turnbuckles\"). Do NOT include the header line inside the checklist array.\nReturn JSON: {isWorkRelated: boolean, title: string, due: string, checklist: string[]}";
+          const prompt = "You are an operations task extractor for a construction and fleet team. Analyze this incoming " + sourceType + " item (and any attached image of a material list or job note).\nText: " + (text || "(See attached image)") + "\nRules:\n1. isWorkRelated: true if related to work, forms, concrete, materials, equipment, job sites, schedules, or errands (always true if an image of a list/note is attached).\n2. title: If there is a header line (e.g. 'All 6 ft forms for Bingham.'), use that as the title. Otherwise create a concise task title.\n3. checklist: Extract each individual item/material line from the text or image into this array, keeping ALL quantities, numbers, dashes, feet ('), and inches (\") intact (e.g. \"20 - 2'x6'\", \"8 - 14\\\"\", \"8 turnbuckles\"). Do NOT include the header line inside the checklist array.\nReturn JSON: {isWorkRelated: boolean, title: string, due: string, checklist: string[]}";
+
+          const parts = [{ text: prompt }];
+          for (let i = 0; i < photos.length; i++) {
+            const commaIdx = photos[i].indexOf(",");
+            if (commaIdx !== -1) {
+              parts.push({
+                inline_data: {
+                  mime_type: "image/jpeg",
+                  data: photos[i].slice(commaIdx + 1)
+                }
+              });
+            }
+          }
+
           const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
+              contents: [{ parts: parts }],
               generationConfig: { responseMimeType: "application/json" }
             })
           });
@@ -740,8 +1341,8 @@
               const parsed = JSON.parse(jsonText);
               const rawList = normalizeArray(parsed.checklist);
               return {
-                isWorkRelated: Boolean(parsed.isWorkRelated),
-                title: parsed.title || text,
+                isWorkRelated: photos.length > 0 ? true : Boolean(parsed.isWorkRelated),
+                title: parsed.title || text || "Photo Material List",
                 due: parsed.due || defaultDue || "Today",
                 checklist: rawList.map(function(item, idx) {
                   return { id: "chk_" + Date.now() + "_" + idx, text: String(item).trim(), done: false };
@@ -752,22 +1353,30 @@
         } catch (err) {}
       }
 
-      return runBuiltInIntelligentParser(text, sourceType, defaultDue, senderName);
+      if (!text && photos.length > 0) {
+        return {
+          isWorkRelated: true,
+          title: "Photo Material List / Job Task",
+          due: defaultDue || "Today",
+          checklist: []
+        };
+      }
+
+      return runBuiltInIntelligentParser(text, sourceType, defaultDue, senderName, photos.length > 0);
     }
 
-    function runBuiltInIntelligentParser(text, sourceType, defaultDue, senderName) {
+    function runBuiltInIntelligentParser(text, sourceType, defaultDue, senderName, hasPhotos) {
       const lower = text.toLowerCase();
-      if (/\b(verification code|security code|one-time passcode|otp|unsubscribe|reply stop)\b/i.test(text)) {
+      if (!hasPhotos && /\b(verification code|security code|one-time passcode|otp|unsubscribe|reply stop)\b/i.test(text)) {
         return { isWorkRelated: false };
       }
 
       const workKeywords = /\b(need|needs|bring|pick up|pickup|drop off|deliver|delivery|load|unload|check|fix|repair|service|install|concrete|rebar|lumber|trench|plate|plates|grinder|excavator|skid steer|trailer|truck|fuel|hydraulic|job|site|footing|pour|forms|form|corners|turnbuckles|ties|flat ties|bingham|stratford|bennett|boice|crew|schedule|meeting|appointment|order|supplies|materials|hardware|bolts|fittings|box|ft|in|call|confirm|before|today|tomorrow|am|pm)\b/i;
 
-      // Also treat multi-line bulleted/quantity lists as work-related automatically
       const rawLines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
       const bulletCount = rawLines.filter(isLikelyBulletOrQuantityLine).length;
 
-      if (sourceType === "SMS" && !workKeywords.test(lower) && bulletCount < 2 && text.split(/\s+/).length < 5) {
+      if (!hasPhotos && sourceType === "SMS" && !workKeywords.test(lower) && bulletCount < 2 && text.split(/\s+/).length < 5) {
         return { isWorkRelated: false };
       }
 
@@ -778,19 +1387,16 @@
       let cleanTitle = "";
       let extractedItems = [];
 
-      // Case 1: Multi-line message (like the Bingham forms list)
       if (rawLines.length >= 2) {
         const firstLineRaw = rawLines[0];
         const restLinesRaw = rawLines.slice(1);
         const firstIsBullet = /^[•*▪▫‣⁃\-]/.test(firstLineRaw);
         const restAreBulletsOrQuantities = restLinesRaw.filter(isLikelyBulletOrQuantityLine).length >= Math.ceil(restLinesRaw.length * 0.5);
 
-        // If line 1 is a heading ("All 6 ft forms for Bingham.") and lines 2+ are the items:
         if (!firstIsBullet && restAreBulletsOrQuantities) {
           cleanTitle = cleanBulletPrefix(firstLineRaw);
           extractedItems = restLinesRaw.map(cleanBulletPrefix).filter(Boolean);
         } else {
-          // Every line is an item in the list
           extractedItems = rawLines.map(cleanBulletPrefix).filter(Boolean);
           const locMatch = text.match(/\b(?:for|to|at)\s+([A-Z][a-zA-Z0-9\s]{2,20}?)(?:\.|\r|\n|$)/);
           if (locMatch) {
@@ -802,7 +1408,6 @@
           }
         }
       } else {
-        // Case 2: Single-line message (check if it contains a comma-separated list or inline bullets)
         if (text.indexOf("•") !== -1) {
           const bulletParts = text.split("•").map(function(p) { return p.trim(); }).filter(Boolean);
           if (bulletParts.length >= 2) {
@@ -826,7 +1431,7 @@
             if (parts.length >= 2) extractedItems = parts;
           }
 
-          cleanTitle = text.trim();
+          cleanTitle = text.trim() || "Photo Material List";
           if (extractedItems.length >= 2) {
             const locMatch = text.match(/\b(?:to|at|for)\s+([A-Z][a-zA-Z0-9\s]{2,20}?)(?:\s+before|\s+by|\s+today|\.|$)/);
             if (locMatch) {
@@ -859,7 +1464,7 @@
       const raw = rawChecklistText.trim();
       const parts = raw.indexOf("\n") !== -1 ? raw.split(/\r?\n/) : raw.split(",");
       return parts.map(cleanBulletPrefix).filter(Boolean).map(function(text, idx) {
-        return { id: "chk_" + Date.now() + "_" + idx, text: text, done: false };
+        return { id: "chk_" + Date.now() + "_" + Math.floor(Math.random() * 1000) + "_" + idx, text: text, done: false };
       });
     }
 
@@ -900,10 +1505,9 @@
         const items = normalizeArray(JSON.parse(rawJson || "[]"));
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
-          // Use item.text (raw message body without sender prefix glued to line 1)
           const rawBody = item.text || item.combined || "";
           const sender = item.sender || "";
-          const result = await evaluateIncomingMessage(rawBody, item.source || "SMS", "Today", sender);
+          const result = await evaluateIncomingMessage(rawBody, item.source || "SMS", "Today", sender, []);
           if (result && result.isWorkRelated) {
             state.tasks.unshift({
               id: "t_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
@@ -911,6 +1515,8 @@
               source: item.source || "SMS",
               due: result.due,
               checklist: result.checklist || [],
+              images: [],
+              notes: [],
               visibility: "triage",
               assignedTo: [],
               createdBy: user.id,
@@ -929,7 +1535,7 @@
         for (let j = 0; j < calEvents.length; j++) {
           const ev = calEvents[j];
           const fullText = ev.text ? (ev.title + "\n" + ev.text) : ev.title;
-          const result = await evaluateIncomingMessage(fullText, "CAL", ev.due || "Upcoming", "");
+          const result = await evaluateIncomingMessage(fullText, "CAL", ev.due || "Upcoming", "", []);
           if (result && result.isWorkRelated) {
             state.tasks.unshift({
               id: "t_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
@@ -937,6 +1543,8 @@
               source: "CAL",
               due: ev.due || result.due,
               checklist: result.checklist || [],
+              images: [],
+              notes: [],
               visibility: "triage",
               assignedTo: [],
               createdBy: user.id,
@@ -963,12 +1571,16 @@
       const btnEl = document.getElementById("btn-analyze");
 
       const rawText = inputEl.value.trim();
-      if (!rawText) return;
+      if (!rawText && triagePendingPhotos.length === 0) {
+        showBanner("Input Required", "Paste a message or attach a photo of a material list first.");
+        return;
+      }
 
       btnEl.textContent = "Analyzing...";
       feedbackEl.style.display = "none";
 
-      const result = await evaluateIncomingMessage(rawText, sourceEl.value, "Today", "");
+      const attachedPhotos = triagePendingPhotos.slice();
+      const result = await evaluateIncomingMessage(rawText, sourceEl.value, "Today", "", attachedPhotos);
       btnEl.textContent = "Analyze & Generate Work Task";
 
       if (!result || !result.isWorkRelated) {
@@ -984,6 +1596,8 @@
         source: sourceEl.value,
         due: result.due,
         checklist: result.checklist || [],
+        images: attachedPhotos,
+        notes: [],
         visibility: "triage",
         assignedTo: [],
         createdBy: currentUserId,
@@ -993,11 +1607,12 @@
       });
 
       inputEl.value = "";
+      triagePendingPhotos = [];
+      renderStagingPhotos();
+
       feedbackEl.style.display = "block";
       feedbackEl.style.color = "#34d399";
-      feedbackEl.textContent = result.checklist.length > 0
-        ? ("Created task \"" + result.title + "\" with " + result.checklist.length + " checklist items.")
-        : ("Created task \"" + result.title + "\" in Triage Queue.");
+      feedbackEl.textContent = "Created task \"" + result.title + "\" (" + (result.checklist ? result.checklist.length : 0) + " checklist items, " + attachedPhotos.length + " photo(s)).";
 
       pushStateToCloud("New Work Item Ready", result.title + " added to Triage Queue.", "ADMINS");
     }
@@ -1055,7 +1670,9 @@
         const remoteTasks = normalizeArray(remoteData.tasks).map(function(t) {
           return Object.assign({}, t, {
             assignedTo: normalizeArray(t.assignedTo),
-            checklist: normalizeArray(t.checklist)
+            checklist: normalizeArray(t.checklist),
+            images: normalizeArray(t.images),
+            notes: normalizeArray(t.notes)
           });
         });
 
@@ -1067,7 +1684,13 @@
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         updateSyncIndicator(true);
-        renderAll();
+
+        // Avoid re-rendering the task list while a user is actively typing a task note
+        const activeEl = document.activeElement;
+        const isTypingNote = activeEl && activeEl.id && activeEl.id.indexOf("note-input-") === 0;
+        if (!isTypingNote) {
+          renderAll();
+        }
 
         if (state.lastNotification) {
           checkAndFireNotification(state.lastNotification, false);
@@ -1192,6 +1815,8 @@
     function logoutUser() {
       currentUserId = null;
       localStorage.removeItem(SESSION_USER_KEY);
+      closeEditModal();
+      closeImageViewer();
       renderAll();
     }
 
@@ -1267,6 +1892,7 @@
       const due = dueInput.value.trim() || "Today";
       const checklist = parseManualChecklistText(checklistInput.value);
       const assignedIds = creatorSelectedUsers.slice();
+      const attachedPhotos = creatorPendingPhotos.slice();
       const names = assignedIds.map(function(id) { return getUserName(id); }).join(", ");
 
       state.tasks.unshift({
@@ -1275,6 +1901,8 @@
         source: "MANUAL",
         due: due,
         checklist: checklist,
+        images: attachedPhotos,
+        notes: [],
         visibility: "assigned",
         assignedTo: assignedIds,
         createdBy: adminUser.id,
@@ -1287,6 +1915,8 @@
       checklistInput.value = "";
       dueInput.value = "";
       creatorSelectedUsers = [];
+      creatorPendingPhotos = [];
+      renderStagingPhotos();
 
       pushStateToCloud("New Task Assignment", "Assigned to " + names + ": " + title + " (Due: " + due + ")", assignedIds);
     }
@@ -1397,7 +2027,7 @@
       const ids = normalizeArray(assignedToField);
       if (ids.length === 0) return '<span class="assignee-pill">Unassigned</span>';
       return ids.map(function(id) {
-        return '<span class="assignee-pill">' + getUserName(id) + '</span>';
+        return '<span class="assignee-pill">' + escapeHtmlAttr(getUserName(id)) + '</span>';
       }).join(" ");
     }
 
@@ -1418,7 +2048,7 @@
         const mark = item.done ? "✓" : "";
         return '<div class="' + rowClass + '" onclick="toggleChecklistItem(\'' + task.id + '\', \'' + item.id + '\')">' +
           '<div class="sub-check">' + mark + '</div>' +
-          '<div class="checklist-item-text">' + item.text + '</div>' +
+          '<div class="checklist-item-text">' + escapeHtmlAttr(item.text) + '</div>' +
         '</div>';
       }).join("");
 
@@ -1438,7 +2068,7 @@
       const prevLoginSel = loginSelect.value;
       loginSelect.innerHTML = state.users.map(function(u) {
         const roleLabel = (u.role || "member").toUpperCase();
-        return '<option value="' + u.id + '">' + u.name + ' (' + roleLabel + ')</option>';
+        return '<option value="' + u.id + '">' + escapeHtmlAttr(u.name) + ' (' + roleLabel + ')</option>';
       }).join("");
       if (prevLoginSel && state.users.some(function(u) { return u.id === prevLoginSel; })) {
         loginSelect.value = prevLoginSel;
@@ -1484,7 +2114,7 @@
           const isSel = creatorSelectedUsers.indexOf(u.id) !== -1;
           const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
           return '<div class="' + rowCls + '" onclick="toggleCreatorUser(\'' + u.id + '\')">' +
-            '<span>' + u.name + ' (' + (u.role || "member").toUpperCase() + ')</span>' +
+            '<span>' + escapeHtmlAttr(u.name) + ' (' + (u.role || "member").toUpperCase() + ')</span>' +
             '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
           '</div>';
         }).join("");
@@ -1511,19 +2141,22 @@
             const isSel = selectedForThis.indexOf(u.id) !== -1;
             const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
             return '<div class="' + rowCls + '" onclick="toggleTriageUser(\'' + t.id + '\', \'' + u.id + '\')">' +
-              '<span>' + u.name + '</span>' +
+              '<span>' + escapeHtmlAttr(u.name) + '</span>' +
               '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
             '</div>';
           }).join("");
 
           return '<div class="card task-card">' +
-            '<div class="task-meta">' + getSourceBadge(t.source) + '<span class="task-sub">Due: ' + (t.due || "Today") + '</span></div>' +
-            '<div class="task-title">' + t.title + '</div>' +
+            '<div class="task-meta">' + getSourceBadge(t.source) + '<span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderTaskPhotosHtml(t) +
             renderChecklistHtml(t) +
+            renderTaskNotesHtml(t, isAdmin) +
             '<label class="form-label" style="margin-top:6px;">Tap Team Members to Assign</label>' +
             '<div class="user-select-grid">' + userRows + '</div>' +
             '<div class="btn-stack">' +
               '<button class="btn" onclick="assignTriageItem(\'' + t.id + '\')">Assign Selected &amp; Send Notification</button>' +
+              '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Checklist &amp; Photos</button>' +
               '<button class="btn btn-danger-outline" onclick="dismissTriageItem(\'' + t.id + '\')">Dismiss Item</button>' +
             '</div>' +
           '</div>';
@@ -1536,7 +2169,7 @@
         }));
         document.getElementById("admin-filter-bar").innerHTML = chips.map(function(c) {
           const cls = adminFilterUserId === c.id ? "chip active" : "chip";
-          return '<button class="' + cls + '" onclick="setAdminFilter(\'' + c.id + '\')">' + c.label + '</button>';
+          return '<button class="' + cls + '" onclick="setAdminFilter(\'' + c.id + '\')">' + escapeHtmlAttr(c.label) + '</button>';
         }).join("");
       }
 
@@ -1575,20 +2208,23 @@
           const cardCls = t.completed ? "card task-card completed" : "card task-card";
           const btnCls = t.completed ? "btn btn-secondary" : "btn btn-success";
           const statusHtml = t.completed
-            ? ('<div class="done-stamp">Completed by ' + getUserName(t.completedBy) + ' at ' + t.completedAt + '</div>')
-            : ('<div class="task-sub">Assigned by ' + getUserName(t.createdBy) + '</div>');
-          const deleteHtml = isAdmin
-            ? ('<button class="btn btn-danger-outline" onclick="deleteTask(\'' + t.id + '\')">Delete Task</button>')
+            ? ('<div class="done-stamp">Completed by ' + escapeHtmlAttr(getUserName(t.completedBy)) + ' at ' + escapeHtmlAttr(t.completedAt) + '</div>')
+            : ('<div class="task-sub">Assigned by ' + escapeHtmlAttr(getUserName(t.createdBy)) + '</div>');
+          const adminButtonsHtml = isAdmin
+            ? ('<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Checklist &amp; Photos</button>' +
+               '<button class="btn btn-danger-outline" onclick="deleteTask(\'' + t.id + '\')">Delete Task</button>')
             : "";
 
           return '<div class="' + cardCls + '">' +
-            '<div class="task-meta">' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' <span class="task-sub">Due: ' + (t.due || "Today") + '</span></div>' +
-            '<div class="task-title">' + t.title + '</div>' +
+            '<div class="task-meta">' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' <span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderTaskPhotosHtml(t) +
             renderChecklistHtml(t) +
+            renderTaskNotesHtml(t, isAdmin) +
             statusHtml +
             '<div class="btn-stack" style="margin-top: 4px;">' +
               '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
-              deleteHtml +
+              adminButtonsHtml +
             '</div>' +
           '</div>';
         }).join("");
@@ -1603,8 +2239,8 @@
           return '<div class="card">' +
             '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">' +
               '<div>' +
-                '<div style="font-weight:600; font-size:16px; margin-bottom:4px;">' + u.name + '</div>' +
-                '<div style="font-size:13px; color:var(--muted);">PIN: ' + (u.pin || "1234") + '</div>' +
+                '<div style="font-weight:600; font-size:16px; margin-bottom:4px;">' + escapeHtmlAttr(u.name) + '</div>' +
+                '<div style="font-size:13px; color:var(--muted);">PIN: ' + escapeHtmlAttr(u.pin || "1234") + '</div>' +
               '</div>' +
               '<span class="' + roleCls + '">' + (u.role || "member").toUpperCase() + '</span>' +
             '</div>' +
