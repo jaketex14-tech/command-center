@@ -227,6 +227,18 @@
       margin-bottom: 14px;
     }
 
+    .scan-status-banner {
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid var(--accent);
+      color: #93c5fd;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
     .section-title {
       font-size: 12px;
       font-weight: 700;
@@ -527,7 +539,6 @@
       margin-bottom: 10px;
     }
 
-    /* Scan Log Entry Card */
     .scan-log-card {
       background: var(--card);
       border: 1px solid var(--card-border);
@@ -729,8 +740,9 @@
 
         <label class="form-label">Attached Photos</label>
         <div id="edit-photos-container" class="photo-grid"></div>
+        <div id="edit-scan-status" class="scan-status-banner hidden">Scanning photo for checklist items...</div>
         <input type="file" id="file-edit-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'edit')" />
-        <button class="btn btn-secondary" onclick="document.getElementById('file-edit-photo').click()" style="margin-bottom:20px;">Attach Additional Photo</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('file-edit-photo').click()" style="margin-bottom:20px;">Attach Photo &amp; Extract Checklist</button>
 
         <label class="form-label">Current Checklist Items</label>
         <div id="edit-checklist-container"></div>
@@ -788,16 +800,17 @@
       <div id="panel-triageCreator" class="dropdown-panel hidden">
         <div class="card-title">Intelligent Task, List &amp; Photo Analyzer</div>
         <div class="card-desc">
-          Paste a message or attach a picture of a material list. Work items are converted into tasks, attached photos are included on the task card, and lists are split into individual checkboxes.
+          Paste a message or attach a picture of a material list. Attached list photos are scanned into checklist items automatically.
         </div>
-
-        <label class="form-label">Message, Reminder, or Material List (Optional if attaching a photo)</label>
-        <textarea id="triage-manual-input" placeholder="All 6 ft forms for Bingham.&#10;• 20 - 2'x6'&#10;• 8 - 14&quot;&#10;• 4 - outside corners"></textarea>
 
         <label class="form-label">Photo of Material List or Job Site (Optional)</label>
         <div id="triage-photo-preview" class="photo-grid"></div>
+        <div id="triage-scan-status" class="scan-status-banner hidden">Scanning photo for checklist items...</div>
         <input type="file" id="file-triage-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'triage')" />
-        <button class="btn btn-secondary" onclick="document.getElementById('file-triage-photo').click()" style="margin-bottom:16px;">Attach Photo of Material List / Site</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('file-triage-photo').click()" style="margin-bottom:16px;">Attach Photo &amp; Extract Checklist</button>
+
+        <label class="form-label">Message, Reminder, or Extracted Material List</label>
+        <textarea id="triage-manual-input" placeholder="All 6 ft forms for Bingham.&#10;• 20 - 2'x6'&#10;• 8 - 14&quot;&#10;• 4 - outside corners"></textarea>
 
         <label class="form-label">Source Type</label>
         <select id="triage-source-select">
@@ -832,16 +845,17 @@
         <div id="panel-taskCreator" class="dropdown-panel hidden">
           <div class="card-title" style="margin-bottom: 14px;">Create &amp; Assign Task</div>
 
-          <label class="form-label">Task Title (Optional if attaching a photo list)</label>
+          <label class="form-label">Task Title</label>
           <input type="text" id="new-task-title" placeholder="e.g. All 6 ft forms for Bingham" />
-
-          <label class="form-label">Checklist Items (Optional — One per line)</label>
-          <textarea id="new-task-checklist" placeholder="4 - 10&quot; x 6'&#10;3 - 16&quot; x 6'&#10;20 - 2'x6'"></textarea>
 
           <label class="form-label">Task Photos / Material List Pictures (AI Vision Scanner)</label>
           <div id="creator-photo-preview" class="photo-grid"></div>
+          <div id="creator-scan-status" class="scan-status-banner hidden">Scanning photo for checklist items...</div>
           <input type="file" id="file-creator-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'creator')" />
           <button class="btn btn-secondary" onclick="document.getElementById('file-creator-photo').click()" style="margin-bottom:16px;">Attach Photo &amp; Extract Checklist</button>
+
+          <label class="form-label">Checklist Items (One per line — Auto-filled when scanning a photo)</label>
+          <textarea id="new-task-checklist" placeholder="4 - 10&quot; x 6'&#10;3 - 16&quot; x 6'&#10;20 - 2'x6'"></textarea>
 
           <label class="form-label">Due Time / Deadline</label>
           <input type="text" id="new-task-due" placeholder="e.g. Today 3:00 PM" />
@@ -911,7 +925,6 @@
           <button class="btn btn-secondary" onclick="pollNativePhoneCaptures(true)">Scan Phone Calendar &amp; Messages Now</button>
         </div>
 
-        <!-- Expandable Smart Filter Rules inside Automatic Phone Capture -->
         <button class="dropdown-trigger sub-trigger" onclick="toggleDropdownPanel('captureRules')">
           <span>Configure Smart Filter Rules</span>
           <span id="chev-captureRules" class="dropdown-chevron">Open</span>
@@ -932,7 +945,6 @@
           <button class="btn" onclick="saveFilterSettings()">Save Filter Rules</button>
         </div>
 
-        <!-- Expandable Recent Scan Log inside Automatic Phone Capture -->
         <button class="dropdown-trigger sub-trigger" style="margin-bottom: 0;" onclick="toggleDropdownPanel('scanLog')">
           <span>View Recent Scan Log</span>
           <span id="chev-scanLog" class="dropdown-chevron">Open</span>
@@ -949,7 +961,7 @@
 
       <!-- 4. GEMINI API KEY (DROPDOWN BUTTON) -->
       <button id="btn-toggle-gemini-key" class="dropdown-trigger" onclick="toggleDropdownPanel('geminiKey')">
-        <span>Gemini API Key</span>
+        <span id="gemini-key-trigger-label">Gemini API Key</span>
         <span id="chev-geminiKey" class="dropdown-chevron">Open</span>
       </button>
 
@@ -984,6 +996,7 @@
 
   <script>
     const STORAGE_KEY = "unified_command_center_v12";
+    const LEGACY_KEYS = ["unified_command_center_v11", "unified_command_center_v10", "unified_command_center_v9"];
     const SESSION_USER_KEY = "command_center_logged_in_user";
     const FIREBASE_URL_KEY = "command_center_firebase_url";
     const LAST_NOTIF_KEY = "command_center_last_notif_id";
@@ -1027,6 +1040,32 @@
       return false;
     }
 
+    // Prevents background sync from re-rendering the DOM while the user is typing in ANY field
+    function isUserTyping() {
+      const el = document.activeElement;
+      if (!el) return false;
+      const tag = (el.tagName || "").toUpperCase();
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || Boolean(el.isContentEditable);
+    }
+
+    function isEditModalOpen() {
+      const modal = document.getElementById("edit-modal");
+      return modal && !modal.classList.contains("hidden");
+    }
+
+    function computeStateHash(st) {
+      try {
+        return JSON.stringify({
+          k: st.geminiApiKey || "",
+          f: st.filterSettings || {},
+          u: st.users || [],
+          t: st.tasks || []
+        });
+      } catch (e) {
+        return String(Date.now());
+      }
+    }
+
     function getFirebaseUrl() {
       const saved = localStorage.getItem(FIREBASE_URL_KEY);
       if (saved && saved.startsWith("https://")) {
@@ -1049,12 +1088,14 @@
     };
 
     let state = loadLocalState();
+    let lastRenderedHash = "";
     let currentUserId = localStorage.getItem(SESSION_USER_KEY) || null;
     let activeTab = "tasks";
     let adminFilterUserId = "ALL";
     let creatorSelectedUsers = [];
     let triageSelections = {};
     let cloudPollTimer = null;
+    let activePhotoScanPromise = null;
 
     let triagePendingPhotos = [];
     let creatorPendingPhotos = [];
@@ -1091,6 +1132,10 @@
       if (panelKey === "scanLog" && nextState) {
         renderScanLog();
       }
+      if (panelKey === "geminiKey" && nextState) {
+        const keyInput = document.getElementById("gemini-key-input");
+        if (keyInput && state.geminiApiKey) keyInput.value = state.geminiApiKey;
+      }
     }
 
     function getFilterSettings() {
@@ -1099,7 +1144,21 @@
 
     function loadLocalState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        let raw = localStorage.getItem(STORAGE_KEY);
+        let recoveredKey = "";
+        for (let i = 0; i < LEGACY_KEYS.length; i++) {
+          const oldRaw = localStorage.getItem(LEGACY_KEYS[i]);
+          if (oldRaw) {
+            try {
+              const oldParsed = JSON.parse(oldRaw);
+              if (oldParsed && oldParsed.geminiApiKey && !recoveredKey) {
+                recoveredKey = oldParsed.geminiApiKey;
+              }
+              if (!raw) raw = oldRaw;
+            } catch (e2) {}
+          }
+        }
+
         if (!raw) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SHARED_STATE));
           return JSON.parse(JSON.stringify(DEFAULT_SHARED_STATE));
@@ -1115,7 +1174,7 @@
           });
         });
         return {
-          geminiApiKey: parsed.geminiApiKey || "",
+          geminiApiKey: parsed.geminiApiKey || recoveredKey || "",
           filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, parsed.filterSettings || {}),
           users: users.length > 0 ? users : DEFAULT_SHARED_STATE.users,
           tasks: tasks,
@@ -1150,7 +1209,7 @@
       });
       while (log.length > 15) log.pop();
       localStorage.setItem(SCAN_LOG_KEY, JSON.stringify(log));
-      if (dropdownState.scanLog) renderScanLog();
+      if (dropdownState.scanLog && !isUserTyping()) renderScanLog();
     }
 
     function clearScanLog() {
@@ -1284,7 +1343,7 @@
     }
 
     /********************************************************************
-     * PHOTO COMPRESSION & STAGING
+     * PHOTO COMPRESSION, IMMEDIATE AI VISION SCANNER & STAGING
      ********************************************************************/
     function compressImageFile(file) {
       return new Promise(function(resolve, reject) {
@@ -1292,7 +1351,7 @@
         reader.onload = function(e) {
           const img = new Image();
           img.onload = function() {
-            const maxDim = 1200;
+            const maxDim = 1024;
             let w = img.width;
             let h = img.height;
             if (w > maxDim || h > maxDim) {
@@ -1309,7 +1368,7 @@
             canvas.height = h;
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL("image/jpeg", 0.78));
+            resolve(canvas.toDataURL("image/jpeg", 0.74));
           };
           img.onerror = reject;
           img.src = e.target.result;
@@ -1319,13 +1378,107 @@
       });
     }
 
+    async function extractChecklistFromPhotosWithGemini(photosArray) {
+      const apiKey = (state.geminiApiKey || "").trim();
+      if (!apiKey) {
+        showBanner("Gemini API Key Needed", "Open Settings -> Gemini API Key and save your key to scan checklists from photos.");
+        return null;
+      }
+
+      const commaParts = [];
+      for (let i = 0; i < photosArray.length; i++) {
+        const commaIdx = photosArray[i].indexOf(",");
+        if (commaIdx !== -1) {
+          commaParts.push({
+            inline_data: {
+              mime_type: "image/jpeg",
+              data: photosArray[i].slice(commaIdx + 1)
+            }
+          });
+        }
+      }
+      if (commaParts.length === 0) return null;
+
+      const prompt = "Read this image of a handwritten or printed material/task list.\n" +
+        "Extract every individual line item into a JSON array of strings under the key \"checklist\", and provide a short \"title\" string.\n" +
+        "CRITICAL RULES:\n" +
+        "- Keep ALL quantities, numbers, dashes, feet ('), and inches (\") intact on every line (for example: \"4 - 10\\\" x 6'\", \"3 - 16\\\" x 4'\", \"20 - 2'x6'\", \"8 turnbuckles\").\n" +
+        "- Ignore crossed-out or scribbled-out mistakes (such as a scribbled number next to a clean number) and only output the clean intended quantity and dimension.\n" +
+        "- Return ONLY valid JSON in this exact format: {\"title\": \"Material List\", \"checklist\": [\"item 1\", \"item 2\"]}";
+
+      const requestParts = [{ text: prompt }].concat(commaParts);
+      const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+      let lastErrorMsg = "";
+
+      for (let m = 0; m < modelsToTry.length; m++) {
+        const modelName = modelsToTry[m];
+        try {
+          const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + encodeURIComponent(apiKey), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: requestParts }],
+              generationConfig: {
+                temperature: 0.1
+              }
+            })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(function() { return {}; });
+            lastErrorMsg = (errData && errData.error && errData.error.message) ? errData.error.message : ("HTTP " + response.status);
+            continue;
+          }
+
+          const data = await response.json();
+          const rawOut = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+            ? data.candidates[0].content.parts[0].text
+            : "";
+
+          if (!rawOut) continue;
+
+          // Parse JSON object or fallback to line-by-line extraction
+          const cleaned = rawOut.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+          let items = [];
+          let title = "Material List";
+
+          try {
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned);
+            if (Array.isArray(parsed)) {
+              items = parsed.map(String);
+            } else if (parsed && Array.isArray(parsed.checklist)) {
+              items = parsed.checklist.map(String);
+              if (parsed.title) title = String(parsed.title);
+            }
+          } catch (parseErr) {
+            items = cleaned.split(/\r?\n/).map(cleanBulletPrefix).filter(Boolean);
+          }
+
+          items = items.map(function(s) { return s.trim(); }).filter(Boolean);
+          if (items.length > 0) {
+            return { title: title, items: items };
+          }
+        } catch (netErr) {
+          lastErrorMsg = netErr && netErr.message ? netErr.message : "Network request failed";
+        }
+      }
+
+      if (lastErrorMsg) {
+        showBanner("Photo Scan Issue", "Gemini Vision could not scan photo: " + lastErrorMsg);
+      }
+      return null;
+    }
+
     async function handlePhotoInput(inputElem, targetMode) {
       const files = inputElem.files ? Array.from(inputElem.files) : [];
       if (files.length === 0) return;
 
+      const newlyAddedPhotos = [];
       for (let i = 0; i < files.length; i++) {
         try {
           const dataUrl = await compressImageFile(files[i]);
+          newlyAddedPhotos.push(dataUrl);
           if (targetMode === "triage") {
             triagePendingPhotos.push(dataUrl);
           } else if (targetMode === "creator") {
@@ -1344,6 +1497,62 @@
         renderEditModalContents(task);
       } else {
         renderStagingPhotos();
+      }
+
+      // Immediately scan newly attached photo(s) into checklist items!
+      if (newlyAddedPhotos.length > 0) {
+        const statusBannerId = targetMode === "triage"
+          ? "triage-scan-status"
+          : (targetMode === "creator" ? "creator-scan-status" : "edit-scan-status");
+        const statusBanner = document.getElementById(statusBannerId);
+        if (statusBanner) {
+          statusBanner.textContent = "Scanning photo for checklist items...";
+          statusBanner.classList.remove("hidden");
+        }
+
+        activePhotoScanPromise = (async function() {
+          const scanResult = await extractChecklistFromPhotosWithGemini(newlyAddedPhotos);
+          if (statusBanner) statusBanner.classList.add("hidden");
+
+          if (scanResult && scanResult.items && scanResult.items.length > 0) {
+            if (targetMode === "creator") {
+              const titleEl = document.getElementById("new-task-title");
+              const chkEl = document.getElementById("new-task-checklist");
+              if (titleEl && !titleEl.value.trim()) {
+                titleEl.value = scanResult.title || "Material List";
+              }
+              if (chkEl) {
+                const existing = chkEl.value.trim();
+                chkEl.value = existing ? (existing + "\n" + scanResult.items.join("\n")) : scanResult.items.join("\n");
+              }
+              showBanner("Checklist Extracted", "Scanned " + scanResult.items.length + " items from photo into the checklist box.");
+            } else if (targetMode === "triage") {
+              const triageInput = document.getElementById("triage-manual-input");
+              if (triageInput) {
+                const header = scanResult.title || "Material List";
+                const formatted = header + "\n" + scanResult.items.map(function(i) { return "• " + i; }).join("\n");
+                const existing = triageInput.value.trim();
+                triageInput.value = existing ? (existing + "\n" + formatted) : formatted;
+              }
+              showBanner("Checklist Extracted", "Scanned " + scanResult.items.length + " items from photo.");
+            } else if (targetMode === "edit") {
+              for (let k = 0; k < scanResult.items.length; k++) {
+                editDraftChecklist.push({
+                  id: "chk_" + Date.now() + "_" + k,
+                  text: scanResult.items[k],
+                  done: false,
+                  doneBy: null
+                });
+              }
+              const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+              renderEditModalContents(task);
+              showBanner("Checklist Extracted", "Added " + scanResult.items.length + " scanned items to this task.");
+            }
+          }
+        })();
+
+        await activePhotoScanPromise;
+        activePhotoScanPromise = null;
       }
     }
 
@@ -1430,6 +1639,7 @@
       });
       task.notes = notes;
       inputEl.value = "";
+      inputEl.blur();
 
       const assignedIds = normalizeArray(task.assignedTo);
       let targetAudience = "ADMINS";
@@ -1594,7 +1804,11 @@
       }
     }
 
-    function saveTaskEdits() {
+    async function saveTaskEdits() {
+      if (activePhotoScanPromise) {
+        await activePhotoScanPromise;
+      }
+
       const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
       const actor = getCurrentUser();
       if (!task || !actor) return;
@@ -1654,7 +1868,6 @@
       const cleanSender = String(senderName || "").trim().toLowerCase();
       const cleanText = String(text || "").trim();
 
-      // 1. Check Source Toggles (only for automatic background captures)
       if (!isManualEntry) {
         if (sourceType === "SMS" && !fs.captureSms) {
           return { ignored: true, reason: "SMS auto-capture is turned off" };
@@ -1667,7 +1880,6 @@
         }
       }
 
-      // 2. Check Ignored Senders List
       if (cleanSender && fs.ignoredSenders) {
         const blockedList = fs.ignoredSenders.split(",").map(function(s) { return s.trim().toLowerCase(); }).filter(Boolean);
         for (let i = 0; i < blockedList.length; i++) {
@@ -1677,23 +1889,19 @@
         }
       }
 
-      // 3. Check Android System / Background Status Notifications
       if (/^(?:\d+\s+new\s+messages?|messages\s+is\s+doing\s+work|syncing\s+messages|checking\s+for\s+messages|connected\s+to\s+chat)/i.test(cleanText)) {
         return { ignored: true, reason: "System status notification" };
       }
 
-      // 4. Check RCS / SMS Reactions (e.g. Liked "...", Loved "...", Emphasized "...")
       if (/^(?:liked|loved|laughed at|emphasized|questioned|disliked|reacted\b.*?\bto)\s+[“"'«]/i.test(cleanText)) {
         return { ignored: true, reason: "Message reaction" };
       }
 
-      // 5. Check Short Conversational Acknowledgments & Replies
       const strippedReply = cleanText.replace(/[.!?👍👌🙏]+$/g, "").trim();
       if (/^(?:ok|okay|k|kk|yep|yup|yes|yeah|no|nope|nah|sounds good|sound good|10-4|copy|copy that|got it|will do|on it|thanks|thank you|thx|ty|appreciate it|on my way|omw|be right there|heading that way|here|i'm here|im here|just left|alright|cool|bet|nice|great|perfect|see you soon|talk soon)$/i.test(strippedReply)) {
         return { ignored: true, reason: "Short conversational acknowledgment" };
       }
 
-      // 6. Check Automated 2FA Codes, Bank Alerts, Carrier & Retail Delivery Promos
       if (/\b(?:verification code|security code|one-time passcode|otp|do not share this code|unsubscribe|reply stop|text stop to end|your package has shipped|out for delivery from amazon|fedex|ups My Choice|uspsInformedDelivery|autopay|statement is ready)\b/i.test(cleanText)) {
         return { ignored: true, reason: "Automated code, promo, or carrier alert" };
       }
@@ -1786,7 +1994,6 @@
       const photos = normalizeArray(attachedPhotos);
       if (!text && photos.length === 0) return null;
 
-      // Step 1: Run Hard Ignore Filter first (unless photos are attached)
       if (photos.length === 0) {
         const hardCheck = checkHardIgnoreRules(text, sourceType, senderName, isManualEntry);
         if (hardCheck.ignored) {
@@ -1794,58 +2001,63 @@
         }
       }
 
+      // If photos are attached and no text checklist was parsed yet, run the dedicated photo scanner
+      if (photos.length > 0 && !text) {
+        const scanRes = await extractChecklistFromPhotosWithGemini(photos);
+        if (scanRes && scanRes.items && scanRes.items.length > 0) {
+          return {
+            isWorkRelated: true,
+            title: scanRes.title || "Material List",
+            due: defaultDue || "Today",
+            reason: "Scanned " + scanRes.items.length + " items from photo",
+            checklist: scanRes.items.map(function(item, idx) {
+              return { id: "chk_" + Date.now() + "_" + idx, text: item, done: false };
+            })
+          };
+        }
+        return {
+          isWorkRelated: true,
+          title: "Material List (Photo Attached)",
+          due: defaultDue || "Today",
+          reason: "Photo material list attached",
+          checklist: []
+        };
+      }
+
+      // If text is already a multi-line list (such as from immediate photo scan or pasted list), parse directly
+      const rawLines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+      if (isManualEntry && rawLines.length >= 2) {
+        const extracted = extractTitleAndChecklist(text, defaultDue, senderName);
+        return {
+          isWorkRelated: true,
+          title: extracted.title,
+          due: extracted.due,
+          reason: "Multi-line work checklist",
+          checklist: extracted.checklist
+        };
+      }
+
       const fs = getFilterSettings();
       const apiKey = (state.geminiApiKey || "").trim();
 
-      // Step 2: If Gemini API Key is configured, use context-aware Gemini 2.5 Flash classification
       if (apiKey) {
         try {
           const prompt = "You are a strict operations task filter and checklist extractor for a construction, excavation, concrete form, and fleet management team.\n" +
             "Known Work Contacts, Crew & Job Sites: " + (fs.workKeywords || "None specified") + "\n" +
             "Incoming Source: " + sourceType + (senderName ? (" | Sender: " + senderName) : "") + "\n" +
-            "Message Text: " + (text || "(Read all lines from the attached image)") + "\n\n" +
+            "Message Text: " + text + "\n\n" +
             "DECISION RULES FOR isWorkRelated:\n" +
-            "- Set isWorkRelated = TRUE ONLY if this is an actionable work task, material/form/equipment request, pickup/delivery instruction, machine repair/maintenance issue, job site schedule item, or an attached material list photo.\n" +
-            "- Set isWorkRelated = FALSE if this is personal/family chat (dinner, groceries, kids, casual check-ins), a non-actionable status reply ('I am here', 'Just left', 'Sounds good'), a greeting, spam, or a general question that is not a work task.\n" +
-            "- title: Use the header line if present, or a concise actionable task title.\n" +
-            "- checklist: If there are multiple materials/items in the text or photo, extract each line keeping ALL quantities, dashes, feet ('), and inches (\") intact (e.g. \"4 - 10\\\" x 6'\", \"20 - 2'x6'\"). Do NOT put the header title inside the checklist array.\n" +
-            "- reason: A brief 4-8 word explanation of why this was accepted as a work task or rejected.";
-
-          const parts = [{ text: prompt }];
-          for (let i = 0; i < photos.length; i++) {
-            const commaIdx = photos[i].indexOf(",");
-            if (commaIdx !== -1) {
-              parts.push({
-                inline_data: {
-                  mime_type: "image/jpeg",
-                  data: photos[i].slice(commaIdx + 1)
-                }
-              });
-            }
-          }
+            "- Set isWorkRelated = true ONLY if this is an actionable work task, material/form/equipment request, pickup/delivery instruction, machine repair/maintenance issue, or job site schedule item.\n" +
+            "- Set isWorkRelated = false if this is personal/family chat (dinner, groceries, kids, casual check-ins), a non-actionable status reply ('I am here', 'Just left', 'Sounds good'), a greeting, or spam.\n" +
+            "- checklist: If there are multiple materials/items, extract each line keeping ALL quantities, dashes, feet ('), and inches (\") intact.\n" +
+            "Return ONLY valid JSON: {\"isWorkRelated\": boolean, \"title\": string, \"due\": string, \"reason\": string, \"checklist\": string[]}";
 
           const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [{ parts: parts }],
-              generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                  type: "OBJECT",
-                  properties: {
-                    isWorkRelated: { type: "BOOLEAN" },
-                    title: { type: "STRING" },
-                    due: { type: "STRING" },
-                    reason: { type: "STRING" },
-                    checklist: {
-                      type: "ARRAY",
-                      items: { type: "STRING" }
-                    }
-                  },
-                  required: ["isWorkRelated", "title", "checklist", "reason"]
-                }
-              }
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.1 }
             })
           });
 
@@ -1854,15 +2066,16 @@
             let jsonText = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : null;
             if (jsonText) {
               jsonText = jsonText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-              let parsed = JSON.parse(jsonText);
+              const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+              let parsed = JSON.parse(jsonMatch ? jsonMatch[0] : jsonText);
               if (Array.isArray(parsed)) parsed = parsed[0] || {};
               const rawList = normalizeArray(parsed.checklist);
-              let finalTitle = parsed.title || text || "Material List";
+              let finalTitle = parsed.title || text || "Work Task";
               if (senderName && finalTitle.indexOf(senderName) === -1 && parsed.isWorkRelated) {
                 finalTitle = finalTitle + " (" + senderName + ")";
               }
               return {
-                isWorkRelated: photos.length > 0 ? true : Boolean(parsed.isWorkRelated),
+                isWorkRelated: Boolean(parsed.isWorkRelated),
                 title: finalTitle,
                 due: parsed.due || defaultDue || "Today",
                 reason: parsed.reason || (parsed.isWorkRelated ? "AI matched work task" : "AI filtered non-work message"),
@@ -1875,17 +2088,6 @@
         } catch (err) {}
       }
 
-      if (!text && photos.length > 0) {
-        return {
-          isWorkRelated: true,
-          title: "Material List (Photo Attached)",
-          due: defaultDue || "Today",
-          reason: "Photo material list attached",
-          checklist: []
-        };
-      }
-
-      // Step 3: Weighted Built-In Work Signal Scoring (Offline / No-API Fallback)
       return runBuiltInIntelligentParser(text, sourceType, defaultDue, senderName, photos.length > 0);
     }
 
@@ -1897,7 +2099,6 @@
       let score = 0;
       let reasons = [];
 
-      // Signal A: Multi-line bullet or quantity/dimension list (+3 points)
       const rawLines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
       const bulletCount = rawLines.filter(isLikelyBulletOrQuantityLine).length;
       if (bulletCount >= 2) {
@@ -1905,7 +2106,6 @@
         reasons.push("Multi-item quantity/material list");
       }
 
-      // Signal B: Matches configured Work Contacts, Crew, or Job Sites (+2 points)
       if (fs.workKeywords) {
         const customTerms = fs.workKeywords.split(",").map(function(s) { return s.trim().toLowerCase(); }).filter(Boolean);
         for (let i = 0; i < customTerms.length; i++) {
@@ -1918,33 +2118,28 @@
         }
       }
 
-      // Signal C: Construction, Excavation, Forms & Fleet Equipment Nouns (+2 points)
       const fieldNouns = /\b(concrete|rebar|lumber|trench|plate|plates|grinder|excavator|mini ex|skid steer|bobcat|loader|trailer|dump trailer|truck|f-150|silverado|crane|trowel|power trowel|fuel|diesel|hydraulic|job site|footing|footings|pour|forms|form|outside corners|inside corners|turnbuckles|flat ties|ties|stakes|grade|laser|transit|bucket|hose|fittings|plywood|2x4|2x6|4x4|anchor bolts|bolts|generator|compressor|pump|backhoe|dozer|culvert|gravel|base rock|topsoil|silt fence)\b/i;
       if (fieldNouns.test(lower)) {
         score += 2;
         reasons.push("Matched construction/equipment terms");
       }
 
-      // Signal D: Actionable Task Verbs (+1 point)
       const actionVerbs = /\b(need|needs|bring|pick up|pickup|drop off|deliver|delivery|load|unload|haul|move|check|fix|repair|service|replace|install|dig|excavate|set|strip|pour|order|grab|schedule|inspect)\b/i;
       if (actionVerbs.test(lower)) {
         score += 1;
         reasons.push("Actionable verb");
       }
 
-      // Signal E: Personal / Household Noise Penalty (-3 points)
       const personalNoise = /\b(dinner|supper|breakfast|groceries|milk|bread|eggs|kids|bedtime|movie|love you|miss you|netflix|doctor|dentist|pharmacy|birthday|anniversary)\b/i;
       if (personalNoise.test(lower)) {
         score -= 3;
         reasons.push("Personal/household topic");
       }
 
-      // Reminders & Calendar Events default to +1 since they are scheduled intentionally
       if (sourceType === "SAMSUNG" || sourceType === "CAL") {
         score += 1;
       }
 
-      // Require Score >= 2 for SMS (so a lone verb without work context is ignored)
       const requiredScore = sourceType === "SMS" ? 2 : 1;
       if (!hasPhotos && score < requiredScore) {
         return {
@@ -2102,6 +2297,11 @@
       const feedbackEl = document.getElementById("analyze-feedback");
       const btnEl = document.getElementById("btn-analyze");
 
+      if (activePhotoScanPromise) {
+        btnEl.textContent = "Finishing Photo Scan...";
+        await activePhotoScanPromise;
+      }
+
       const rawText = inputEl.value.trim();
       if (!rawText && triagePendingPhotos.length === 0) {
         showBanner("Input Required", "Paste a message or attach a photo of a material list first.");
@@ -2117,7 +2317,7 @@
 
       recordScanDecision({
         source: sourceEl.value,
-        sender: "Manual Test",
+        sender: "Manual Entry",
         text: rawText || "(Photo Scan)",
         accepted: Boolean(result && result.isWorkRelated),
         reason: result && result.reason ? result.reason : "Evaluated"
@@ -2158,6 +2358,9 @@
       pushStateToCloud("New Work Item Ready", result.title + " added to Triage Queue.", "ADMINS");
     }
 
+    /********************************************************************
+     * CLOUD SYNC (KEYBOARD-SAFE: ONLY RENDERS WHEN DATA CHANGES & NOT TYPING)
+     ********************************************************************/
     async function pushStateToCloud(notifyTitle, notifyBody, targetAudience) {
       if (notifyTitle && notifyBody) {
         state.lastNotification = {
@@ -2217,8 +2420,10 @@
           });
         });
 
+        const preservedKey = remoteData.geminiApiKey || state.geminiApiKey || "";
+
         state = {
-          geminiApiKey: remoteData.geminiApiKey || state.geminiApiKey || "",
+          geminiApiKey: preservedKey,
           filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, remoteData.filterSettings || state.filterSettings || {}),
           users: remoteUsers.length > 0 ? remoteUsers : DEFAULT_SHARED_STATE.users,
           tasks: remoteTasks,
@@ -2227,13 +2432,15 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         updateSyncIndicator(true);
 
-        const activeEl = document.activeElement;
-        const isTypingInput = activeEl && (
-          (activeEl.id && activeEl.id.indexOf("note-input-") === 0) ||
-          activeEl.id === "filter-work-keywords" ||
-          activeEl.id === "filter-ignored-senders"
-        );
-        if (!isTypingInput) {
+        // If local had a saved Gemini API key that wasn't in remote yet, sync it back up
+        if (preservedKey && !remoteData.geminiApiKey) {
+          pushStateToCloud();
+        }
+
+        // CRITICAL FIX: Never touch the DOM while the user's keyboard is open in ANY field or while editing a task,
+        // and never re-render if the underlying data hasn't changed since the last render.
+        const incomingHash = computeStateHash(state);
+        if (!isUserTyping() && !isEditModalOpen() && incomingHash !== lastRenderedHash) {
           renderAll();
         }
 
@@ -2252,8 +2459,10 @@
         pullStateFromCloud();
         cloudPollTimer = setInterval(function() {
           pullStateFromCloud();
-          pollNativePhoneCaptures(false);
-        }, 3000);
+          if (!isUserTyping() && !isEditModalOpen()) {
+            pollNativePhoneCaptures(false);
+          }
+        }, 3500);
       } else {
         updateSyncIndicator(false);
       }
@@ -2379,7 +2588,20 @@
       } else {
         creatorSelectedUsers.push(userId);
       }
-      renderAll();
+      renderCreatorUserGrid();
+    }
+
+    function renderCreatorUserGrid() {
+      const grid = document.getElementById("creator-user-grid");
+      if (!grid) return;
+      grid.innerHTML = state.users.map(function(u) {
+        const isSel = creatorSelectedUsers.indexOf(u.id) !== -1;
+        const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
+        return '<div class="' + rowCls + '" onclick="toggleCreatorUser(\'' + u.id + '\')">' +
+          '<span>' + escapeHtmlAttr(u.name) + ' (' + (u.role || "member").toUpperCase() + ')</span>' +
+          '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
+        '</div>';
+      }).join("");
     }
 
     function toggleTriageUser(taskId, userId) {
@@ -2424,30 +2646,39 @@
       const dueInput = document.getElementById("new-task-due");
       const createBtn = document.getElementById("btn-create-task");
 
-      let title = titleInput.value.trim();
-      const rawChecklistText = checklistInput.value.trim();
-      const attachedPhotos = creatorPendingPhotos.slice();
-
       if (creatorSelectedUsers.length === 0) {
         showBanner("Select Assignee", "Tap at least one team member to assign this task.");
         return;
       }
+
+      // Wait if an automatic photo scan is currently in progress
+      if (activePhotoScanPromise) {
+        createBtn.textContent = "Finishing Photo Scan...";
+        await activePhotoScanPromise;
+      }
+
+      let title = titleInput.value.trim();
+      const rawChecklistText = checklistInput.value.trim();
+      const attachedPhotos = creatorPendingPhotos.slice();
+
       if (!title && !rawChecklistText && attachedPhotos.length === 0) {
         showBanner("Input Required", "Enter a task title, checklist items, or attach a photo.");
         return;
       }
 
-      createBtn.textContent = "Scanning Photo & Publishing...";
+      createBtn.textContent = "Publishing...";
 
       let checklist = parseManualChecklistText(rawChecklistText);
 
+      // If photos were attached and checklist box is still empty, scan now
       if (attachedPhotos.length > 0 && checklist.length === 0) {
-        const aiResult = await evaluateIncomingMessage(title, "MANUAL", dueInput.value.trim() || "Today", "", attachedPhotos, true);
-        if (aiResult) {
-          if (!title && aiResult.title) title = aiResult.title;
-          if (aiResult.checklist && aiResult.checklist.length > 0) {
-            checklist = aiResult.checklist;
-          }
+        createBtn.textContent = "Scanning Photo List...";
+        const scanRes = await extractChecklistFromPhotosWithGemini(attachedPhotos);
+        if (scanRes && scanRes.items && scanRes.items.length > 0) {
+          if (!title && scanRes.title) title = scanRes.title;
+          checklist = scanRes.items.map(function(txt, idx) {
+            return { id: "chk_" + Date.now() + "_" + idx, text: txt, done: false };
+          });
         }
       }
 
@@ -2542,8 +2773,9 @@
     function saveGeminiKey() {
       const keyInput = document.getElementById("gemini-key-input");
       state.geminiApiKey = keyInput.value.trim();
+      keyInput.blur();
       toggleDropdownPanel("geminiKey", false);
-      pushStateToCloud("AI Settings Updated", "Gemini API key saved.", "ADMINS");
+      pushStateToCloud("AI Settings Updated", "Gemini API key saved and active for photo scanning.", "ADMINS");
     }
 
     function addNewUser() {
@@ -2561,6 +2793,7 @@
         pin: pin
       });
       nameInput.value = "";
+      nameInput.blur();
       toggleDropdownPanel("addUser", false);
       pushStateToCloud("Account Created", "New account created for " + name + ".", "ADMINS");
     }
@@ -2630,15 +2863,18 @@
       state.users = normalizeArray(state.users);
       if (state.users.length === 0) state.users = DEFAULT_SHARED_STATE.users.slice();
       state.tasks = normalizeArray(state.tasks);
+      lastRenderedHash = computeStateHash(state);
 
       const loginSelect = document.getElementById("login-user-select");
-      const prevLoginSel = loginSelect.value;
-      loginSelect.innerHTML = state.users.map(function(u) {
-        const roleLabel = (u.role || "member").toUpperCase();
-        return '<option value="' + u.id + '">' + escapeHtmlAttr(u.name) + ' (' + roleLabel + ')</option>';
-      }).join("");
-      if (prevLoginSel && state.users.some(function(u) { return u.id === prevLoginSel; })) {
-        loginSelect.value = prevLoginSel;
+      if (document.activeElement !== loginSelect) {
+        const prevLoginSel = loginSelect.value;
+        loginSelect.innerHTML = state.users.map(function(u) {
+          const roleLabel = (u.role || "member").toUpperCase();
+          return '<option value="' + u.id + '">' + escapeHtmlAttr(u.name) + ' (' + roleLabel + ')</option>';
+        }).join("");
+        if (prevLoginSel && state.users.some(function(u) { return u.id === prevLoginSel; })) {
+          loginSelect.value = prevLoginSel;
+        }
       }
 
       const user = getCurrentUser();
@@ -2676,14 +2912,14 @@
       document.getElementById("nav-team").classList.toggle("active", activeTab === "team");
 
       if (isAdmin) {
-        document.getElementById("creator-user-grid").innerHTML = state.users.map(function(u) {
-          const isSel = creatorSelectedUsers.indexOf(u.id) !== -1;
-          const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
-          return '<div class="' + rowCls + '" onclick="toggleCreatorUser(\'' + u.id + '\')">' +
-            '<span>' + escapeHtmlAttr(u.name) + ' (' + (u.role || "member").toUpperCase() + ')</span>' +
-            '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
-          '</div>';
-        }).join("");
+        renderCreatorUserGrid();
+
+        const keyTriggerLabel = document.getElementById("gemini-key-trigger-label");
+        if (keyTriggerLabel) {
+          keyTriggerLabel.innerHTML = state.geminiApiKey
+            ? 'Gemini API Key <span style="color:#34d399; font-size:12px; margin-left:6px;">(Saved &amp; Active)</span>'
+            : 'Gemini API Key <span style="color:#fbbf24; font-size:12px; margin-left:6px;">(Not Set)</span>';
+        }
 
         const keyInput = document.getElementById("gemini-key-input");
         if (document.activeElement !== keyInput && state.geminiApiKey) {
