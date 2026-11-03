@@ -268,6 +268,7 @@
       text-align: center;
       display: block;
     }
+    .btn:active { background: var(--accent-hover); }
     .btn-success { background: var(--success); }
     .btn-secondary {
       background: var(--surface);
@@ -325,7 +326,6 @@
       font-weight: 600;
     }
 
-    /* Checklist Styles */
     .checklist-box {
       background: var(--surface);
       border: 1px solid var(--card-border);
@@ -390,7 +390,6 @@
       color: var(--muted);
     }
 
-    /* Task Photo Gallery & Previews */
     .photo-grid {
       display: flex;
       flex-direction: column;
@@ -419,7 +418,6 @@
       margin-top: 8px;
     }
 
-    /* Task Notes Section */
     .notes-box {
       background: var(--surface);
       border: 1px solid var(--card-border);
@@ -464,7 +462,6 @@
       margin-bottom: 10px;
     }
 
-    /* Modals (Edit Task & Fullscreen Image Viewer) */
     #edit-modal {
       position: fixed;
       top: 0;
@@ -626,7 +623,6 @@
     <button class="btn-text" onclick="logoutUser()">Sign Out</button>
   </header>
 
-  <!-- FULL-SCREEN IMAGE VIEWER -->
   <section id="image-viewer-modal" class="hidden">
     <div class="viewer-img-wrap">
       <img id="viewer-full-img" src="" alt="Task Attachment" />
@@ -634,7 +630,6 @@
     <button class="btn btn-secondary" onclick="closeImageViewer()">Close Photo Viewer</button>
   </section>
 
-  <!-- FULL-SCREEN TASK & CHECKLIST EDITOR -->
   <section id="edit-modal" class="hidden">
     <div class="edit-modal-inner">
       <div class="card">
@@ -673,7 +668,6 @@
   </section>
 
   <main>
-    <!-- LOGIN SCREEN -->
     <section id="login-screen">
       <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block;">
         <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#2563eb" stroke-width="3"/>
@@ -698,7 +692,6 @@
       <button class="btn" onclick="handleLogin()">Sign In</button>
     </section>
 
-    <!-- TAB 1: INBOX & TRIAGE -->
     <section id="tab-triage" class="hidden">
       <div id="native-listener-card" class="card hidden">
         <div class="card-title">Automatic Phone Capture</div>
@@ -743,21 +736,20 @@
       <div id="triage-list"></div>
     </section>
 
-    <!-- TAB 2: TASK BOARD -->
     <section id="tab-tasks" class="hidden">
       <div id="admin-task-creator" class="card">
         <div class="card-title" style="margin-bottom: 14px;">Create &amp; Assign Task</div>
 
-        <label class="form-label">Task Title</label>
+        <label class="form-label">Task Title (Optional if attaching a photo list)</label>
         <input type="text" id="new-task-title" placeholder="e.g. All 6 ft forms for Bingham" />
 
         <label class="form-label">Checklist Items (Optional — One per line)</label>
         <textarea id="new-task-checklist" placeholder="20 - 2'x6'&#10;8 - 14&quot;&#10;4 - outside corners"></textarea>
 
-        <label class="form-label">Task Photos (Optional)</label>
+        <label class="form-label">Task Photos / Material List Pictures (AI Vision Scanner)</label>
         <div id="creator-photo-preview" class="photo-grid"></div>
         <input type="file" id="file-creator-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'creator')" />
-        <button class="btn btn-secondary" onclick="document.getElementById('file-creator-photo').click()" style="margin-bottom:16px;">Attach Photo to Task</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('file-creator-photo').click()" style="margin-bottom:16px;">Attach Photo &amp; Extract Checklist</button>
 
         <label class="form-label">Due Time / Deadline</label>
         <input type="text" id="new-task-due" placeholder="e.g. Today 3:00 PM" />
@@ -765,7 +757,7 @@
         <label class="form-label">Tap Team Members to Assign</label>
         <div id="creator-user-grid" class="user-select-grid"></div>
 
-        <button class="btn" onclick="createAndAssignTask()">Publish &amp; Notify Assignees</button>
+        <button id="btn-create-task" class="btn" onclick="createAndAssignTask()">Publish &amp; Notify Assignees</button>
       </div>
 
       <div id="admin-filter-bar" class="filter-bar"></div>
@@ -777,7 +769,6 @@
       <div id="tasks-list"></div>
     </section>
 
-    <!-- TAB 3: SETTINGS & USERS -->
     <section id="tab-team" class="hidden">
       <div class="card">
         <div class="card-title">AI Task &amp; Photo List Intelligence</div>
@@ -828,7 +819,7 @@
   </nav>
 
   <script>
-    const STORAGE_KEY = "unified_command_center_v9";
+    const STORAGE_KEY = "unified_command_center_v10";
     const SESSION_USER_KEY = "command_center_logged_in_user";
     const FIREBASE_URL_KEY = "command_center_firebase_url";
     const LAST_NOTIF_KEY = "command_center_last_notif_id";
@@ -891,11 +882,9 @@
     let triageSelections = {};
     let cloudPollTimer = null;
 
-    // Staged Photo Arrays
     let triagePendingPhotos = [];
     let creatorPendingPhotos = [];
 
-    // Task Editor State
     let editingTaskId = null;
     let editDraftChecklist = [];
     let editDraftAssignees = [];
@@ -929,9 +918,6 @@
       }
     }
 
-    /********************************************************************
-     * PHOTO COMPRESSION, STAGING & FULLSCREEN VIEWER
-     ********************************************************************/
     function compressImageFile(file) {
       return new Promise(function(resolve, reject) {
         const reader = new FileReader();
@@ -1054,9 +1040,6 @@
       '</div>';
     }
 
-    /********************************************************************
-     * TEAM MEMBER & ADMIN TASK NOTES
-     ********************************************************************/
     function addTaskNote(taskId) {
       const inputEl = document.getElementById("note-input-" + taskId);
       if (!inputEl) return;
@@ -1080,7 +1063,6 @@
       task.notes = notes;
       inputEl.value = "";
 
-      // Notify Admins + Assignees when a note is added
       const assignedIds = normalizeArray(task.assignedTo);
       let targetAudience = "ADMINS";
       if (actor.role === "admin" && assignedIds.length > 0) {
@@ -1130,9 +1112,6 @@
       '</div>';
     }
 
-    /********************************************************************
-     * FULL TASK, CHECKLIST & PHOTO EDITOR
-     ********************************************************************/
     function openEditModal(taskId) {
       const task = state.tasks.find(function(t) { return t.id === taskId; });
       if (!task) return;
@@ -1299,9 +1278,6 @@
       pushStateToCloud(notifyHeading, notifyMsg, notifyTargets);
     }
 
-    /********************************************************************
-     * INTELLIGENT WORK FILTER, CHECKLIST & PHOTO VISION PARSER
-     ********************************************************************/
     async function evaluateIncomingMessage(rawText, sourceType, defaultDue, senderName, attachedPhotos) {
       const text = (rawText || "").trim();
       const photos = normalizeArray(attachedPhotos);
@@ -1310,7 +1286,7 @@
       const apiKey = (state.geminiApiKey || "").trim();
       if (apiKey) {
         try {
-          const prompt = "You are an operations task extractor for a construction and fleet team. Analyze this incoming " + sourceType + " item (and any attached image of a material list or job note).\nText: " + (text || "(See attached image)") + "\nRules:\n1. isWorkRelated: true if related to work, forms, concrete, materials, equipment, job sites, schedules, or errands (always true if an image of a list/note is attached).\n2. title: If there is a header line (e.g. 'All 6 ft forms for Bingham.'), use that as the title. Otherwise create a concise task title.\n3. checklist: Extract each individual item/material line from the text or image into this array, keeping ALL quantities, numbers, dashes, feet ('), and inches (\") intact (e.g. \"20 - 2'x6'\", \"8 - 14\\\"\", \"8 turnbuckles\"). Do NOT include the header line inside the checklist array.\nReturn JSON: {isWorkRelated: boolean, title: string, due: string, checklist: string[]}";
+          const prompt = "You are an operations task extractor for a construction and fleet team. Analyze this incoming " + sourceType + " item (and any attached image of a material list or handwritten note).\nText: " + (text || "(See attached image)") + "\nRules:\n1. isWorkRelated: true if related to work, forms, concrete, materials, equipment, job sites, schedules, or errands (always true if an image of a list/note is attached).\n2. title: If there is a header line, use that as the title. If no title text is provided and a photo of a material list is attached, name the task 'Material List (" + (senderName || "Field Photo") + ")'. Otherwise create a concise task title.\n3. checklist: Extract each individual item/material line from the text or image into this array, keeping ALL quantities, numbers, dashes, feet ('), and inches (\") intact (e.g. \"4 - 10\\\" x 6'\", \"3 - 16\\\" x 6'\", \"20 - 2'x6'\", \"8 turnbuckles\"). Do NOT include header lines inside the checklist array.\nReturn JSON: {isWorkRelated: boolean, title: string, due: string, checklist: string[]}";
 
           const parts = [{ text: prompt }];
           for (let i = 0; i < photos.length; i++) {
@@ -1342,7 +1318,7 @@
               const rawList = normalizeArray(parsed.checklist);
               return {
                 isWorkRelated: photos.length > 0 ? true : Boolean(parsed.isWorkRelated),
-                title: parsed.title || text || "Photo Material List",
+                title: parsed.title || text || "Material List",
                 due: parsed.due || defaultDue || "Today",
                 checklist: rawList.map(function(item, idx) {
                   return { id: "chk_" + Date.now() + "_" + idx, text: String(item).trim(), done: false };
@@ -1356,7 +1332,7 @@
       if (!text && photos.length > 0) {
         return {
           isWorkRelated: true,
-          title: "Photo Material List / Job Task",
+          title: "Material List (Photo Scan)",
           due: defaultDue || "Today",
           checklist: []
         };
@@ -1431,7 +1407,7 @@
             if (parts.length >= 2) extractedItems = parts;
           }
 
-          cleanTitle = text.trim() || "Photo Material List";
+          cleanTitle = text.trim() || "Material List";
           if (extractedItems.length >= 2) {
             const locMatch = text.match(/\b(?:to|at|for)\s+([A-Z][a-zA-Z0-9\s]{2,20}?)(?:\s+before|\s+by|\s+today|\.|$)/);
             if (locMatch) {
@@ -1685,7 +1661,6 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         updateSyncIndicator(true);
 
-        // Avoid re-rendering the task list while a user is actively typing a task note
         const activeEl = document.activeElement;
         const isTypingNote = activeEl && activeEl.id && activeEl.id.indexOf("note-input-") === 0;
         if (!isTypingNote) {
@@ -1873,26 +1848,46 @@
       pushStateToCloud();
     }
 
-    function createAndAssignTask() {
+    // UPDATED: Create & Assign Task now runs attached photos through Gemini Vision AI
+    async function createAndAssignTask() {
       const titleInput = document.getElementById("new-task-title");
       const checklistInput = document.getElementById("new-task-checklist");
       const dueInput = document.getElementById("new-task-due");
+      const createBtn = document.getElementById("btn-create-task");
 
-      const title = titleInput.value.trim();
-      if (!title) {
-        showBanner("Missing Title", "Enter a task description first.");
-        return;
-      }
+      let title = titleInput.value.trim();
+      const rawChecklistText = checklistInput.value.trim();
+      const attachedPhotos = creatorPendingPhotos.slice();
+
       if (creatorSelectedUsers.length === 0) {
         showBanner("Select Assignee", "Tap at least one team member to assign this task.");
         return;
       }
+      if (!title && !rawChecklistText && attachedPhotos.length === 0) {
+        showBanner("Input Required", "Enter a task title, checklist items, or attach a photo.");
+        return;
+      }
+
+      createBtn.textContent = "Scanning Photo & Publishing...";
+
+      let checklist = parseManualChecklistText(rawChecklistText);
+
+      // If photos were attached but no manual checklist text was typed, run Gemini Vision API
+      if (attachedPhotos.length > 0 && checklist.length === 0) {
+        const aiResult = await evaluateIncomingMessage(title, "MANUAL", dueInput.value.trim() || "Today", "", attachedPhotos);
+        if (aiResult) {
+          if (!title && aiResult.title) title = aiResult.title;
+          if (aiResult.checklist && aiResult.checklist.length > 0) {
+            checklist = aiResult.checklist;
+          }
+        }
+      }
+
+      if (!title) title = "Material List Task";
 
       const adminUser = getCurrentUser();
       const due = dueInput.value.trim() || "Today";
-      const checklist = parseManualChecklistText(checklistInput.value);
       const assignedIds = creatorSelectedUsers.slice();
-      const attachedPhotos = creatorPendingPhotos.slice();
       const names = assignedIds.map(function(id) { return getUserName(id); }).join(", ");
 
       state.tasks.unshift({
@@ -1917,8 +1912,9 @@
       creatorSelectedUsers = [];
       creatorPendingPhotos = [];
       renderStagingPhotos();
+      createBtn.textContent = "Publish & Notify Assignees";
 
-      pushStateToCloud("New Task Assignment", "Assigned to " + names + ": " + title + " (Due: " + due + ")", assignedIds);
+      pushStateToCloud("New Task Assignment", "Assigned to " + names + ": " + title + " (Due: " + due + ", " + checklist.length + " items)", assignedIds);
     }
 
     function toggleChecklistItem(taskId, itemId) {
@@ -2223,7 +2219,7 @@
             renderTaskNotesHtml(t, isAdmin) +
             statusHtml +
             '<div class="btn-stack" style="margin-top: 4px;">' +
-              '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
+              '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnTest + '</button>' +
               adminButtonsHtml +
             '</div>' +
           '</div>';
