@@ -1,0 +1,4153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Command Center</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Command" />
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #131d31;
+      --card-border: #22324f;
+      --surface: #080c14;
+      --text: #f1f5f9;
+      --muted: #8a9bb8;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success: #059669;
+      --danger: #dc2626;
+      --amber: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 110px;
+    }
+
+    .sync-bar {
+      background: #070a12;
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .sync-indicator {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: var(--muted);
+    }
+    .sync-indicator.online {
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(5, 150, 105, 0.6);
+    }
+
+    header {
+      padding: 16px 20px;
+      background: rgba(19, 29, 49, 0.96);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .app-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .user-info h1 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .role-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+    .role-admin { background: rgba(37, 99, 235, 0.2); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.4); }
+    .role-member { background: rgba(5, 150, 105, 0.2); color: #34d399; border: 1px solid rgba(5, 150, 105, 0.4); }
+
+    .btn-text {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--muted);
+      padding: 8px 13px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #push-banner {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.75);
+      z-index: 999;
+      display: none;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .push-title { font-size: 14px; font-weight: 600; color: #60a5fa; margin-bottom: 4px; }
+    .push-body { font-size: 14px; color: var(--text); line-height: 1.4; }
+
+    main {
+      padding: 20px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    #login-screen {
+      max-width: 420px;
+      margin: 36px auto;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    #login-screen h2 { margin: 16px 0 8px; font-size: 22px; font-weight: 600; }
+    #login-screen p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
+    .dropdown-trigger {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .dropdown-trigger.primary-trigger {
+      background: rgba(37, 99, 235, 0.14);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .dropdown-trigger.recovery-trigger {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: var(--amber);
+      color: #fde68a;
+    }
+    .dropdown-trigger.sub-trigger {
+      background: var(--surface);
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .dropdown-chevron {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .dropdown-panel {
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    }
+    .dropdown-subpanel {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .scan-status-banner {
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid var(--accent);
+      color: #93c5fd;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 18px 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .day-group-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 16px 0 8px;
+      padding-left: 4px;
+    }
+
+    label.form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 15px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    .dropdown-subpanel input, .dropdown-subpanel textarea {
+      background: var(--card);
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    /* Embedded Calendar & AM/PM Slider Widget */
+    .schedule-widget {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .cal-quick-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .cal-quick-btn {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 9px 6px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .cal-quick-btn:active {
+      border-color: var(--accent);
+      background: rgba(37, 99, 235, 0.2);
+    }
+    .cal-header-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .cal-month-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cal-nav-btn {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .cal-weekdays, .cal-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+    .cal-weekdays div {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 4px 0;
+    }
+    .cal-day-cell {
+      padding: 9px 0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      border: 1px solid transparent;
+    }
+    .cal-day-cell.empty {
+      pointer-events: none;
+    }
+    .cal-day-cell.today {
+      border-color: rgba(96, 165, 250, 0.5);
+      color: #93c5fd;
+    }
+    .cal-day-cell.selected {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* AM / PM Slider Toggle */
+    .ampm-slider-wrap {
+      margin-top: 12px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 4px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .ampm-option {
+      padding: 10px;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .ampm-option.active-am {
+      background: rgba(245, 158, 11, 0.22);
+      border: 1px solid rgba(245, 158, 11, 0.55);
+      color: #fcd34d;
+    }
+    .ampm-option.active-pm {
+      background: rgba(37, 99, 235, 0.25);
+      border: 1px solid rgba(96, 165, 250, 0.6);
+      color: #93c5fd;
+    }
+    .schedule-selected-readout {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #34d399;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .user-select-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .user-pick-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      padding: 14px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .dropdown-subpanel .user-pick-row {
+      background: var(--card);
+    }
+    .user-pick-row.selected {
+      background: rgba(37, 99, 235, 0.18);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .user-pick-row.urgent-toggle-row.selected {
+      background: rgba(220, 38, 38, 0.2);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+    .pick-indicator {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .user-pick-row.selected .pick-indicator {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .user-pick-row.urgent-toggle-row.selected .pick-indicator {
+      background: var(--danger);
+      border-color: #ef4444;
+      color: #fff;
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      display: block;
+    }
+    .btn:active { background: var(--accent-hover); }
+    .btn-success { background: var(--success); }
+    .btn-secondary {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+    .btn-danger-outline {
+      background: transparent;
+      border: 1px solid rgba(220, 38, 38, 0.45);
+      color: #f87171;
+    }
+    .btn-urgent-active {
+      background: rgba(220, 38, 38, 0.18);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-urgent {
+      background: rgba(220, 38, 38, 0.25);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      font-weight: 700;
+    }
+    .src-sms { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .src-samsung { background: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); }
+    .src-cal { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .src-manual { background: rgba(100, 116, 139, 0.15); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.3); }
+
+    .due-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      color: #cbd5e1;
+    }
+    .due-pill.due-am {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fcd34d;
+    }
+    .due-pill.due-pm {
+      background: rgba(37, 99, 235, 0.15);
+      border-color: rgba(96, 165, 250, 0.4);
+      color: #93c5fd;
+    }
+    .due-pill.due-overdue {
+      background: rgba(220, 38, 38, 0.18);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+
+    /* Expandable Accordion Task Cards */
+    .task-card {
+      padding: 0;
+      overflow: hidden;
+    }
+    .task-card.urgent-card {
+      border-color: #ef4444;
+      box-shadow: 0 0 18px rgba(220, 38, 38, 0.18);
+    }
+    .task-card.completed { opacity: 0.68; }
+    .task-card.completed .task-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    .task-accordion-header {
+      padding: 16px 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      user-select: none;
+    }
+    .task-header-left {
+      flex: 1;
+      min-width: 0;
+    }
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .task-title {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+    .task-summary-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .summary-pill {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .summary-pill.ready {
+      color: #34d399;
+      border-color: rgba(5, 150, 105, 0.45);
+      background: rgba(5, 150, 105, 0.12);
+    }
+    .task-expand-pill {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .task-card.expanded .task-expand-pill {
+      border-color: var(--accent);
+      color: #93c5fd;
+      background: rgba(37, 99, 235, 0.15);
+    }
+    .task-accordion-body {
+      padding: 0 18px 18px;
+      border-top: 1px solid rgba(34, 50, 79, 0.55);
+      padding-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .task-sub { font-size: 13px; color: var(--muted); }
+    .assignee-pill {
+      font-size: 11px;
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      padding: 4px 9px;
+      border-radius: 6px;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    .checklist-box {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .checklist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .checklist-ready-banner {
+      background: rgba(5, 150, 105, 0.15);
+      border: 1px solid rgba(5, 150, 105, 0.4);
+      color: #34d399;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .checklist-item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 10px;
+      border-top: 1px solid rgba(34, 50, 79, 0.6);
+      cursor: pointer;
+    }
+    .checklist-item-row:first-of-type { border-top: none; }
+    .sub-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .checklist-item-row.item-done .sub-check {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .checklist-item-text {
+      font-size: 15px;
+      flex: 1;
+      line-height: 1.35;
+    }
+    .checklist-item-row.item-done .checklist-item-text {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .photo-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .photo-card {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .photo-card img {
+      width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #05080f;
+      cursor: pointer;
+      display: block;
+    }
+    .photo-caption {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .notes-box {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .notes-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .note-item {
+      padding: 10px 0;
+      border-top: 1px solid rgba(34, 50, 79, 0.6);
+    }
+    .note-item:first-of-type {
+      border-top: none;
+      padding-top: 2px;
+    }
+    .note-meta {
+      font-size: 11px;
+      font-weight: 600;
+      color: #60a5fa;
+      margin-bottom: 4px;
+    }
+    .note-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .note-input-wrap {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(34, 50, 79, 0.6);
+    }
+    .note-input-wrap input {
+      background: var(--card);
+      margin-bottom: 10px;
+    }
+
+    .scan-log-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .scan-status-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .scan-accepted { background: rgba(5, 150, 105, 0.2); color: #34d399; border: 1px solid rgba(5, 150, 105, 0.4); }
+    .scan-ignored { background: rgba(220, 38, 38, 0.15); color: #f87171; border: 1px solid rgba(220, 38, 38, 0.35); }
+
+    #edit-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg);
+      z-index: 200;
+      overflow-y: auto;
+      padding: 20px 20px 100px;
+    }
+    .edit-modal-inner {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .edit-item-card {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .edit-item-card input {
+      background: var(--card);
+      margin-bottom: 10px;
+    }
+
+    #image-viewer-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 8, 15, 0.96);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+    }
+    .viewer-img-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      margin-bottom: 16px;
+    }
+    .viewer-img-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .done-stamp {
+      font-size: 13px;
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .chip {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--muted);
+      padding: 9px 15px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    nav.bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #070a12;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      padding: 14px 0 22px;
+      z-index: 30;
+    }
+    .nav-item {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      padding: 6px 18px;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-badge {
+      position: absolute;
+      top: -2px;
+      right: 2px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="sync-bar">
+    <div>
+      <span id="sync-dot" class="sync-indicator"></span>
+      <span id="sync-status-text">Connecting...</span>
+    </div>
+    <span id="sync-time"></span>
+  </div>
+
+  <div id="push-banner">
+    <div>
+      <div class="push-title" id="push-title">Notification</div>
+      <div class="push-body" id="push-body"></div>
+    </div>
+    <button class="btn-text" onclick="hidePush()">Dismiss</button>
+  </div>
+
+  <header id="app-header" class="hidden">
+    <div class="brand-group">
+      <svg class="app-logo" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#22324f" stroke-width="3"/>
+        <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#2563eb"/>
+        <path d="M54,22 A32,32 0 0,1 54,86 Z" fill="#059669"/>
+        <circle cx="54" cy="54" r="22" fill="#0f172a"/>
+        <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="user-info">
+        <h1 id="header-username">Command Center</h1>
+        <span id="header-role-badge" class="role-tag role-admin">Admin</span>
+      </div>
+    </div>
+    <button class="btn-text" onclick="logoutUser()">Sign Out</button>
+  </header>
+
+  <section id="image-viewer-modal" class="hidden">
+    <div class="viewer-img-wrap">
+      <img id="viewer-full-img" src="" alt="Task Attachment" />
+    </div>
+    <button class="btn btn-secondary" onclick="closeImageViewer()">Close Photo Viewer</button>
+  </section>
+
+  <!-- EDIT TASK MODAL -->
+  <section id="edit-modal" class="hidden">
+    <div class="edit-modal-inner">
+      <div class="card">
+        <div class="card-title" style="font-size:18px; margin-bottom:6px;">Edit Task, Schedule &amp; Checklist</div>
+        <div class="card-desc">Update task details, due date &amp; AM/PM slot, priority level, checklist items, or attached photos.</div>
+
+        <label class="form-label">Task Title</label>
+        <input type="text" id="edit-task-title" placeholder="Task title" />
+
+        <label class="form-label">Due Date &amp; AM/PM Schedule</label>
+        <div id="cal-widget-edit" class="schedule-widget"></div>
+
+        <label class="form-label">Priority Level</label>
+        <div id="edit-urgent-row" class="user-pick-row urgent-toggle-row" style="margin-bottom:16px;" onclick="toggleEditUrgent()">
+          <span>Urgent / High-Priority (Pin to Top)</span>
+          <div id="edit-urgent-ind" class="pick-indicator"></div>
+        </div>
+
+        <label class="form-label">Attached Photos</label>
+        <div id="edit-photos-container" class="photo-grid" style="margin-bottom:12px;"></div>
+        <div id="edit-scan-status" class="scan-status-banner hidden">Scanning photo with Gemini 3.8 Flash...</div>
+        <input type="file" id="file-edit-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'edit')" />
+        <button class="btn btn-secondary" onclick="document.getElementById('file-edit-photo').click()" style="margin-bottom:20px;">Attach Photo &amp; Extract Checklist</button>
+
+        <label class="form-label">Current Checklist Items</label>
+        <div id="edit-checklist-container"></div>
+
+        <label class="form-label" style="margin-top:8px;">Add New Items to Checklist (One per line)</label>
+        <textarea id="edit-new-items-input" placeholder="e.g.&#10;6 - 12&quot; forms&#10;2 bundles stakes"></textarea>
+        <button class="btn btn-secondary" onclick="appendDraftItems()" style="margin-bottom:20px;">Add Items to Checklist Above</button>
+
+        <div id="edit-assignees-section">
+          <label class="form-label">Assigned Team Members (Tap to Toggle)</label>
+          <div id="edit-user-grid" class="user-select-grid"></div>
+        </div>
+
+        <div class="btn-stack" style="margin-top:12px;">
+          <button class="btn btn-success" onclick="saveTaskEdits()">Save Changes &amp; Notify Assignees</button>
+          <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <!-- LOGIN SCREEN -->
+    <section id="login-screen">
+      <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block;">
+        <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#2563eb" stroke-width="3"/>
+        <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#2563eb"/>
+        <path d="M54,22 A32,32 0 0,1 54,86 Z" fill="#059669"/>
+        <circle cx="54" cy="54" r="22" fill="#0f172a"/>
+        <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>Command Center</h2>
+      <p>Select your profile and enter your PIN</p>
+
+      <label class="form-label" style="text-align: left;">User Account</label>
+      <select id="login-user-select">
+        <option value="u_admin1">Admin 1 (ADMIN)</option>
+      </select>
+
+      <label class="form-label" style="text-align: left;">Security PIN</label>
+      <input type="password" id="login-pin" inputmode="numeric" placeholder="Enter PIN" value="1234" />
+
+      <div id="login-error" style="color:var(--danger); font-size:13px; margin-bottom:14px; display:none;">Incorrect PIN. Please try again.</div>
+
+      <button class="btn" onclick="handleLogin()">Sign In</button>
+    </section>
+
+    <!-- TAB 1: INBOX & TRIAGE -->
+    <section id="tab-triage" class="hidden">
+      <button id="btn-toggle-triage-create" class="dropdown-trigger primary-trigger" onclick="toggleDropdownPanel('triageCreator')">
+        <span>+ Create Triage Task / Scan List</span>
+        <span id="chev-triageCreator" class="dropdown-chevron">Open</span>
+      </button>
+
+      <div id="panel-triageCreator" class="dropdown-panel hidden">
+        <div class="card-title">Intelligent Task, List &amp; Photo Analyzer</div>
+        <div class="card-desc">
+          Paste a message or attach a picture of a material list. Attached list photos are scanned into checklist items automatically.
+        </div>
+
+        <label class="form-label">Photo of Material List or Job Site (Optional)</label>
+        <div id="triage-photo-preview" class="photo-grid" style="margin-bottom:12px;"></div>
+        <div id="triage-scan-status" class="scan-status-banner hidden">Scanning photo with Gemini 3.8 Flash...</div>
+        <input type="file" id="file-triage-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'triage')" />
+        <button class="btn btn-secondary" onclick="document.getElementById('file-triage-photo').click()" style="margin-bottom:16px;">Attach Photo &amp; Extract Checklist</button>
+
+        <label class="form-label">Message, Reminder, or Extracted Material List</label>
+        <textarea id="triage-manual-input" placeholder="All 6 ft forms for Bingham.&#10;• 20 - 2'x6'&#10;• 8 - 14&quot;&#10;• 4 - outside corners"></textarea>
+
+        <label class="form-label">Target Due Date &amp; AM/PM Slot</label>
+        <div id="cal-widget-triage" class="schedule-widget"></div>
+
+        <label class="form-label">Priority Level</label>
+        <div id="triage-urgent-row" class="user-pick-row urgent-toggle-row" style="margin-bottom:16px;" onclick="toggleTriageCreatorUrgent()">
+          <span>Urgent / High-Priority (Pin to Top)</span>
+          <div id="triage-urgent-ind" class="pick-indicator"></div>
+        </div>
+
+        <label class="form-label">Source Type</label>
+        <select id="triage-source-select">
+          <option value="SMS">Text / Picture Message</option>
+          <option value="SAMSUNG">Reminder</option>
+          <option value="CAL">Calendar Event</option>
+        </select>
+
+        <div class="btn-stack">
+          <button id="btn-analyze" class="btn" onclick="handleManualAnalyze()">Analyze &amp; Generate Work Task</button>
+          <button class="btn btn-secondary" onclick="toggleDropdownPanel('triageCreator', false)">Close</button>
+        </div>
+      </div>
+
+      <div id="analyze-feedback" style="font-size:13px; color:var(--muted); margin-bottom:12px; display:none;"></div>
+
+      <div class="section-title" style="margin-top: 6px;">
+        <span>Work Triage Queue (<span id="triage-count">0</span>)</span>
+        <button class="btn-text" onclick="toggleExpandAll('triage')">Expand / Collapse All</button>
+      </div>
+      <div id="triage-list"></div>
+    </section>
+
+    <!-- TAB 2: TASK BOARD -->
+    <section id="tab-tasks" class="hidden">
+      <div id="admin-task-creator-wrap" class="hidden">
+        <button id="btn-toggle-task-create" class="dropdown-trigger primary-trigger" onclick="toggleDropdownPanel('taskCreator')">
+          <span>+ Create &amp; Assign Task</span>
+          <span id="chev-taskCreator" class="dropdown-chevron">Open</span>
+        </button>
+
+        <div id="panel-taskCreator" class="dropdown-panel hidden">
+          <div class="card-title" style="margin-bottom: 14px;">Create &amp; Assign Task</div>
+
+          <label class="form-label">Task Title</label>
+          <input type="text" id="new-task-title" placeholder="e.g. All 6 ft forms for Bingham" />
+
+          <label class="form-label">Due Date &amp; AM/PM Schedule</label>
+          <div id="cal-widget-creator" class="schedule-widget"></div>
+
+          <label class="form-label">Priority Level</label>
+          <div id="creator-urgent-row" class="user-pick-row urgent-toggle-row" style="margin-bottom:16px;" onclick="toggleCreatorUrgent()">
+            <span>Urgent / High-Priority (Pin to Top)</span>
+            <div id="creator-urgent-ind" class="pick-indicator"></div>
+          </div>
+
+          <label class="form-label">Task Photos / Material List Pictures (AI Vision Scanner)</label>
+          <div id="creator-photo-preview" class="photo-grid" style="margin-bottom:12px;"></div>
+          <div id="creator-scan-status" class="scan-status-banner hidden">Scanning photo with Gemini 3.8 Flash...</div>
+          <input type="file" id="file-creator-photo" accept="image/*" multiple class="hidden" onchange="handlePhotoInput(this, 'creator')" />
+          <button class="btn btn-secondary" onclick="document.getElementById('file-creator-photo').click()" style="margin-bottom:16px;">Attach Photo &amp; Extract Checklist</button>
+
+          <label class="form-label">Checklist Items (One per line — Auto-filled when scanning a photo)</label>
+          <textarea id="new-task-checklist" placeholder="4 - 10&quot; x 6'&#10;3 - 16&quot; x 6'&#10;20 - 2'x6'"></textarea>
+
+          <label class="form-label">Tap Team Members to Assign</label>
+          <div id="creator-user-grid" class="user-select-grid"></div>
+
+          <div class="btn-stack">
+            <button id="btn-create-task" class="btn" onclick="createAndAssignTask()">Publish &amp; Notify Assignees</button>
+            <button class="btn btn-secondary" onclick="toggleDropdownPanel('taskCreator', false)">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-filter-bar" class="filter-bar"></div>
+
+      <!-- TASK SORT / GROUPING BAR -->
+      <div class="filter-bar" id="sort-mode-bar">
+        <button id="sort-chip-priority_date" class="chip active" onclick="setTaskSortMode('priority_date')">Urgent + Due Date</button>
+        <button id="sort-chip-date_only" class="chip" onclick="setTaskSortMode('date_only')">Due Date (Earliest)</button>
+        <button id="sort-chip-group_day" class="chip" onclick="setTaskSortMode('group_day')">Group by Day</button>
+      </div>
+
+      <div class="section-title" style="margin-top: 6px;">
+        <div>
+          <span id="tasks-heading">Active Tasks</span>
+          <span id="tasks-stats" style="margin-left:8px; color:#60a5fa;"></span>
+        </div>
+        <button class="btn-text" onclick="toggleExpandAll('active')">Expand / Collapse All</button>
+      </div>
+      <div id="tasks-list"></div>
+
+      <!-- COLLAPSIBLE COMPLETED TASKS SECTION -->
+      <div id="completed-tasks-wrap" style="margin-top: 24px;">
+        <button id="btn-toggle-completed" class="dropdown-trigger" onclick="toggleDropdownPanel('completedTasks')">
+          <span id="completed-trigger-label">Completed Tasks (0)</span>
+          <span id="chev-completedTasks" class="dropdown-chevron">Open</span>
+        </button>
+
+        <div id="panel-completedTasks" class="dropdown-panel hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px;">
+            <span style="font-size:12px; color:var(--muted); line-height:1.4;">
+              Attached photos are cleared 3 days after completion to save storage, and completed tasks auto-delete after 14 days.
+            </span>
+          </div>
+          <button id="btn-clear-completed" class="btn btn-danger-outline hidden" style="margin-bottom:16px; padding:12px;" onclick="clearAllCompletedTasks()">
+            Clear All Completed Tasks Now
+          </button>
+          <div id="completed-tasks-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SETTINGS (ORDERED: Recovery Tool, 1. Active Users, 2. Add User, 3. Auto Capture, 4. Gemini API Key) -->
+    <section id="tab-team" class="hidden">
+      <!-- EMERGENCY LOCAL STORAGE SNAPSHOT RECOVERY TOOL -->
+      <button id="btn-toggle-recovery" class="dropdown-trigger recovery-trigger" onclick="toggleDropdownPanel('recoveryScanner')">
+        <span>Recover Previous Device Data / Backups</span>
+        <span id="chev-recoveryScanner" class="dropdown-chevron">Open</span>
+      </button>
+
+      <div id="panel-recoveryScanner" class="dropdown-panel hidden" style="border-color: var(--amber);">
+        <div class="card-title" style="color: #fde68a;">Local Storage Snapshot Recovery Scanner</div>
+        <div class="card-desc">
+          Scans all storage slots on this phone (including older versions like v9, v10, v11, v12, and safety backups) so you can restore your users, PINs, API key, and tasks back to Firebase.
+        </div>
+        <div id="recovery-snapshots-list"></div>
+      </div>
+
+      <!-- 1. ACTIVE TEAM USERS -->
+      <div class="section-title" style="margin-top: 0;">Active Team Users</div>
+      <div id="team-list" style="margin-bottom: 22px;"></div>
+
+      <!-- 2. ADD USER ACCOUNT (DROPDOWN BUTTON) -->
+      <button id="btn-toggle-add-user" class="dropdown-trigger" onclick="toggleDropdownPanel('addUser')">
+        <span>Add User Account</span>
+        <span id="chev-addUser" class="dropdown-chevron">Open</span>
+      </button>
+
+      <div id="panel-addUser" class="dropdown-panel hidden">
+        <div class="card-title">Add User Account</div>
+        <div class="card-desc">Create an account for an Administrator or Team Member.</div>
+
+        <label class="form-label">Full Name</label>
+        <input type="text" id="new-user-name" placeholder="e.g. Ronnie" />
+
+        <label class="form-label">Permission Role</label>
+        <select id="new-user-role">
+          <option value="member">Team Member (Assigned Tasks Only)</option>
+          <option value="admin">Administrator (Full Access)</option>
+        </select>
+
+        <label class="form-label">4-Digit PIN</label>
+        <input type="text" id="new-user-pin" inputmode="numeric" placeholder="1234" value="1234" />
+
+        <div class="btn-stack">
+          <button class="btn" onclick="addNewUser()">Create Account</button>
+          <button class="btn btn-secondary" onclick="toggleDropdownPanel('addUser', false)">Close</button>
+        </div>
+      </div>
+
+      <!-- 3. AUTOMATIC PHONE CAPTURE & SMART FILTER RULES -->
+      <div id="native-listener-card" class="card" style="margin-bottom: 14px;">
+        <div class="card-title">Automatic Phone Capture</div>
+        <div id="native-listener-desc" class="card-desc">
+          Evaluates incoming notifications and turns work-related messages, reminders, and calendar events into triage tasks while ignoring personal chatter and reactions.
+        </div>
+
+        <div class="btn-stack" style="margin-bottom: 12px;">
+          <button id="btn-enable-listener" class="btn" onclick="openNativeCaptureSettings()">Enable Notification Access</button>
+          <button class="btn btn-secondary" onclick="pollNativePhoneCaptures(true)">Scan Phone Calendar &amp; Messages Now</button>
+        </div>
+
+        <button class="dropdown-trigger sub-trigger" onclick="toggleDropdownPanel('captureRules')">
+          <span>Configure Smart Filter Rules</span>
+          <span id="chev-captureRules" class="dropdown-chevron">Open</span>
+        </button>
+
+        <div id="panel-captureRules" class="dropdown-subpanel hidden">
+          <label class="form-label">Sources to Auto-Capture</label>
+          <div class="user-select-grid" id="source-toggle-grid"></div>
+
+          <label class="form-label">Work Contacts, Job Sites &amp; Keywords (Comma-Separated)</label>
+          <div class="card-desc" style="margin-bottom:8px;">Messages mentioning these contacts, sites, or terms are prioritized as work-related.</div>
+          <textarea id="filter-work-keywords" placeholder="Keith Pratt, Ronnie, Ray, Terry, Bingham, Boice, Advancement Center, City Hall, Bennett, Wheeler"></textarea>
+
+          <label class="form-label">Ignored Senders / Personal Contacts (Comma-Separated)</label>
+          <div class="card-desc" style="margin-bottom:8px;">Notifications from these names or numbers will never be turned into tasks.</div>
+          <textarea id="filter-ignored-senders" placeholder="e.g. Mom, Bank Alerts, 800-555-0199"></textarea>
+
+          <button class="btn" onclick="saveFilterSettings()">Save Filter Rules</button>
+        </div>
+
+        <button class="dropdown-trigger sub-trigger" style="margin-bottom: 0;" onclick="toggleDropdownPanel('scanLog')">
+          <span>View Recent Scan Log</span>
+          <span id="chev-scanLog" class="dropdown-chevron">Open</span>
+        </button>
+
+        <div id="panel-scanLog" class="dropdown-subpanel hidden" style="margin-top: 10px; margin-bottom: 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-size:12px; color:var(--muted); font-weight:600;">LAST 15 EVALUATED NOTIFICATIONS</span>
+            <button class="btn-text" style="padding:5px 10px; font-size:11px;" onclick="clearScanLog()">Clear Log</button>
+          </div>
+          <div id="scan-log-list"></div>
+        </div>
+      </div>
+
+      <!-- 4. GEMINI API KEY (DROPDOWN BUTTON) -->
+      <button id="btn-toggle-gemini-key" class="dropdown-trigger" onclick="toggleDropdownPanel('geminiKey')">
+        <span id="gemini-key-trigger-label">Gemini API Key</span>
+        <span id="chev-geminiKey" class="dropdown-chevron">Open</span>
+      </button>
+
+      <div id="panel-geminiKey" class="dropdown-panel hidden">
+        <div class="card-title">Gemini API Key Configuration</div>
+        <div class="card-desc">
+          Used for AI Vision scanning of handwritten or printed material list photos and context-aware message classification.
+        </div>
+        <label class="form-label">Gemini API Key</label>
+        <input type="password" id="gemini-key-input" placeholder="AIzaSy..." />
+        <div class="btn-stack">
+          <button class="btn" onclick="saveGeminiKey()">Save API Key</button>
+          <button class="btn btn-secondary" onclick="toggleDropdownPanel('geminiKey', false)">Close</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav id="bottom-nav" class="bottom-nav hidden">
+    <button id="nav-triage" class="nav-item" onclick="switchTab('triage')">
+      <span>Inbox</span>
+      <span id="badge-triage" class="nav-badge hidden">0</span>
+    </button>
+    <button id="nav-tasks" class="nav-item active" onclick="switchTab('tasks')">
+      <span>Tasks</span>
+      <span id="badge-tasks" class="nav-badge hidden">0</span>
+    </button>
+    <button id="nav-team" class="nav-item" onclick="switchTab('team')">
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = "unified_command_center_v12";
+    const SAFETY_BACKUP_KEY = "command_center_safety_backup_v1";
+    const LEGACY_KEYS = [
+      "unified_command_center_v14",
+      "unified_command_center_v13",
+      "unified_command_center_v12",
+      "unified_command_center_v11",
+      "unified_command_center_v10",
+      "unified_command_center_v9",
+      "unified_command_center_v8"
+    ];
+    const SESSION_USER_KEY = "command_center_logged_in_user";
+    const FIREBASE_URL_KEY = "command_center_firebase_url";
+    const LAST_NOTIF_KEY = "command_center_last_notif_id";
+    const SCAN_LOG_KEY = "command_center_scan_log_v1";
+    const INJECTED_CLOUD_URL = "PLACEHOLDER_FIREBASE_URL";
+
+    const PHOTO_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
+    const TASK_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+
+    const DEFAULT_FILTER_SETTINGS = {
+      captureSms: true,
+      captureReminders: true,
+      captureCalendar: true,
+      workKeywords: "Keith Pratt, Ronnie, Ray, Terry, Bingham, Boice, Advancement Center, City Hall, Bennett, Wheeler",
+      ignoredSenders: ""
+    };
+
+    function normalizeArray(val) {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.filter(Boolean);
+      if (typeof val === "object") return Object.values(val).filter(Boolean);
+      return [];
+    }
+
+    function escapeHtmlAttr(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function cleanBulletPrefix(line) {
+      return String(line || "")
+        .trim()
+        .replace(/^(?:[•*▪▫‣⁃]+|\-\s+|\d+[\.\)]\s+)\s*/, "")
+        .trim();
+    }
+
+    function isLikelyBulletOrQuantityLine(rawLine) {
+      const s = String(rawLine || "").trim();
+      if (/^[•*▪▫‣⁃\-]/.test(s)) return true;
+      if (/^\d+\s*(?:x\b|-|\s+[a-zA-Z0-9"'])/i.test(s)) return true;
+      return false;
+    }
+
+    function isUserTyping() {
+      const el = document.activeElement;
+      if (!el) return false;
+      const tag = (el.tagName || "").toUpperCase();
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || Boolean(el.isContentEditable);
+    }
+
+    function isEditModalOpen() {
+      const modal = document.getElementById("edit-modal");
+      return modal && !modal.classList.contains("hidden");
+    }
+
+    function computeStateHash(st) {
+      try {
+        return JSON.stringify({
+          k: st.geminiApiKey || "",
+          f: st.filterSettings || {},
+          u: st.users || [],
+          t: st.tasks || []
+        });
+      } catch (e) {
+        return String(Date.now());
+      }
+    }
+
+    function getFirebaseUrl() {
+      const saved = localStorage.getItem(FIREBASE_URL_KEY);
+      if (saved && saved.startsWith("https://")) {
+        return saved.trim().replace(/\/$/, "");
+      }
+      return INJECTED_CLOUD_URL.trim().replace(/\/$/, "");
+    }
+
+    /********************************************************************
+     * DATE, CALENDAR & AM/PM SLIDER HELPERS
+     ********************************************************************/
+    function getTodayIso() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return yyyy + "-" + mm + "-" + dd;
+    }
+
+    function addDaysToIso(isoStr, daysToAdd) {
+      const parts = String(isoStr || getTodayIso()).split("-");
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      d.setDate(d.getDate() + daysToAdd);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return yyyy + "-" + mm + "-" + dd;
+    }
+
+    function getNextMondayIso() {
+      const d = new Date();
+      const day = d.getDay();
+      const diff = (8 - day) % 7 || 7;
+      d.setDate(d.getDate() + diff);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return yyyy + "-" + mm + "-" + dd;
+    }
+
+    function formatFriendlyDueLabel(dueDate, duePeriod, fallbackDue) {
+      if (!dueDate) return fallbackDue || "Today";
+      const today = getTodayIso();
+      const tomorrow = addDaysToIso(today, 1);
+      const slot = (duePeriod === "PM") ? "PM" : "AM";
+
+      if (dueDate === today) return "Today • " + slot;
+      if (dueDate === tomorrow) return "Tomorrow • " + slot;
+
+      const parts = dueDate.split("-");
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        const label = d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+        return label + " • " + slot;
+      }
+      return dueDate + " • " + slot;
+    }
+
+    function formatDayHeading(dueDate) {
+      if (!dueDate) return "Unscheduled";
+      const today = getTodayIso();
+      const tomorrow = addDaysToIso(today, 1);
+      const parts = dueDate.split("-");
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      const fullDate = d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+
+      if (dueDate < today) return "Overdue — " + fullDate;
+      if (dueDate === today) return "Today — " + fullDate;
+      if (dueDate === tomorrow) return "Tomorrow — " + fullDate;
+      return fullDate;
+    }
+
+    function computeTaskDueSortScore(task) {
+      const iso = task.dueDate || getTodayIso();
+      const numDate = Number(iso.replace(/\-/g, "")) || 99999999;
+      const slotOffset = (task.duePeriod === "PM") ? 1 : 0;
+      return (numDate * 10) + slotOffset;
+    }
+
+    let calState = {
+      creator: { date: getTodayIso(), period: "AM", viewYear: new Date().getFullYear(), viewMonth: new Date().getMonth() },
+      triage: { date: getTodayIso(), period: "AM", viewYear: new Date().getFullYear(), viewMonth: new Date().getMonth() },
+      edit: { date: getTodayIso(), period: "AM", viewYear: new Date().getFullYear(), viewMonth: new Date().getMonth() }
+    };
+
+    function setCalendarQuickDate(mode, targetType) {
+      const st = calState[mode];
+      if (!st) return;
+      if (targetType === "today") st.date = getTodayIso();
+      else if (targetType === "tomorrow") st.date = addDaysToIso(getTodayIso(), 1);
+      else if (targetType === "monday") st.date = getNextMondayIso();
+
+      const parts = st.date.split("-");
+      st.viewYear = Number(parts[0]);
+      st.viewMonth = Number(parts[1]) - 1;
+      renderScheduleWidget(mode);
+    }
+
+    function shiftCalendarMonth(mode, delta) {
+      const st = calState[mode];
+      if (!st) return;
+      st.viewMonth += delta;
+      if (st.viewMonth < 0) {
+        st.viewMonth = 11;
+        st.viewYear -= 1;
+      } else if (st.viewMonth > 11) {
+        st.viewMonth = 0;
+        st.viewYear += 1;
+      }
+      renderScheduleWidget(mode);
+    }
+
+    function pickCalendarDay(mode, isoDate) {
+      const st = calState[mode];
+      if (!st) return;
+      st.date = isoDate;
+      renderScheduleWidget(mode);
+    }
+
+    function setCalendarPeriod(mode, period) {
+      const st = calState[mode];
+      if (!st) return;
+      st.period = (period === "PM") ? "PM" : "AM";
+      renderScheduleWidget(mode);
+    }
+
+    function renderScheduleWidget(mode) {
+      const container = document.getElementById("cal-widget-" + mode);
+      const st = calState[mode];
+      if (!container || !st) return;
+
+      const todayIso = getTodayIso();
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const firstDayIdx = new Date(st.viewYear, st.viewMonth, 1).getDay();
+      const daysInMonth = new Date(st.viewYear, st.viewMonth + 1, 0).getDate();
+
+      let cellsHtml = "";
+      for (let e = 0; e < firstDayIdx; e++) {
+        cellsHtml += '<div class="cal-day-cell empty"></div>';
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const mm = String(st.viewMonth + 1).padStart(2, "0");
+        const dd = String(day).padStart(2, "0");
+        const cellIso = st.viewYear + "-" + mm + "-" + dd;
+        let cls = "cal-day-cell";
+        if (cellIso === todayIso) cls += " today";
+        if (cellIso === st.date) cls += " selected";
+        cellsHtml += '<div class="' + cls + '" onclick="pickCalendarDay(\'' + mode + '\', \'' + cellIso + '\')">' + day + '</div>';
+      }
+
+      const amCls = st.period === "AM" ? "ampm-option active-am" : "ampm-option";
+      const pmCls = st.period === "PM" ? "ampm-option active-pm" : "ampm-option";
+      const readout = formatFriendlyDueLabel(st.date, st.period, "Today");
+
+      container.innerHTML =
+        '<div class="cal-quick-row">' +
+          '<button type="button" class="cal-quick-btn" onclick="setCalendarQuickDate(\'' + mode + '\', \'today\')">Today</button>' +
+          '<button type="button" class="cal-quick-btn" onclick="setCalendarQuickDate(\'' + mode + '\', \'tomorrow\')">Tomorrow</button>' +
+          '<button type="button" class="cal-quick-btn" onclick="setCalendarQuickDate(\'' + mode + '\', \'monday\')">Next Mon</button>' +
+        '</div>' +
+        '<div class="cal-header-nav">' +
+          '<button type="button" class="cal-nav-btn" onclick="shiftCalendarMonth(\'' + mode + '\', -1)">&lt;</button>' +
+          '<div class="cal-month-title">' + monthNames[st.viewMonth] + ' ' + st.viewYear + '</div>' +
+          '<button type="button" class="cal-nav-btn" onclick="shiftCalendarMonth(\'' + mode + '\', 1)">&gt;</button>' +
+        '</div>' +
+        '<div class="cal-weekdays"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div>' +
+        '<div class="cal-days-grid">' + cellsHtml + '</div>' +
+        '<div class="ampm-slider-wrap">' +
+          '<div class="' + amCls + '" onclick="setCalendarPeriod(\'' + mode + '\', \'AM\')">AM (Morning)</div>' +
+          '<div class="' + pmCls + '" onclick="setCalendarPeriod(\'' + mode + '\', \'PM\')">PM (Afternoon)</div>' +
+        '</div>' +
+        '<div class="schedule-selected-readout">Scheduled: ' + escapeHtmlAttr(readout) + '</div>';
+    }
+
+    const DEFAULT_SHARED_STATE = {
+      geminiApiKey: "",
+      filterSettings: DEFAULT_FILTER_SETTINGS,
+      users: [
+        { id: "u_admin1", name: "Admin 1", role: "admin", pin: "1234" }
+      ],
+      tasks: [],
+      lastNotification: null
+    };
+
+    // STRICT CLOUD WRITE-PROTECTION LOCK: Never PUT to Firebase until initial cloud pull completes
+    let hasCompletedInitialCloudPull = false;
+
+    let state = loadBestAvailableLocalState();
+    let lastRenderedHash = "";
+    let currentUserId = localStorage.getItem(SESSION_USER_KEY) || null;
+    let activeTab = "tasks";
+    let adminFilterUserId = "ALL";
+    let taskSortMode = "priority_date";
+    let expandedTaskIds = {};
+    let creatorSelectedUsers = [];
+    let creatorUrgent = false;
+    let triageCreatorUrgent = false;
+    let triageSelections = {};
+    let cloudPollTimer = null;
+    let activePhotoScanPromise = null;
+    let preferredWorkingModel = null;
+
+    let triagePendingPhotos = [];
+    let creatorPendingPhotos = [];
+
+    let editingTaskId = null;
+    let editDraftChecklist = [];
+    let editDraftAssignees = [];
+    let editDraftPhotos = [];
+    let editDraftUrgent = false;
+
+    let dropdownState = {
+      triageCreator: false,
+      taskCreator: false,
+      completedTasks: false,
+      recoveryScanner: false,
+      addUser: false,
+      geminiKey: false,
+      captureRules: false,
+      scanLog: false
+    };
+
+    function toggleDropdownPanel(panelKey, forceState) {
+      const nextState = typeof forceState === "boolean" ? forceState : !dropdownState[panelKey];
+      dropdownState[panelKey] = nextState;
+
+      const panelEl = document.getElementById("panel-" + panelKey);
+      const chevEl = document.getElementById("chev-" + panelKey);
+      if (panelEl) {
+        panelEl.classList.toggle("hidden", !nextState);
+      }
+      if (chevEl) {
+        chevEl.textContent = nextState ? "Close" : "Open";
+      }
+      if (panelKey === "taskCreator" && nextState) {
+        renderScheduleWidget("creator");
+      }
+      if (panelKey === "triageCreator" && nextState) {
+        renderScheduleWidget("triage");
+      }
+      if (panelKey === "recoveryScanner" && nextState) {
+        renderRecoverySnapshots();
+      }
+      if (panelKey === "captureRules" && nextState) {
+        populateFilterInputs();
+      }
+      if (panelKey === "scanLog" && nextState) {
+        renderScanLog();
+      }
+      if (panelKey === "geminiKey" && nextState) {
+        const keyInput = document.getElementById("gemini-key-input");
+        if (keyInput && state.geminiApiKey) keyInput.value = state.geminiApiKey;
+      }
+    }
+
+    function toggleTaskExpanded(taskId) {
+      expandedTaskIds[taskId] = !expandedTaskIds[taskId];
+      renderAll();
+    }
+
+    function toggleExpandAll(sectionType) {
+      const targetTasks = sectionType === "triage"
+        ? state.tasks.filter(function(t) { return t.visibility === "triage"; })
+        : state.tasks.filter(function(t) { return t.visibility === "assigned" && !t.completed; });
+
+      const anyCollapsed = targetTasks.some(function(t) { return !expandedTaskIds[t.id]; });
+      for (let i = 0; i < targetTasks.length; i++) {
+        expandedTaskIds[targetTasks[i].id] = anyCollapsed;
+      }
+      renderAll();
+    }
+
+    function setTaskSortMode(mode) {
+      taskSortMode = mode;
+      renderAll();
+    }
+
+    function getFilterSettings() {
+      return Object.assign({}, DEFAULT_FILTER_SETTINGS, state.filterSettings || {});
+    }
+
+    /********************************************************************
+     * LOCAL STORAGE RECOVERY SCANNER & SAFETY BACKUP SYSTEM
+     ********************************************************************/
+    function isDemoSeedData(parsedObj) {
+      if (!parsedObj) return false;
+      const tasks = normalizeArray(parsedObj.tasks);
+      // Detect if a snapshot was one of the Canvas preview seeds
+      for (let i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === "t_demo_1" || tasks[i].id === "t_demo_2" || tasks[i].id === "chk_demo_1") {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function scanAllLocalStorageSnapshots() {
+      const snapshots = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key) continue;
+          const raw = localStorage.getItem(key);
+          if (!raw || raw[0] !== "{") continue;
+
+          try {
+            const parsed = JSON.parse(raw);
+            const users = normalizeArray(parsed.users);
+            const tasks = normalizeArray(parsed.tasks);
+            const hasKey = Boolean(parsed.geminiApiKey && String(parsed.geminiApiKey).trim());
+
+            if (users.length > 0 || tasks.length > 0 || hasKey) {
+              snapshots.push({
+                storageKey: key,
+                isDemo: isDemoSeedData(parsed),
+                usersCount: users.length,
+                userNames: users.map(function(u) { return u.name; }).join(", "),
+                tasksCount: tasks.length,
+                taskTitles: tasks.slice(0, 4).map(function(t) { return t.title; }).join(" • "),
+                hasGeminiKey: hasKey,
+                data: parsed
+              });
+            }
+          } catch (e2) {}
+        }
+      } catch (e) {}
+
+      // Sort non-demo snapshots with the most tasks/users first
+      snapshots.sort(function(a, b) {
+        if (a.isDemo !== b.isDemo) return a.isDemo ? 1 : -1;
+        return (b.tasksCount + b.usersCount) - (a.tasksCount + a.usersCount);
+      });
+      return snapshots;
+    }
+
+    function renderRecoverySnapshots() {
+      const container = document.getElementById("recovery-snapshots-list");
+      if (!container) return;
+      const list = scanAllLocalStorageSnapshots();
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="font-size:13px; color:var(--muted);">No local snapshots found on this device.</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(function(snap, idx) {
+        const tag = snap.isDemo
+          ? '<span class="scan-status-pill scan-ignored">Preview Demo Data</span>'
+          : '<span class="scan-status-pill scan-accepted">Saved Device Snapshot</span>';
+        const keyBadge = snap.hasGeminiKey ? " • Gemini Key Present" : "";
+        return '<div class="scan-log-card">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+            tag +
+            '<span style="font-size:11px; color:var(--muted);">' + escapeHtmlAttr(snap.storageKey) + '</span>' +
+          '</div>' +
+          '<div style="font-size:13px; color:#60a5fa; font-weight:600; margin-bottom:4px;">' +
+            snap.usersCount + ' Users (' + escapeHtmlAttr(snap.userNames || "None") + ') • ' + snap.tasksCount + ' Tasks' + keyBadge +
+          '</div>' +
+          (snap.taskTitles ? ('<div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Tasks: ' + escapeHtmlAttr(snap.taskTitles) + '</div>') : '') +
+          '<button class="btn btn-success" style="padding:11px; font-size:13px;" onclick="restoreSnapshotByIndex(' + idx + ')">Restore This Snapshot to App &amp; Firebase</button>' +
+        '</div>';
+      }).join("");
+    }
+
+    async function restoreSnapshotByIndex(idx) {
+      const list = scanAllLocalStorageSnapshots();
+      const chosen = list[idx];
+      if (!chosen || !chosen.data) return;
+
+      const d = chosen.data;
+      const restoredUsers = normalizeArray(d.users);
+      const restoredTasks = normalizeArray(d.tasks).map(normalizeTaskObject);
+
+      state = {
+        geminiApiKey: d.geminiApiKey || state.geminiApiKey || "",
+        filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, d.filterSettings || state.filterSettings || {}),
+        users: restoredUsers.length > 0 ? restoredUsers : state.users,
+        tasks: restoredTasks,
+        lastNotification: d.lastNotification || null
+      };
+
+      // Ensure current logged in user is valid in restored users
+      if (!state.users.some(function(u) { return u.id === currentUserId; })) {
+        currentUserId = state.users[0].id;
+        localStorage.setItem(SESSION_USER_KEY, currentUserId);
+      }
+
+      hasCompletedInitialCloudPull = true;
+      toggleDropdownPanel("recoveryScanner", false);
+      await pushStateToCloud("Snapshot Restored", "Restored " + state.users.length + " users and " + state.tasks.length + " tasks to Firebase.", "ADMINS");
+    }
+
+    function normalizeTaskObject(t) {
+      const dueDate = t.dueDate || getTodayIso();
+      const duePeriod = (t.duePeriod === "PM") ? "PM" : "AM";
+      return Object.assign({}, t, {
+        urgent: Boolean(t.urgent),
+        dueDate: dueDate,
+        duePeriod: duePeriod,
+        due: t.due || formatFriendlyDueLabel(dueDate, duePeriod, "Today"),
+        assignedTo: normalizeArray(t.assignedTo),
+        checklist: normalizeArray(t.checklist),
+        images: normalizeArray(t.images),
+        notes: normalizeArray(t.notes)
+      });
+    }
+
+    function loadBestAvailableLocalState() {
+      try {
+        let bestCandidate = null;
+        let recoveredKey = "";
+
+        // Scan all known keys to find the richest non-demo user data
+        const allKeys = [SAFETY_BACKUP_KEY, STORAGE_KEY].concat(LEGACY_KEYS);
+        for (let i = 0; i < allKeys.length; i++) {
+          const raw = localStorage.getItem(allKeys[i]);
+          if (!raw) continue;
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.geminiApiKey && !recoveredKey) {
+              recoveredKey = parsed.geminiApiKey;
+            }
+            if (!isDemoSeedData(parsed) && !bestCandidate) {
+              bestCandidate = parsed;
+            }
+          } catch (e2) {}
+        }
+
+        if (!bestCandidate) {
+          const rawCurrent = localStorage.getItem(STORAGE_KEY);
+          if (rawCurrent) bestCandidate = JSON.parse(rawCurrent);
+        }
+
+        if (!bestCandidate) {
+          return JSON.parse(JSON.stringify(DEFAULT_SHARED_STATE));
+        }
+
+        const users = normalizeArray(bestCandidate.users);
+        const rawTasks = normalizeArray(bestCandidate.tasks).map(normalizeTaskObject);
+        const maint = runCompletedTasksMaintenance(rawTasks);
+
+        return {
+          geminiApiKey: bestCandidate.geminiApiKey || recoveredKey || "",
+          filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, bestCandidate.filterSettings || {}),
+          users: users.length > 0 ? users : DEFAULT_SHARED_STATE.users,
+          tasks: maint.tasks,
+          lastNotification: bestCandidate.lastNotification || null
+        };
+      } catch (e) {
+        return JSON.parse(JSON.stringify(DEFAULT_SHARED_STATE));
+      }
+    }
+
+    /********************************************************************
+     * URGENT PRIORITY TOGGLE CONTROLS
+     ********************************************************************/
+    function syncUrgentToggleUI() {
+      const cRow = document.getElementById("creator-urgent-row");
+      const cInd = document.getElementById("creator-urgent-ind");
+      if (cRow && cInd) {
+        cRow.classList.toggle("selected", creatorUrgent);
+        cInd.textContent = creatorUrgent ? "✓" : "";
+      }
+
+      const tRow = document.getElementById("triage-urgent-row");
+      const tInd = document.getElementById("triage-urgent-ind");
+      if (tRow && tInd) {
+        tRow.classList.toggle("selected", triageCreatorUrgent);
+        tInd.textContent = triageCreatorUrgent ? "✓" : "";
+      }
+
+      const eRow = document.getElementById("edit-urgent-row");
+      const eInd = document.getElementById("edit-urgent-ind");
+      if (eRow && eInd) {
+        eRow.classList.toggle("selected", editDraftUrgent);
+        eInd.textContent = editDraftUrgent ? "✓" : "";
+      }
+    }
+
+    function toggleCreatorUrgent() {
+      creatorUrgent = !creatorUrgent;
+      syncUrgentToggleUI();
+    }
+
+    function toggleTriageCreatorUrgent() {
+      triageCreatorUrgent = !triageCreatorUrgent;
+      syncUrgentToggleUI();
+    }
+
+    function toggleEditUrgent() {
+      editDraftUrgent = !editDraftUrgent;
+      syncUrgentToggleUI();
+    }
+
+    function toggleTaskUrgentDirect(taskId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      task.urgent = !task.urgent;
+      expandedTaskIds[taskId] = true;
+
+      if (task.urgent && task.visibility === "assigned") {
+        const targets = normalizeArray(task.assignedTo);
+        pushStateToCloud(
+          "[URGENT] Priority Escalated",
+          actor.name + " pinned \"" + task.title + "\" as Urgent / High-Priority.",
+          targets.length > 0 ? targets : "ALL"
+        );
+      } else {
+        pushStateToCloud();
+      }
+    }
+
+    function runCompletedTasksMaintenance(tasksList) {
+      const now = Date.now();
+      let changed = false;
+      const kept = [];
+
+      const list = normalizeArray(tasksList);
+      for (let i = 0; i < list.length; i++) {
+        const t = list[i];
+        if (!t.completed) {
+          kept.push(t);
+          continue;
+        }
+
+        if (!t.completedTimestamp) {
+          t.completedTimestamp = now;
+          changed = true;
+        }
+
+        const ageMs = now - Number(t.completedTimestamp);
+
+        if (ageMs > TASK_RETENTION_MS) {
+          changed = true;
+          continue;
+        }
+
+        const imgs = normalizeArray(t.images);
+        if (ageMs > PHOTO_RETENTION_MS && imgs.length > 0) {
+          t.images = [];
+          t.photosPurged = true;
+          changed = true;
+        }
+
+        kept.push(t);
+      }
+
+      return { tasks: kept, changed: changed };
+    }
+
+    /********************************************************************
+     * FAST, BOUNDED GEMINI 3.8 FLASH ROUTER WITH 15-SECOND TIMEOUT
+     ********************************************************************/
+    function extractNonThoughtTextFromCandidate(data) {
+      if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) return "";
+      const parts = normalizeArray(data.candidates[0].content.parts);
+      if (parts.length === 0) return "";
+
+      const outputParts = [];
+      for (let i = 0; i < parts.length; i++) {
+        if (!parts[i].thought && typeof parts[i].text === "string" && parts[i].text.trim()) {
+          outputParts.push(parts[i].text.trim());
+        }
+      }
+      if (outputParts.length > 0) {
+        return outputParts.join("\n");
+      }
+      for (let j = parts.length - 1; j >= 0; j--) {
+        if (typeof parts[j].text === "string" && parts[j].text.trim()) {
+          return parts[j].text.trim();
+        }
+      }
+      return "";
+    }
+
+    async function fetchWithTimeout(url, options, timeoutMs) {
+      const controller = new AbortController();
+      const timer = setTimeout(function() {
+        controller.abort();
+      }, timeoutMs || 15000);
+
+      try {
+        const res = await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+        clearTimeout(timer);
+        return res;
+      } catch (err) {
+        clearTimeout(timer);
+        throw err;
+      }
+    }
+
+    async function callGeminiGenerateContent(requestParts, statusCallback) {
+      const apiKey = (state.geminiApiKey || "").trim();
+      if (!apiKey) {
+        return { ok: false, error: "No Gemini API Key configured in Settings." };
+      }
+
+      const modelsToTry = [];
+      if (preferredWorkingModel) modelsToTry.push(preferredWorkingModel);
+      const activeModels = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"];
+      for (let i = 0; i < activeModels.length; i++) {
+        if (modelsToTry.indexOf(activeModels[i]) === -1) {
+          modelsToTry.push(activeModels[i]);
+        }
+      }
+
+      const tried = {};
+      let lastErrorMsg = "";
+
+      for (let m = 0; m < modelsToTry.length; m++) {
+        const modelName = modelsToTry[m];
+        if (!modelName || tried[modelName]) continue;
+        tried[modelName] = true;
+
+        if (typeof statusCallback === "function") {
+          statusCallback("Scanning photo with " + modelName + "...");
+        }
+
+        const payloadVariants = [
+          {
+            contents: [{ role: "user", parts: requestParts }],
+            generationConfig: {
+              thinkingConfig: { thinkingLevel: "LOW" }
+            }
+          },
+          {
+            contents: [{ role: "user", parts: requestParts }]
+          }
+        ];
+
+        for (let v = 0; v < payloadVariants.length; v++) {
+          try {
+            const response = await fetchWithTimeout(
+              "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + encodeURIComponent(apiKey),
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payloadVariants[v])
+              },
+              15000
+            );
+
+            if (!response.ok) {
+              const errData = await response.json().catch(function() { return {}; });
+              const msg = (errData && errData.error && errData.error.message) ? errData.error.message : ("HTTP " + response.status);
+              lastErrorMsg = msg;
+
+              const redirectMatch = msg.match(/use\s+models\/([a-zA-Z0-9.\-_]+)/i);
+              if (redirectMatch && redirectMatch[1] && !tried[redirectMatch[1]]) {
+                modelsToTry.splice(m + 1, 0, redirectMatch[1]);
+              }
+
+              if (response.status === 400 && v === 0) {
+                continue;
+              }
+              break;
+            }
+
+            const data = await response.json();
+            const rawOut = extractNonThoughtTextFromCandidate(data);
+            if (rawOut) {
+              preferredWorkingModel = modelName;
+              return { ok: true, text: rawOut, model: modelName };
+            }
+          } catch (netErr) {
+            const isTimeout = netErr && netErr.name === "AbortError";
+            lastErrorMsg = isTimeout ? ("Request to " + modelName + " timed out after 15s") : (netErr && netErr.message ? netErr.message : "Network request failed");
+            break;
+          }
+        }
+      }
+
+      return { ok: false, error: lastErrorMsg || "No compatible Gemini model responded." };
+    }
+
+    /********************************************************************
+     * SCAN LOG & SMART FILTER SETTINGS MANAGEMENT
+     ********************************************************************/
+    function getScanLog() {
+      try {
+        return normalizeArray(JSON.parse(localStorage.getItem(SCAN_LOG_KEY) || "[]"));
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function recordScanDecision(entry) {
+      const log = getScanLog();
+      log.unshift({
+        id: "log_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        source: entry.source || "SMS",
+        sender: entry.sender || "",
+        text: entry.text || "",
+        accepted: Boolean(entry.accepted),
+        reason: entry.reason || ""
+      });
+      while (log.length > 15) log.pop();
+      localStorage.setItem(SCAN_LOG_KEY, JSON.stringify(log));
+      if (dropdownState.scanLog && !isUserTyping()) renderScanLog();
+    }
+
+    function clearScanLog() {
+      localStorage.removeItem(SCAN_LOG_KEY);
+      renderScanLog();
+    }
+
+    function forcePromoteLogItem(logId) {
+      const log = getScanLog();
+      const item = log.find(function(x) { return x.id === logId; });
+      if (!item) return;
+
+      const parsed = extractTitleAndChecklist(item.text, "", item.sender);
+      const dueDate = getTodayIso();
+      state.tasks.unshift({
+        id: "t_" + Date.now(),
+        title: parsed.title,
+        source: item.source || "SMS",
+        dueDate: dueDate,
+        duePeriod: "AM",
+        due: formatFriendlyDueLabel(dueDate, "AM", "Today"),
+        urgent: false,
+        checklist: parsed.checklist || [],
+        images: [],
+        notes: [],
+        visibility: "triage",
+        assignedTo: [],
+        createdBy: currentUserId,
+        completed: false,
+        completedBy: null,
+        completedAt: null,
+        completedTimestamp: null
+      });
+
+      item.accepted = true;
+      item.reason = "Manually promoted to Triage Queue";
+      localStorage.setItem(SCAN_LOG_KEY, JSON.stringify(log));
+      renderScanLog();
+      pushStateToCloud("Moved to Triage", "\"" + parsed.title + "\" added to Triage Queue.", "ADMINS");
+    }
+
+    function blockSenderFromLog(senderName) {
+      const clean = String(senderName || "").trim();
+      if (!clean) return;
+      const fs = getFilterSettings();
+      const existing = fs.ignoredSenders
+        ? fs.ignoredSenders.split(",").map(function(s) { return s.trim(); }).filter(Boolean)
+        : [];
+      if (existing.indexOf(clean) === -1) {
+        existing.push(clean);
+      }
+      fs.ignoredSenders = existing.join(", ");
+      state.filterSettings = fs;
+      populateFilterInputs();
+      pushStateToCloud("Sender Ignored", "Future notifications from \"" + clean + "\" will be ignored.", "ADMINS");
+    }
+
+    function renderScanLog() {
+      const listEl = document.getElementById("scan-log-list");
+      if (!listEl) return;
+      const log = getScanLog();
+      if (log.length === 0) {
+        listEl.innerHTML = '<div style="font-size:13px; color:var(--muted); padding:10px 0;">No notifications scanned yet.</div>';
+        return;
+      }
+
+      listEl.innerHTML = log.map(function(item) {
+        const pillCls = item.accepted ? "scan-status-pill scan-accepted" : "scan-status-pill scan-ignored";
+        const pillLabel = item.accepted ? "Task Created" : "Ignored";
+        const senderLabel = item.sender ? ("From: " + escapeHtmlAttr(item.sender) + " • ") : "";
+        const promoteBtn = !item.accepted
+          ? ('<button class="btn btn-secondary" style="padding:10px; font-size:13px;" onclick="forcePromoteLogItem(\'' + item.id + '\')">Send to Triage Queue Anyway</button>')
+          : "";
+        const blockBtn = item.sender
+          ? ('<button class="btn btn-danger-outline" style="padding:10px; font-size:13px;" onclick="blockSenderFromLog(\'' + escapeHtmlAttr(item.sender) + '\')">Ignore Sender (' + escapeHtmlAttr(item.sender) + ')</button>')
+          : "";
+
+        return '<div class="scan-log-card">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+            '<span class="' + pillCls + '">' + pillLabel + '</span>' +
+            '<span style="font-size:11px; color:var(--muted);">' + escapeHtmlAttr(item.source) + ' • ' + escapeHtmlAttr(item.time) + '</span>' +
+          '</div>' +
+          '<div style="font-size:12px; color:#60a5fa; margin-bottom:4px;">' + senderLabel + escapeHtmlAttr(item.reason) + '</div>' +
+          '<div style="font-size:14px; color:var(--text); margin-bottom:10px; line-height:1.35; white-space:pre-wrap;">' + escapeHtmlAttr(item.text) + '</div>' +
+          '<div class="btn-stack">' + promoteBtn + blockBtn + '</div>' +
+        '</div>';
+      }).join("");
+    }
+
+    function toggleSourceSetting(key) {
+      const fs = getFilterSettings();
+      fs[key] = !fs[key];
+      state.filterSettings = fs;
+      populateFilterInputs();
+      pushStateToCloud();
+    }
+
+    function populateFilterInputs() {
+      const fs = getFilterSettings();
+      const gridEl = document.getElementById("source-toggle-grid");
+      if (gridEl) {
+        const sources = [
+          { key: "captureSms", label: "Text & Picture Messages (SMS / RCS)" },
+          { key: "captureReminders", label: "Reminders (Samsung / Google)" },
+          { key: "captureCalendar", label: "Calendar Events" }
+        ];
+        gridEl.innerHTML = sources.map(function(s) {
+          const isOn = Boolean(fs[s.key]);
+          const rowCls = isOn ? "user-pick-row selected" : "user-pick-row";
+          return '<div class="' + rowCls + '" onclick="toggleSourceSetting(\'' + s.key + '\')">' +
+            '<span>' + s.label + '</span>' +
+            '<div class="pick-indicator">' + (isOn ? "✓" : "") + '</div>' +
+          '</div>';
+        }).join("");
+      }
+
+      const workInput = document.getElementById("filter-work-keywords");
+      const ignoredInput = document.getElementById("filter-ignored-senders");
+      if (workInput && document.activeElement !== workInput) {
+        workInput.value = fs.workKeywords || "";
+      }
+      if (ignoredInput && document.activeElement !== ignoredInput) {
+        ignoredInput.value = fs.ignoredSenders || "";
+      }
+    }
+
+    function saveFilterSettings() {
+      const fs = getFilterSettings();
+      const workInput = document.getElementById("filter-work-keywords");
+      const ignoredInput = document.getElementById("filter-ignored-senders");
+      if (workInput) fs.workKeywords = workInput.value.trim();
+      if (ignoredInput) fs.ignoredSenders = ignoredInput.value.trim();
+      state.filterSettings = fs;
+      toggleDropdownPanel("captureRules", false);
+      pushStateToCloud("Filter Rules Saved", "Notification scanning preferences updated.", "ADMINS");
+    }
+
+    /********************************************************************
+     * PHOTO COMPRESSION, IMMEDIATE AI VISION SCANNER & STAGING
+     ********************************************************************/
+    function compressImageFile(file) {
+      return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const maxDim = 960;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round(h * (maxDim / w));
+                w = maxDim;
+              } else {
+                w = Math.round(w * (maxDim / h));
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", 0.72));
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function extractChecklistFromPhotosWithGemini(photosArray, statusCallback) {
+      const apiKey = (state.geminiApiKey || "").trim();
+      if (!apiKey) {
+        showBanner("Gemini API Key Needed", "Open Settings -> Gemini API Key and save your key to scan checklists from photos.");
+        return null;
+      }
+
+      const imageParts = [];
+      for (let i = 0; i < photosArray.length; i++) {
+        const commaIdx = photosArray[i].indexOf(",");
+        if (commaIdx !== -1) {
+          imageParts.push({
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: photosArray[i].slice(commaIdx + 1)
+            }
+          });
+        }
+      }
+      if (imageParts.length === 0) return null;
+
+      const prompt = "Read this image of a handwritten or printed material/task list.\n" +
+        "Extract every individual line item into a JSON array of strings under the key \"checklist\", and provide a short \"title\" string.\n" +
+        "CRITICAL RULES:\n" +
+        "- Keep ALL quantities, numbers, dashes, feet ('), and inches (\") intact on every line (for example: \"4 - 10\\\" x 6'\", \"3 - 16\\\" x 4'\", \"20 - 2'x6'\", \"wedge bolts\", \"turn buckles\").\n" +
+        "- Ignore crossed-out or scribbled-out mistakes and only output the clean intended item or dimension.\n" +
+        "- Return ONLY valid JSON in this exact format: {\"title\": \"Material List\", \"checklist\": [\"item 1\", \"item 2\"]}";
+
+      const requestParts = [{ text: prompt }].concat(imageParts);
+      const genResult = await callGeminiGenerateContent(requestParts, statusCallback);
+
+      if (!genResult.ok) {
+        showBanner("Photo Scan Issue", "Gemini Vision could not scan photo: " + genResult.error);
+        return null;
+      }
+
+      const cleaned = genResult.text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+      let items = [];
+      let title = "Material List";
+
+      try {
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned);
+        if (Array.isArray(parsed)) {
+          items = parsed.map(String);
+        } else if (parsed && Array.isArray(parsed.checklist)) {
+          items = parsed.checklist.map(String);
+          if (parsed.title) title = String(parsed.title);
+        }
+      } catch (parseErr) {
+        items = cleaned.split(/\r?\n/).map(cleanBulletPrefix).filter(Boolean);
+      }
+
+      items = items.map(function(s) { return s.trim(); }).filter(Boolean);
+      if (items.length > 0) {
+        return { title: title, items: items };
+      }
+      showBanner("No List Items Found", "Gemini scanned the photo but did not detect any readable list items.");
+      return null;
+    }
+
+    async function handlePhotoInput(inputElem, targetMode) {
+      const files = inputElem.files ? Array.from(inputElem.files) : [];
+      if (files.length === 0) return;
+
+      const newlyAddedPhotos = [];
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const dataUrl = await compressImageFile(files[i]);
+          newlyAddedPhotos.push(dataUrl);
+          if (targetMode === "triage") {
+            triagePendingPhotos.push(dataUrl);
+          } else if (targetMode === "creator") {
+            creatorPendingPhotos.push(dataUrl);
+          } else if (targetMode === "edit") {
+            editDraftPhotos.push(dataUrl);
+          }
+        } catch (err) {
+          showBanner("Photo Error", "Could not process the selected image.");
+        }
+      }
+
+      inputElem.value = "";
+      if (targetMode === "edit") {
+        const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+        renderEditModalContents(task);
+      } else {
+        renderStagingPhotos();
+      }
+
+      if (newlyAddedPhotos.length > 0) {
+        const statusBannerId = targetMode === "triage"
+          ? "triage-scan-status"
+          : (targetMode === "creator" ? "creator-scan-status" : "edit-scan-status");
+        const statusBanner = document.getElementById(statusBannerId);
+        if (statusBanner) {
+          statusBanner.textContent = "Scanning photo with Gemini 3.8 Flash...";
+          statusBanner.classList.remove("hidden");
+        }
+
+        activePhotoScanPromise = (async function() {
+          try {
+            const scanResult = await extractChecklistFromPhotosWithGemini(newlyAddedPhotos, function(msg) {
+              if (statusBanner) statusBanner.textContent = msg;
+            });
+
+            if (scanResult && scanResult.items && scanResult.items.length > 0) {
+              if (targetMode === "creator") {
+                const titleEl = document.getElementById("new-task-title");
+                const chkEl = document.getElementById("new-task-checklist");
+                if (titleEl && !titleEl.value.trim()) {
+                  titleEl.value = scanResult.title || "Material List";
+                }
+                if (chkEl) {
+                  const existing = chkEl.value.trim();
+                  chkEl.value = existing ? (existing + "\n" + scanResult.items.join("\n")) : scanResult.items.join("\n");
+                }
+                showBanner("Checklist Extracted", "Scanned " + scanResult.items.length + " items from photo into the checklist box.");
+              } else if (targetMode === "triage") {
+                const triageInput = document.getElementById("triage-manual-input");
+                if (triageInput) {
+                  const header = scanResult.title || "Material List";
+                  const formatted = header + "\n" + scanResult.items.map(function(i) { return "• " + i; }).join("\n");
+                  const existing = triageInput.value.trim();
+                  triageInput.value = existing ? (existing + "\n" + formatted) : formatted;
+                }
+                showBanner("Checklist Extracted", "Scanned " + scanResult.items.length + " items from photo.");
+              } else if (targetMode === "edit") {
+                for (let k = 0; k < scanResult.items.length; k++) {
+                  editDraftChecklist.push({
+                    id: "chk_" + Date.now() + "_" + k,
+                    text: scanResult.items[k],
+                    done: false,
+                    doneBy: null
+                  });
+                }
+                const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+                renderEditModalContents(task);
+                showBanner("Checklist Extracted", "Added " + scanResult.items.length + " scanned items to this task.");
+              }
+            }
+          } finally {
+            if (statusBanner) statusBanner.classList.add("hidden");
+            activePhotoScanPromise = null;
+          }
+        })();
+
+        await activePhotoScanPromise;
+      }
+    }
+
+    function removeStagedPhoto(targetMode, index) {
+      if (targetMode === "triage") {
+        triagePendingPhotos.splice(index, 1);
+        renderStagingPhotos();
+      } else if (targetMode === "creator") {
+        creatorPendingPhotos.splice(index, 1);
+        renderStagingPhotos();
+      } else if (targetMode === "edit") {
+        editDraftPhotos.splice(index, 1);
+        const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+        renderEditModalContents(task);
+      }
+    }
+
+    function renderStagingPhotos() {
+      const triageContainer = document.getElementById("triage-photo-preview");
+      if (triageContainer) {
+        triageContainer.innerHTML = triagePendingPhotos.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Staged Photo" />' +
+            '<button class="btn btn-danger-outline" style="margin-top:10px; padding:10px;" onclick="removeStagedPhoto(\'triage\', ' + idx + ')">Remove Photo</button>' +
+          '</div>';
+        }).join("");
+      }
+
+      const creatorContainer = document.getElementById("creator-photo-preview");
+      if (creatorContainer) {
+        creatorContainer.innerHTML = creatorPendingPhotos.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Staged Photo" />' +
+            '<button class="btn btn-danger-outline" style="margin-top:10px; padding:10px;" onclick="removeStagedPhoto(\'creator\', ' + idx + ')">Remove Photo</button>' +
+          '</div>';
+        }).join("");
+      }
+    }
+
+    function openImageViewer(src) {
+      if (!src) return;
+      document.getElementById("viewer-full-img").src = src;
+      document.getElementById("image-viewer-modal").classList.remove("hidden");
+    }
+
+    function closeImageViewer() {
+      document.getElementById("viewer-full-img").src = "";
+      document.getElementById("image-viewer-modal").classList.add("hidden");
+    }
+
+    function renderTaskPhotosHtml(task) {
+      const images = normalizeArray(task.images);
+      if (images.length === 0) {
+        if (task.photosPurged) {
+          return '<div style="font-size:12px; color:var(--muted); font-style:italic;">Attached photo cleared after 3-day retention period.</div>';
+        }
+        return "";
+      }
+
+      return '<div class="photo-grid">' +
+        images.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Task Photo ' + (idx + 1) + '" />' +
+            '<div class="photo-caption">Tap photo to view full screen</div>' +
+          '</div>';
+        }).join("") +
+      '</div>';
+    }
+
+    function addTaskNote(taskId) {
+      const inputEl = document.getElementById("note-input-" + taskId);
+      if (!inputEl) return;
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      const notes = normalizeArray(task.notes);
+      const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      notes.push({
+        id: "n_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        authorId: actor.id,
+        authorName: actor.name,
+        text: text,
+        createdAt: timeStr
+      });
+      task.notes = notes;
+      expandedTaskIds[taskId] = true;
+      inputEl.value = "";
+      inputEl.blur();
+
+      const assignedIds = normalizeArray(task.assignedTo);
+      let targetAudience = "ADMINS";
+      if (actor.role === "admin" && assignedIds.length > 0) {
+        targetAudience = assignedIds.slice();
+      } else if (assignedIds.length > 0) {
+        const adminIds = normalizeArray(state.users)
+          .filter(function(u) { return u.role === "admin"; })
+          .map(function(u) { return u.id; });
+        targetAudience = adminIds.concat(assignedIds);
+      }
+
+      pushStateToCloud(
+        "New Note on \"" + task.title + "\"",
+        actor.name + ": \"" + text + "\"",
+        targetAudience
+      );
+    }
+
+    function deleteTaskNote(taskId, noteId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      if (!task) return;
+      task.notes = normalizeArray(task.notes).filter(function(n) { return n.id !== noteId; });
+      expandedTaskIds[taskId] = true;
+      pushStateToCloud();
+    }
+
+    function renderTaskNotesHtml(task, isAdmin) {
+      const notes = normalizeArray(task.notes);
+      const notesListHtml = notes.length === 0
+        ? '<div style="font-size:13px; color:var(--muted); margin-bottom:6px;">No notes added yet.</div>'
+        : notes.map(function(n) {
+            const delBtn = isAdmin
+              ? (' <span style="color:#f87171; cursor:pointer; float:right;" onclick="deleteTaskNote(\'' + task.id + '\', \'' + n.id + '\')">Remove</span>')
+              : "";
+            return '<div class="note-item">' +
+              '<div class="note-meta">' + escapeHtmlAttr(n.authorName) + ' • ' + escapeHtmlAttr(n.createdAt) + delBtn + '</div>' +
+              '<div class="note-text">' + escapeHtmlAttr(n.text) + '</div>' +
+            '</div>';
+          }).join("");
+
+      return '<div class="notes-box">' +
+        '<div class="notes-header">Task Notes (' + notes.length + ')</div>' +
+        notesListHtml +
+        '<div class="note-input-wrap">' +
+          '<input type="text" id="note-input-' + task.id + '" placeholder="Write a note or update for this task..." />' +
+          '<button class="btn btn-secondary" style="padding:12px;" onclick="addTaskNote(\'' + task.id + '\')">Add Note &amp; Notify</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function openEditModal(taskId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      if (!task) return;
+
+      editingTaskId = task.id;
+      document.getElementById("edit-task-title").value = task.title || "";
+      document.getElementById("edit-new-items-input").value = "";
+
+      const iso = task.dueDate || getTodayIso();
+      const parts = iso.split("-");
+      calState.edit = {
+        date: iso,
+        period: (task.duePeriod === "PM") ? "PM" : "AM",
+        viewYear: Number(parts[0]) || new Date().getFullYear(),
+        viewMonth: (Number(parts[1]) || (new Date().getMonth() + 1)) - 1
+      };
+      renderScheduleWidget("edit");
+
+      editDraftUrgent = Boolean(task.urgent);
+      editDraftChecklist = normalizeArray(task.checklist).map(function(item) {
+        return {
+          id: item.id || ("chk_" + Date.now() + "_" + Math.floor(Math.random() * 1000)),
+          text: String(item.text || ""),
+          done: Boolean(item.done),
+          doneBy: item.doneBy || null
+        };
+      });
+
+      editDraftAssignees = normalizeArray(task.assignedTo).slice();
+      editDraftPhotos = normalizeArray(task.images).slice();
+
+      syncUrgentToggleUI();
+      renderEditModalContents(task);
+      document.getElementById("edit-modal").classList.remove("hidden");
+    }
+
+    function closeEditModal() {
+      editingTaskId = null;
+      editDraftChecklist = [];
+      editDraftAssignees = [];
+      editDraftPhotos = [];
+      editDraftUrgent = false;
+      document.getElementById("edit-modal").classList.add("hidden");
+    }
+
+    function updateDraftItemText(index, newText) {
+      if (editDraftChecklist[index]) {
+        editDraftChecklist[index].text = newText;
+      }
+    }
+
+    function removeDraftItem(index) {
+      editDraftChecklist.splice(index, 1);
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      renderEditModalContents(task);
+    }
+
+    function appendDraftItems() {
+      const newItemsInput = document.getElementById("edit-new-items-input");
+      const raw = (newItemsInput.value || "").trim();
+      if (!raw) return;
+
+      const parsedItems = parseManualChecklistText(raw);
+      for (let i = 0; i < parsedItems.length; i++) {
+        editDraftChecklist.push(parsedItems[i]);
+      }
+      newItemsInput.value = "";
+
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      renderEditModalContents(task);
+    }
+
+    function toggleEditAssignee(userId) {
+      const idx = editDraftAssignees.indexOf(userId);
+      if (idx !== -1) {
+        editDraftAssignees.splice(idx, 1);
+      } else {
+        editDraftAssignees.push(userId);
+      }
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      renderEditModalContents(task);
+    }
+
+    function renderEditModalContents(task) {
+      const photoContainer = document.getElementById("edit-photos-container");
+      if (editDraftPhotos.length === 0) {
+        photoContainer.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:4px 0 8px;">No photos attached to this task.</div>';
+      } else {
+        photoContainer.innerHTML = editDraftPhotos.map(function(src, idx) {
+          return '<div class="photo-card">' +
+            '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Attached Photo" />' +
+            '<button class="btn btn-danger-outline" style="margin-top:10px; padding:10px;" onclick="removeStagedPhoto(\'edit\', ' + idx + ')">Remove Photo</button>' +
+          '</div>';
+        }).join("");
+      }
+
+      const container = document.getElementById("edit-checklist-container");
+      if (editDraftChecklist.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:12px 0 16px;">No checklist items yet. Add items below if needed.</div>';
+      } else {
+        container.innerHTML = editDraftChecklist.map(function(item, idx) {
+          return '<div class="edit-item-card">' +
+            '<label class="form-label">Item #' + (idx + 1) + (item.done ? " (Checked Off)" : "") + '</label>' +
+            '<input type="text" value="' + escapeHtmlAttr(item.text) + '" oninput="updateDraftItemText(' + idx + ', this.value)" />' +
+            '<button class="btn btn-danger-outline" style="padding:12px;" onclick="removeDraftItem(' + idx + ')">Remove Item</button>' +
+          '</div>';
+        }).join("");
+      }
+
+      const assigneesSection = document.getElementById("edit-assignees-section");
+      const userGrid = document.getElementById("edit-user-grid");
+      if (task && task.visibility === "assigned") {
+        assigneesSection.classList.remove("hidden");
+        userGrid.innerHTML = state.users.map(function(u) {
+          const isSel = editDraftAssignees.indexOf(u.id) !== -1;
+          const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
+          return '<div class="' + rowCls + '" onclick="toggleEditAssignee(\'' + u.id + '\')">' +
+            '<span>' + escapeHtmlAttr(u.name) + ' (' + (u.role || "member").toUpperCase() + ')</span>' +
+            '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
+          '</div>';
+        }).join("");
+      } else {
+        assigneesSection.classList.add("hidden");
+      }
+    }
+
+    async function saveTaskEdits() {
+      if (activePhotoScanPromise) {
+        await activePhotoScanPromise;
+      }
+
+      const task = state.tasks.find(function(t) { return t.id === editingTaskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      const pendingNewText = (document.getElementById("edit-new-items-input").value || "").trim();
+      if (pendingNewText) {
+        const extraItems = parseManualChecklistText(pendingNewText);
+        for (let i = 0; i < extraItems.length; i++) {
+          editDraftChecklist.push(extraItems[i]);
+        }
+      }
+
+      const newTitle = document.getElementById("edit-task-title").value.trim();
+      if (!newTitle) {
+        showBanner("Missing Title", "Task title cannot be blank.");
+        return;
+      }
+
+      if (task.visibility === "assigned" && editDraftAssignees.length === 0) {
+        showBanner("Select Assignee", "An assigned task must have at least one team member selected.");
+        return;
+      }
+
+      task.title = newTitle;
+      task.dueDate = calState.edit.date || getTodayIso();
+      task.duePeriod = calState.edit.period || "AM";
+      task.due = formatFriendlyDueLabel(task.dueDate, task.duePeriod, "Today");
+      task.urgent = Boolean(editDraftUrgent);
+      task.images = editDraftPhotos.slice();
+      task.checklist = editDraftChecklist.map(function(item) {
+        return {
+          id: item.id,
+          text: String(item.text || "").trim(),
+          done: Boolean(item.done),
+          doneBy: item.doneBy || null
+        };
+      }).filter(function(item) {
+        return item.text.length > 0;
+      });
+
+      if (task.visibility === "assigned") {
+        task.assignedTo = editDraftAssignees.slice();
+      }
+
+      expandedTaskIds[task.id] = true;
+      const prefix = task.urgent ? "[URGENT] " : "";
+      const notifyTargets = task.visibility === "assigned" ? task.assignedTo.slice() : "ADMINS";
+      const notifyHeading = prefix + (task.visibility === "assigned" ? "Assigned Task Updated" : "Triage Task Updated");
+      const notifyMsg = actor.name + " updated \"" + task.title + "\" (Due: " + task.due + ").";
+
+      closeEditModal();
+      pushStateToCloud(notifyHeading, notifyMsg, notifyTargets);
+    }
+
+    /********************************************************************
+     * MULTI-STAGE NOTIFICATION CLASSIFIER & LIST PARSER
+     ********************************************************************/
+    function checkHardIgnoreRules(text, sourceType, senderName, isManualEntry) {
+      const fs = getFilterSettings();
+      const cleanSender = String(senderName || "").trim().toLowerCase();
+      const cleanText = String(text || "").trim();
+
+      if (!isManualEntry) {
+        if (sourceType === "SMS" && !fs.captureSms) {
+          return { ignored: true, reason: "SMS auto-capture is turned off" };
+        }
+        if (sourceType === "SAMSUNG" && !fs.captureReminders) {
+          return { ignored: true, reason: "Reminder auto-capture is turned off" };
+        }
+        if (sourceType === "CAL" && !fs.captureCalendar) {
+          return { ignored: true, reason: "Calendar auto-capture is turned off" };
+        }
+      }
+
+      if (cleanSender && fs.ignoredSenders) {
+        const blockedList = fs.ignoredSenders.split(",").map(function(s) { return s.trim().toLowerCase(); }).filter(Boolean);
+        for (let i = 0; i < blockedList.length; i++) {
+          if (cleanSender.indexOf(blockedList[i]) !== -1) {
+            return { ignored: true, reason: "Sender is in Ignored Senders list" };
+          }
+        }
+      }
+
+      if (/^(?:\d+\s+new\s+messages?|messages\s+is\s+doing\s+work|syncing\s+messages|checking\s+for\s+messages|connected\s+to\s+chat)/i.test(cleanText)) {
+        return { ignored: true, reason: "System status notification" };
+      }
+
+      if (/^(?:liked|loved|laughed at|emphasized|questioned|disliked|reacted\b.*?\bto)\s+[“"'«]/i.test(cleanText)) {
+        return { ignored: true, reason: "Message reaction" };
+      }
+
+      const strippedReply = cleanText.replace(/[.!?👍👌🙏]+$/g, "").trim();
+      if (/^(?:ok|okay|k|kk|yep|yup|yes|yeah|no|nope|nah|sounds good|sound good|10-4|copy|copy that|got it|will do|on it|thanks|thank you|thx|ty|appreciate it|on my way|omw|be right there|heading that way|here|i'm here|im here|just left|alright|cool|bet|nice|great|perfect|see you soon|talk soon)$/i.test(strippedReply)) {
+        return { ignored: true, reason: "Short conversational acknowledgment" };
+      }
+
+      if (/\b(?:verification code|security code|one-time passcode|otp|do not share this code|unsubscribe|reply stop|text stop to end|your package has shipped|out for delivery from amazon|fedex|ups My Choice|uspsInformedDelivery|autopay|statement is ready)\b/i.test(cleanText)) {
+        return { ignored: true, reason: "Automated code, promo, or carrier alert" };
+      }
+
+      return { ignored: false };
+    }
+
+    function detectUrgentKeyword(text) {
+      return /\b(?:urgent|asap|emergency|immediately|right away|right now|critical|rush)\b/i.test(String(text || ""));
+    }
+
+    function extractTitleAndChecklist(text, defaultDue, senderName) {
+      let due = defaultDue || "Today";
+      const rawLines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+      let cleanTitle = "";
+      let extractedItems = [];
+
+      if (rawLines.length >= 2) {
+        const firstLineRaw = rawLines[0];
+        const restLinesRaw = rawLines.slice(1);
+        const firstIsBullet = /^[•*▪▫‣⁃\-]/.test(firstLineRaw);
+        const restAreBulletsOrQuantities = restLinesRaw.filter(isLikelyBulletOrQuantityLine).length >= Math.ceil(restLinesRaw.length * 0.5);
+
+        if (!firstIsBullet && restAreBulletsOrQuantities) {
+          cleanTitle = cleanBulletPrefix(firstLineRaw);
+          extractedItems = restLinesRaw.map(cleanBulletPrefix).filter(Boolean);
+        } else {
+          extractedItems = rawLines.map(cleanBulletPrefix).filter(Boolean);
+          const locMatch = text.match(/\b(?:for|to|at)\s+([A-Z][a-zA-Z0-9\s]{2,20}?)(?:\.|\r|\n|$)/);
+          if (locMatch) {
+            cleanTitle = "Materials List for " + locMatch[1].trim();
+          } else if (senderName) {
+            cleanTitle = "Material List from " + senderName;
+          } else {
+            cleanTitle = "Material & Item Checklist (" + extractedItems.length + " items)";
+          }
+        }
+      } else {
+        if (text.indexOf("•") !== -1) {
+          const bulletParts = text.split("•").map(function(p) { return p.trim(); }).filter(Boolean);
+          if (bulletParts.length >= 2) {
+            cleanTitle = bulletParts[0];
+            extractedItems = bulletParts.slice(1).map(cleanBulletPrefix).filter(Boolean);
+          }
+        } else {
+          let listBody = text;
+          const listTrigger = text.match(/(?:need|bring|pick up|get|load|deliver|include|items|materials|list)\s*:?\s*(.+)/i);
+          if (listTrigger && listTrigger[1]) listBody = listTrigger[1];
+
+          listBody = listBody.replace(/\s+(?:delivered|brought|taken)\s+to\s+.+$/i, "")
+                             .replace(/\s+(?:before|by|at)\s+\d{1,2}.*$/i, "");
+
+          if (listBody.indexOf(",") !== -1) {
+            const parts = listBody.split(/,|(?:\s+and\s+)/i).map(function(p) {
+              return cleanBulletPrefix(p).replace(/\.$/, "");
+            }).filter(function(p) {
+              return p.length > 1 && p.length < 70;
+            });
+            if (parts.length >= 2) extractedItems = parts;
+          }
+
+          cleanTitle = text.trim() || "Material List";
+          if (extractedItems.length >= 2) {
+            const locMatch = text.match(/\b(?:to|at|for)\s+([A-Z][a-zA-Z0-9\s]{2,20}?)(?:\s+before|\s+by|\s+today|\.|$)/);
+            if (locMatch) {
+              cleanTitle = "Prepare & Deliver Materials (" + locMatch[1].trim() + ")";
+            } else if (cleanTitle.length > 65) {
+              cleanTitle = "Material & Item Checklist (" + extractedItems.length + " items)";
+            }
+          }
+        }
+      }
+
+      if (senderName && cleanTitle.indexOf(senderName) === -1) {
+        cleanTitle = cleanTitle + " (" + senderName + ")";
+      }
+
+      const checklist = extractedItems.map(function(itemText, idx) {
+        return { id: "chk_" + Date.now() + "_" + idx, text: itemText, done: false };
+      });
+
+      return {
+        title: cleanTitle,
+        due: due,
+        urgent: detectUrgentKeyword(text),
+        checklist: checklist
+      };
+    }
+
+    async function evaluateIncomingMessage(rawText, sourceType, defaultDue, senderName, attachedPhotos, isManualEntry) {
+      const text = (rawText || "").trim();
+      const photos = normalizeArray(attachedPhotos);
+      if (!text && photos.length === 0) return null;
+
+      if (photos.length === 0) {
+        const hardCheck = checkHardIgnoreRules(text, sourceType, senderName, isManualEntry);
+        if (hardCheck.ignored) {
+          return { isWorkRelated: false, reason: hardCheck.reason };
+        }
+      }
+
+      if (photos.length > 0 && !text) {
+        const scanRes = await extractChecklistFromPhotosWithGemini(photos);
+        if (scanRes && scanRes.items && scanRes.items.length > 0) {
+          return {
+            isWorkRelated: true,
+            title: scanRes.title || "Material List",
+            due: defaultDue || "Today",
+            urgent: false,
+            reason: "Scanned " + scanRes.items.length + " items from photo",
+            checklist: scanRes.items.map(function(item, idx) {
+              return { id: "chk_" + Date.now() + "_" + idx, text: item, done: false };
+            })
+          };
+        }
+        return {
+          isWorkRelated: true,
+          title: "Material List (Photo Attached)",
+          due: defaultDue || "Today",
+          urgent: false,
+          reason: "Photo material list attached",
+          checklist: []
+        };
+      }
+
+      const rawLines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+      if (isManualEntry && rawLines.length >= 2) {
+        const extracted = extractTitleAndChecklist(text, defaultDue, senderName);
+        return {
+          isWorkRelated: true,
+          title: extracted.title,
+          due: extracted.due,
+          urgent: extracted.urgent,
+          reason: "Multi-line work checklist",
+          checklist: extracted.checklist
+        };
+      }
+
+      const fs = getFilterSettings();
+      const apiKey = (state.geminiApiKey || "").trim();
+
+      if (apiKey) {
+        try {
+          const prompt = "You are a strict operations task filter and checklist extractor for a construction, excavation, concrete form, and fleet management team.\n" +
+            "Known Work Contacts, Crew & Job Sites: " + (fs.workKeywords || "None specified") + "\n" +
+            "Incoming Source: " + sourceType + (senderName ? (" | Sender: " + senderName) : "") + "\n" +
+            "Message Text: " + text + "\n\n" +
+            "DECISION RULES FOR isWorkRelated:\n" +
+            "- Set isWorkRelated = true ONLY if this is an actionable work task, material/form/equipment request, pickup/delivery instruction, machine repair/maintenance issue, or job site schedule item.\n" +
+            "- Set isWorkRelated = false if this is personal/family chat (dinner, groceries, kids, casual check-ins), a non-actionable status reply ('I am here', 'Just left', 'Sounds good'), a greeting, or spam.\n" +
+            "- urgent: true if the message indicates urgent, ASAP, emergency, or immediate priority.\n" +
+            "- checklist: If there are multiple materials/items, extract each line keeping ALL quantities, dashes, feet ('), and inches (\") intact.\n" +
+            "Return ONLY valid JSON: {\"isWorkRelated\": boolean, \"urgent\": boolean, \"title\": string, \"due\": string, \"reason\": string, \"checklist\": string[]}";
+
+          const genResult = await callGeminiGenerateContent([{ text: prompt }]);
+          if (genResult.ok && genResult.text) {
+            let jsonText = genResult.text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+            const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+            let parsed = JSON.parse(jsonMatch ? jsonMatch[0] : jsonText);
+            if (Array.isArray(parsed)) parsed = parsed[0] || {};
+            const rawList = normalizeArray(parsed.checklist);
+            let finalTitle = parsed.title || text || "Work Task";
+            if (senderName && finalTitle.indexOf(senderName) === -1 && parsed.isWorkRelated) {
+              finalTitle = finalTitle + " (" + senderName + ")";
+            }
+            return {
+              isWorkRelated: Boolean(parsed.isWorkRelated),
+              urgent: Boolean(parsed.urgent) || detectUrgentKeyword(text),
+              title: finalTitle,
+              due: parsed.due || defaultDue || "Today",
+              reason: parsed.reason || (parsed.isWorkRelated ? "AI matched work task" : "AI filtered non-work message"),
+              checklist: rawList.map(function(item, idx) {
+                return { id: "chk_" + Date.now() + "_" + idx, text: String(item).trim(), done: false };
+              }).filter(function(i) { return Boolean(i.text); })
+            };
+          }
+        } catch (err) {}
+      }
+
+      return runBuiltInIntelligentParser(text, sourceType, defaultDue, senderName, photos.length > 0);
+    }
+
+    function runBuiltInIntelligentParser(text, sourceType, defaultDue, senderName, hasPhotos) {
+      const lower = text.toLowerCase();
+      const cleanSender = String(senderName || "").toLowerCase();
+      const fs = getFilterSettings();
+
+      let score = 0;
+      let reasons = [];
+
+      const rawLines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+      const bulletCount = rawLines.filter(isLikelyBulletOrQuantityLine).length;
+      if (bulletCount >= 2) {
+        score += 3;
+        reasons.push("Multi-item quantity/material list");
+      }
+
+      if (fs.workKeywords) {
+        const customTerms = fs.workKeywords.split(",").map(function(s) { return s.trim().toLowerCase(); }).filter(Boolean);
+        for (let i = 0; i < customTerms.length; i++) {
+          const term = customTerms[i];
+          if (term && (lower.indexOf(term) !== -1 || cleanSender.indexOf(term) !== -1)) {
+            score += 2;
+            reasons.push("Matched work contact/site (" + customTerms[i] + ")");
+            break;
+          }
+        }
+      }
+
+      const fieldNouns = /\b(concrete|rebar|lumber|trench|plate|plates|grinder|excavator|mini ex|skid steer|bobcat|loader|trailer|dump trailer|truck|f-150|silverado|crane|trowel|power trowel|fuel|diesel|hydraulic|job site|footing|footings|pour|forms|form|outside corners|inside corners|turnbuckles|flat ties|ties|stakes|grade|laser|transit|bucket|hose|fittings|plywood|2x4|2x6|4x4|anchor bolts|wedge bolts|bolts|generator|compressor|pump|backhoe|dozer|culvert|gravel|base rock|topsoil|silt fence)\b/i;
+      if (fieldNouns.test(lower)) {
+        score += 2;
+        reasons.push("Matched construction/equipment terms");
+      }
+
+      const actionVerbs = /\b(need|needs|bring|pick up|pickup|drop off|deliver|delivery|load|unload|haul|move|check|fix|repair|service|replace|install|dig|excavate|set|strip|pour|order|grab|schedule|inspect)\b/i;
+      if (actionVerbs.test(lower)) {
+        score += 1;
+        reasons.push("Actionable verb");
+      }
+
+      const personalNoise = /\b(dinner|supper|breakfast|groceries|milk|bread|eggs|kids|bedtime|movie|love you|miss you|netflix|doctor|dentist|pharmacy|birthday|anniversary)\b/i;
+      if (personalNoise.test(lower)) {
+        score -= 3;
+        reasons.push("Personal/household topic");
+      }
+
+      if (sourceType === "SAMSUNG" || sourceType === "CAL") {
+        score += 1;
+      }
+
+      const requiredScore = sourceType === "SMS" ? 2 : 1;
+      if (!hasPhotos && score < requiredScore) {
+        return {
+          isWorkRelated: false,
+          reason: reasons.length > 0 ? ("Low work score (" + reasons.join(", ") + ")") : "No construction, site, or work task indicators"
+        };
+      }
+
+      const extracted = extractTitleAndChecklist(text, defaultDue, senderName);
+      return {
+        isWorkRelated: true,
+        urgent: extracted.urgent,
+        title: extracted.title,
+        due: extracted.due,
+        reason: reasons.join(" + ") || "Work reminder/event",
+        checklist: extracted.checklist
+      };
+    }
+
+    function parseManualChecklistText(rawChecklistText) {
+      if (!rawChecklistText || !rawChecklistText.trim()) return [];
+      const raw = rawChecklistText.trim();
+      const parts = raw.indexOf("\n") !== -1 ? raw.split(/\r?\n/) : raw.split(",");
+      return parts.map(cleanBulletPrefix).filter(Boolean).map(function(text, idx) {
+        return { id: "chk_" + Date.now() + "_" + Math.floor(Math.random() * 1000) + "_" + idx, text: text, done: false };
+      });
+    }
+
+    function hasNativeBridge() {
+      return typeof window.AndroidNative !== "undefined" && typeof window.AndroidNative.isCaptureEnabled === "function";
+    }
+
+    function openNativeCaptureSettings() {
+      if (hasNativeBridge()) {
+        window.AndroidNative.openCaptureSettings();
+      } else {
+        showBanner("Android App Feature", "Background notification capture is active when running the installed Android APK.");
+      }
+    }
+
+    async function pollNativePhoneCaptures(manualTrigger) {
+      if (!hasNativeBridge()) {
+        if (manualTrigger) {
+          showBanner("Android App Feature", "Phone calendar & message scanning runs inside the installed Android APK.");
+        }
+        return;
+      }
+      if (!hasCompletedInitialCloudPull) return;
+      const user = getCurrentUser();
+      if (!user || user.role !== "admin") return;
+
+      try {
+        const enabled = window.AndroidNative.isCaptureEnabled();
+        const descEl = document.getElementById("native-listener-desc");
+        const btnEl = document.getElementById("btn-enable-listener");
+        if (descEl && btnEl) {
+          if (enabled) {
+            descEl.textContent = "Automatic background capture is active. Incoming notifications are filtered using your Smart Filter Rules below.";
+            btnEl.textContent = "Notification Access Enabled (Tap to Manage)";
+            btnEl.className = "btn btn-secondary";
+          } else {
+            descEl.textContent = "Enable Notification Access once so Command Center can automatically read incoming work text messages and reminders.";
+            btnEl.textContent = "Enable Notification Access";
+            btnEl.className = "btn";
+          }
+        }
+      } catch (e) {}
+
+      let addedCount = 0;
+      const todayIso = getTodayIso();
+
+      try {
+        const rawJson = window.AndroidNative.getPendingCaptures();
+        const items = normalizeArray(JSON.parse(rawJson || "[]"));
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const rawBody = item.text || item.combined || "";
+          const sender = item.sender || "";
+          const src = item.source || "SMS";
+          const result = await evaluateIncomingMessage(rawBody, src, "Today • AM", sender, [], false);
+
+          recordScanDecision({
+            source: src,
+            sender: sender,
+            text: rawBody,
+            accepted: Boolean(result && result.isWorkRelated),
+            reason: result && result.reason ? result.reason : "Evaluated"
+          });
+
+          if (result && result.isWorkRelated) {
+            state.tasks.unshift({
+              id: "t_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+              title: result.title,
+              source: src,
+              dueDate: todayIso,
+              duePeriod: "AM",
+              due: formatFriendlyDueLabel(todayIso, "AM", "Today"),
+              urgent: Boolean(result.urgent),
+              checklist: result.checklist || [],
+              images: [],
+              notes: [],
+              visibility: "triage",
+              assignedTo: [],
+              createdBy: user.id,
+              completed: false,
+              completedBy: null,
+              completedAt: null,
+              completedTimestamp: null
+            });
+            addedCount++;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const calJson = window.AndroidNative.syncCalendarEvents();
+        const calEvents = normalizeArray(JSON.parse(calJson || "[]"));
+        for (let j = 0; j < calEvents.length; j++) {
+          const ev = calEvents[j];
+          const fullText = ev.text ? (ev.title + "\n" + ev.text) : ev.title;
+          const result = await evaluateIncomingMessage(fullText, "CAL", ev.due || "Today • AM", "", [], false);
+
+          recordScanDecision({
+            source: "CAL",
+            sender: "Calendar",
+            text: fullText,
+            accepted: Boolean(result && result.isWorkRelated),
+            reason: result && result.reason ? result.reason : "Evaluated"
+          });
+
+          if (result && result.isWorkRelated) {
+            state.tasks.unshift({
+              id: "t_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+              title: result.title,
+              source: "CAL",
+              dueDate: todayIso,
+              duePeriod: "AM",
+              due: ev.due || formatFriendlyDueLabel(todayIso, "AM", "Today"),
+              urgent: Boolean(result.urgent),
+              checklist: result.checklist || [],
+              images: [],
+              notes: [],
+              visibility: "triage",
+              assignedTo: [],
+              createdBy: user.id,
+              completed: false,
+              completedBy: null,
+              completedAt: null,
+              completedTimestamp: null
+            });
+            addedCount++;
+          }
+        }
+      } catch (e) {}
+
+      if (addedCount > 0) {
+        pushStateToCloud("Work Items Captured", addedCount + " new work item(s) added to Triage Queue.", "ADMINS");
+      } else if (manualTrigger) {
+        showBanner("Scan Complete", "No new work tasks found. Check the Recent Scan Log to review evaluated notifications.");
+      }
+    }
+
+    async function handleManualAnalyze() {
+      const inputEl = document.getElementById("triage-manual-input");
+      const sourceEl = document.getElementById("triage-source-select");
+      const feedbackEl = document.getElementById("analyze-feedback");
+      const btnEl = document.getElementById("btn-analyze");
+
+      if (activePhotoScanPromise) {
+        btnEl.textContent = "Finishing Photo Scan...";
+        await activePhotoScanPromise;
+      }
+
+      const rawText = inputEl.value.trim();
+      if (!rawText && triagePendingPhotos.length === 0) {
+        showBanner("Input Required", "Paste a message or attach a photo of a material list first.");
+        return;
+      }
+
+      btnEl.textContent = "Analyzing...";
+      feedbackEl.style.display = "none";
+
+      const dueDate = calState.triage.date || getTodayIso();
+      const duePeriod = calState.triage.period || "AM";
+      const dueLabel = formatFriendlyDueLabel(dueDate, duePeriod, "Today");
+
+      const attachedPhotos = triagePendingPhotos.slice();
+      const result = await evaluateIncomingMessage(rawText, sourceEl.value, dueLabel, "", attachedPhotos, true);
+      btnEl.textContent = "Analyze & Generate Work Task";
+
+      recordScanDecision({
+        source: sourceEl.value,
+        sender: "Manual Entry",
+        text: rawText || "(Photo Scan)",
+        accepted: Boolean(result && result.isWorkRelated),
+        reason: result && result.reason ? result.reason : "Evaluated"
+      });
+
+      if (!result || !result.isWorkRelated) {
+        feedbackEl.style.display = "block";
+        feedbackEl.style.color = "#f87171";
+        feedbackEl.textContent = "Filtered Out (" + (result && result.reason ? result.reason : "Non-work message") + ").";
+        return;
+      }
+
+      const isUrgent = Boolean(triageCreatorUrgent || result.urgent);
+      const newId = "t_" + Date.now();
+
+      state.tasks.unshift({
+        id: newId,
+        title: result.title,
+        source: sourceEl.value,
+        dueDate: dueDate,
+        duePeriod: duePeriod,
+        due: dueLabel,
+        urgent: isUrgent,
+        checklist: result.checklist || [],
+        images: attachedPhotos,
+        notes: [],
+        visibility: "triage",
+        assignedTo: [],
+        createdBy: currentUserId,
+        completed: false,
+        completedBy: null,
+        completedAt: null,
+        completedTimestamp: null
+      });
+
+      expandedTaskIds[newId] = true;
+      inputEl.value = "";
+      triagePendingPhotos = [];
+      triageCreatorUrgent = false;
+      syncUrgentToggleUI();
+      renderStagingPhotos();
+      toggleDropdownPanel("triageCreator", false);
+
+      feedbackEl.style.display = "block";
+      feedbackEl.style.color = "#34d399";
+      feedbackEl.textContent = "Created task \"" + result.title + "\" (" + (result.checklist ? result.checklist.length : 0) + " checklist items, " + attachedPhotos.length + " photo(s)).";
+
+      const prefix = isUrgent ? "[URGENT] " : "";
+      pushStateToCloud(prefix + "New Work Item Ready", result.title + " added to Triage Queue.", "ADMINS");
+    }
+
+    /********************************************************************
+     * PROTECTED CLOUD SYNC (READ-BEFORE-WRITE GUARD + SAFETY BACKUP)
+     ********************************************************************/
+    async function pushStateToCloud(notifyTitle, notifyBody, targetAudience) {
+      if (notifyTitle && notifyBody) {
+        state.lastNotification = {
+          id: Date.now(),
+          title: notifyTitle,
+          body: notifyBody,
+          target: targetAudience || "ALL",
+          actorId: currentUserId
+        };
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (!isDemoSeedData(state) && (state.tasks.length > 0 || state.users.length > 1)) {
+        localStorage.setItem(SAFETY_BACKUP_KEY, JSON.stringify(state));
+      }
+      renderAll();
+
+      if (notifyTitle && notifyBody) {
+        checkAndFireNotification(state.lastNotification, true);
+      }
+
+      const dbUrl = getFirebaseUrl();
+      if (!dbUrl || dbUrl.indexOf("PLACEHOLDER") !== -1) return;
+
+      // CRITICAL PROTECTION: Never overwrite Firebase until initial cloud pull has completed!
+      if (!hasCompletedInitialCloudPull) {
+        await pullStateFromCloud();
+        return;
+      }
+
+      try {
+        await fetch(dbUrl + "/command_center.json", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state)
+        });
+        updateSyncIndicator(true);
+      } catch (err) {
+        updateSyncIndicator(false);
+      }
+    }
+
+    async function pullStateFromCloud() {
+      const dbUrl = getFirebaseUrl();
+      if (!dbUrl || dbUrl.indexOf("PLACEHOLDER") !== -1) {
+        hasCompletedInitialCloudPull = true;
+        updateSyncIndicator(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(dbUrl + "/command_center.json?t=" + Date.now());
+        if (!res.ok) throw new Error("Sync HTTP error");
+        const remoteData = await res.json();
+
+        if (!remoteData) {
+          hasCompletedInitialCloudPull = true;
+          if (!isDemoSeedData(state)) {
+            await pushStateToCloud();
+          }
+          return;
+        }
+
+        // Before accepting remoteData, save current local state to safety backup if local has real non-demo data
+        if (!isDemoSeedData(state) && (state.tasks.length > 0 || state.users.length > 1)) {
+          localStorage.setItem(SAFETY_BACKUP_KEY, JSON.stringify(state));
+        }
+
+        const remoteUsers = normalizeArray(remoteData.users);
+        const rawRemoteTasks = normalizeArray(remoteData.tasks).map(normalizeTaskObject);
+        const maint = runCompletedTasksMaintenance(rawRemoteTasks);
+        const preservedKey = remoteData.geminiApiKey || state.geminiApiKey || "";
+
+        state = {
+          geminiApiKey: preservedKey,
+          filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, remoteData.filterSettings || state.filterSettings || {}),
+          users: remoteUsers.length > 0 ? remoteUsers : state.users,
+          tasks: maint.tasks,
+          lastNotification: remoteData.lastNotification || null
+        };
+
+        hasCompletedInitialCloudPull = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        updateSyncIndicator(true);
+
+        if ((preservedKey && !remoteData.geminiApiKey) || maint.changed) {
+          pushStateToCloud();
+        }
+
+        const incomingHash = computeStateHash(state);
+        if (!isUserTyping() && !isEditModalOpen() && incomingHash !== lastRenderedHash) {
+          renderAll();
+        }
+
+        if (state.lastNotification) {
+          checkAndFireNotification(state.lastNotification, false);
+        }
+      } catch (err) {
+        updateSyncIndicator(false);
+      }
+    }
+
+    function startCloudSyncLoop() {
+      clearInterval(cloudPollTimer);
+      const dbUrl = getFirebaseUrl();
+      if (dbUrl && dbUrl.indexOf("PLACEHOLDER") === -1) {
+        pullStateFromCloud();
+        cloudPollTimer = setInterval(function() {
+          pullStateFromCloud();
+          if (!isUserTyping() && !isEditModalOpen()) {
+            pollNativePhoneCaptures(false);
+          }
+        }, 3500);
+      } else {
+        hasCompletedInitialCloudPull = true;
+        updateSyncIndicator(false);
+      }
+    }
+
+    function updateSyncIndicator(isOnline) {
+      const dot = document.getElementById("sync-dot");
+      const txt = document.getElementById("sync-status-text");
+      const timeEl = document.getElementById("sync-time");
+      const dbUrl = getFirebaseUrl();
+      if (isOnline && dbUrl && dbUrl.indexOf("PLACEHOLDER") === -1) {
+        dot.className = "sync-indicator online";
+        txt.textContent = "Cloud Synchronized";
+        timeEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      } else {
+        dot.className = "sync-indicator";
+        txt.textContent = "Offline Mode";
+      }
+    }
+
+    function showBanner(title, body) {
+      const banner = document.getElementById("push-banner");
+      document.getElementById("push-title").textContent = title;
+      document.getElementById("push-body").textContent = body;
+      banner.style.display = "flex";
+      clearTimeout(window._pushTimer);
+      window._pushTimer = setTimeout(hidePush, 6000);
+    }
+
+    function checkAndFireNotification(notifObj, isLocalAction) {
+      if (!notifObj || !notifObj.id) return;
+      const lastSeenId = Number(localStorage.getItem(LAST_NOTIF_KEY) || 0);
+      if (notifObj.id <= lastSeenId) return;
+
+      localStorage.setItem(LAST_NOTIF_KEY, String(notifObj.id));
+
+      const user = getCurrentUser();
+      if (!user) return;
+
+      const targets = normalizeArray(notifObj.target);
+      const isTargetedToMe =
+        notifObj.target === "ALL" ||
+        targets.indexOf(user.id) !== -1 ||
+        notifObj.target === user.id ||
+        (notifObj.target === "ADMINS" && user.role === "admin");
+
+      if (!isTargetedToMe && !isLocalAction) return;
+
+      showBanner(notifObj.title, notifObj.body);
+
+      try {
+        if (window.AndroidNative && typeof window.AndroidNative.sendNotification === "function") {
+          window.AndroidNative.sendNotification(notifObj.title, notifObj.body);
+          return;
+        }
+      } catch (e) {}
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(notifObj.title, { body: notifObj.body });
+      }
+    }
+
+    function hidePush() {
+      document.getElementById("push-banner").style.display = "none";
+    }
+
+    function getCurrentUser() {
+      if (!currentUserId) return null;
+      const list = normalizeArray(state.users);
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === currentUserId) return list[i];
+      }
+      return null;
+    }
+
+    function handleLogin() {
+      const selectedId = document.getElementById("login-user-select").value;
+      const enteredPin = document.getElementById("login-pin").value.trim();
+      const list = normalizeArray(state.users);
+      let userAccount = null;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === selectedId) userAccount = list[i];
+      }
+      const errEl = document.getElementById("login-error");
+
+      if (!userAccount) return;
+      const requiredPin = userAccount.pin || "1234";
+
+      if (enteredPin !== requiredPin) {
+        errEl.style.display = "block";
+        return;
+      }
+
+      errEl.style.display = "none";
+      currentUserId = userAccount.id;
+      localStorage.setItem(SESSION_USER_KEY, currentUserId);
+      document.getElementById("login-pin").value = "";
+
+      if (userAccount.role !== "admin") activeTab = "tasks";
+      renderAll();
+      pollNativePhoneCaptures(false);
+    }
+
+    function logoutUser() {
+      currentUserId = null;
+      localStorage.removeItem(SESSION_USER_KEY);
+      closeEditModal();
+      closeImageViewer();
+      renderAll();
+    }
+
+    function switchTab(tabName) {
+      const user = getCurrentUser();
+      if (!user || (user.role !== "admin" && tabName !== "tasks")) return;
+      activeTab = tabName;
+      renderAll();
+    }
+
+    function toggleCreatorUser(userId) {
+      const idx = creatorSelectedUsers.indexOf(userId);
+      if (idx !== -1) {
+        creatorSelectedUsers.splice(idx, 1);
+      } else {
+        creatorSelectedUsers.push(userId);
+      }
+      renderCreatorUserGrid();
+    }
+
+    function renderCreatorUserGrid() {
+      const grid = document.getElementById("creator-user-grid");
+      if (!grid) return;
+      grid.innerHTML = state.users.map(function(u) {
+        const isSel = creatorSelectedUsers.indexOf(u.id) !== -1;
+        const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
+        return '<div class="' + rowCls + '" onclick="toggleCreatorUser(\'' + u.id + '\')">' +
+          '<span>' + escapeHtmlAttr(u.name) + ' (' + (u.role || "member").toUpperCase() + ')</span>' +
+          '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
+        '</div>';
+      }).join("");
+    }
+
+    function toggleTriageUser(taskId, userId) {
+      const current = triageSelections[taskId] ? triageSelections[taskId].slice() : [];
+      const idx = current.indexOf(userId);
+      if (idx !== -1) {
+        current.splice(idx, 1);
+      } else {
+        current.push(userId);
+      }
+      triageSelections[taskId] = current;
+      expandedTaskIds[taskId] = true;
+      renderAll();
+    }
+
+    function assignTriageItem(taskId) {
+      const selectedIds = triageSelections[taskId] || [];
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      const adminUser = getCurrentUser();
+
+      if (!task || selectedIds.length === 0 || !adminUser) {
+        showBanner("Select Assignee", "Tap at least one team member before assigning.");
+        return;
+      }
+
+      task.visibility = "assigned";
+      task.assignedTo = selectedIds;
+      delete triageSelections[taskId];
+
+      const prefix = task.urgent ? "[URGENT] " : "";
+      const names = selectedIds.map(function(id) { return getUserName(id); }).join(", ");
+      pushStateToCloud(prefix + "Task Assigned", "Assigned to " + names + ": " + task.title, selectedIds);
+    }
+
+    function dismissTriageItem(taskId) {
+      state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
+      delete triageSelections[taskId];
+      pushStateToCloud();
+    }
+
+    async function createAndAssignTask() {
+      const titleInput = document.getElementById("new-task-title");
+      const checklistInput = document.getElementById("new-task-checklist");
+      const createBtn = document.getElementById("btn-create-task");
+
+      if (creatorSelectedUsers.length === 0) {
+        showBanner("Select Assignee", "Tap at least one team member to assign this task.");
+        return;
+      }
+
+      if (activePhotoScanPromise) {
+        createBtn.textContent = "Finishing Photo Scan...";
+        await activePhotoScanPromise;
+      }
+
+      let title = titleInput.value.trim();
+      const rawChecklistText = checklistInput.value.trim();
+      const attachedPhotos = creatorPendingPhotos.slice();
+
+      if (!title && !rawChecklistText && attachedPhotos.length === 0) {
+        showBanner("Input Required", "Enter a task title, checklist items, or attach a photo.");
+        return;
+      }
+
+      createBtn.textContent = "Publishing...";
+
+      let checklist = parseManualChecklistText(rawChecklistText);
+
+      if (attachedPhotos.length > 0 && checklist.length === 0) {
+        createBtn.textContent = "Scanning Photo List...";
+        const scanRes = await extractChecklistFromPhotosWithGemini(attachedPhotos);
+        if (scanRes && scanRes.items && scanRes.items.length > 0) {
+          if (!title && scanRes.title) title = scanRes.title;
+          checklist = scanRes.items.map(function(txt, idx) {
+            return { id: "chk_" + Date.now() + "_" + idx, text: txt, done: false };
+          });
+        }
+      }
+
+      if (!title) title = "Material List Task";
+
+      const isUrgent = Boolean(creatorUrgent || detectUrgentKeyword(title));
+      const adminUser = getCurrentUser();
+      const dueDate = calState.creator.date || getTodayIso();
+      const duePeriod = calState.creator.period || "AM";
+      const due = formatFriendlyDueLabel(dueDate, duePeriod, "Today");
+      const assignedIds = creatorSelectedUsers.slice();
+      const names = assignedIds.map(function(id) { return getUserName(id); }).join(", ");
+      const newId = "t_" + Date.now();
+
+      state.tasks.unshift({
+        id: newId,
+        title: title,
+        source: "MANUAL",
+        dueDate: dueDate,
+        duePeriod: duePeriod,
+        due: due,
+        urgent: isUrgent,
+        checklist: checklist,
+        images: attachedPhotos,
+        notes: [],
+        visibility: "assigned",
+        assignedTo: assignedIds,
+        createdBy: adminUser.id,
+        completed: false,
+        completedBy: null,
+        completedAt: null,
+        completedTimestamp: null
+      });
+
+      expandedTaskIds[newId] = true;
+      titleInput.value = "";
+      checklistInput.value = "";
+      creatorSelectedUsers = [];
+      creatorUrgent = false;
+      creatorPendingPhotos = [];
+      syncUrgentToggleUI();
+      renderStagingPhotos();
+      createBtn.textContent = "Publish & Notify Assignees";
+      toggleDropdownPanel("taskCreator", false);
+
+      const prefix = isUrgent ? "[URGENT] " : "";
+      pushStateToCloud(prefix + "New Task Assignment", "Assigned to " + names + ": " + title + " (Due: " + due + ", " + checklist.length + " items)", assignedIds);
+    }
+
+    function toggleChecklistItem(taskId, itemId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      const list = normalizeArray(task.checklist);
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === itemId) {
+          list[i].done = !list[i].done;
+          list[i].doneBy = list[i].done ? actor.name : null;
+          break;
+        }
+      }
+      task.checklist = list;
+      expandedTaskIds[taskId] = true;
+
+      const total = list.length;
+      const doneCount = list.filter(function(i) { return i.done; }).length;
+
+      if (total > 0 && doneCount === total) {
+        pushStateToCloud(
+          "Checklist Items Ready",
+          "All " + total + " items checked for \"" + task.title + "\" by " + actor.name + ". Ready for final delivery/completion.",
+          "ADMINS"
+        );
+      } else {
+        pushStateToCloud();
+      }
+    }
+
+    function toggleTaskCompletion(taskId) {
+      const task = state.tasks.find(function(t) { return t.id === taskId; });
+      const actor = getCurrentUser();
+      if (!task || !actor) return;
+
+      task.completed = !task.completed;
+
+      if (task.completed) {
+        const now = new Date();
+        const nowStr = now.toLocaleDateString([], { month: "short", day: "numeric" }) + " " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        task.completedBy = actor.id;
+        task.completedAt = nowStr;
+        task.completedTimestamp = Date.now();
+        expandedTaskIds[taskId] = false;
+        pushStateToCloud("Task Delivered & Completed", "\"" + task.title + "\" marked complete by " + actor.name + " at " + nowStr + ".", "ADMINS");
+      } else {
+        task.completedBy = null;
+        task.completedAt = null;
+        task.completedTimestamp = null;
+        pushStateToCloud("Task Re-Opened", "\"" + task.title + "\" reopened by " + actor.name + ".", "ADMINS");
+      }
+    }
+
+    function clearAllCompletedTasks() {
+      const completedCount = state.tasks.filter(function(t) { return t.visibility === "assigned" && t.completed; }).length;
+      if (completedCount === 0) return;
+      state.tasks = state.tasks.filter(function(t) { return !(t.visibility === "assigned" && t.completed); });
+      toggleDropdownPanel("completedTasks", false);
+      pushStateToCloud("Completed Tasks Cleared", "Removed " + completedCount + " completed task(s) from the archive.", "ADMINS");
+    }
+
+    function deleteTask(taskId) {
+      state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
+      pushStateToCloud();
+    }
+
+    function saveGeminiKey() {
+      const keyInput = document.getElementById("gemini-key-input");
+      state.geminiApiKey = keyInput.value.trim();
+      preferredWorkingModel = null;
+      keyInput.blur();
+      toggleDropdownPanel("geminiKey", false);
+      pushStateToCloud("AI Settings Updated", "Gemini API key saved and active for photo scanning.", "ADMINS");
+    }
+
+    function addNewUser() {
+      const nameInput = document.getElementById("new-user-name");
+      const roleSelect = document.getElementById("new-user-role");
+      const pinInput = document.getElementById("new-user-pin");
+      const name = nameInput.value.trim();
+      const pin = pinInput.value.trim() || "1234";
+      if (!name) return;
+
+      state.users.push({
+        id: "u_" + Date.now(),
+        name: name,
+        role: roleSelect.value,
+        pin: pin
+      });
+      nameInput.value = "";
+      nameInput.blur();
+      toggleDropdownPanel("addUser", false);
+      pushStateToCloud("Account Created", "New account created for " + name + ".", "ADMINS");
+    }
+
+    function removeUser(userId) {
+      if (state.users.length <= 1) return;
+      state.users = state.users.filter(function(u) { return u.id !== userId; });
+      pushStateToCloud();
+    }
+
+    function getSourceBadge(source) {
+      const map = {
+        SMS: { cls: "src-sms", label: "Text Message" },
+        SAMSUNG: { cls: "src-samsung", label: "Reminder" },
+        CAL: { cls: "src-cal", label: "Calendar" },
+        MANUAL: { cls: "src-manual", label: "Direct Task" }
+      };
+      const item = map[source] || map.MANUAL;
+      return '<span class="badge ' + item.cls + '">' + item.label + '</span>';
+    }
+
+    function getUrgentBadge(isUrgent) {
+      if (!isUrgent) return "";
+      return '<span class="badge badge-urgent">URGENT</span>';
+    }
+
+    function getDuePillHtml(task) {
+      const label = formatFriendlyDueLabel(task.dueDate, task.duePeriod, task.due || "Today");
+      const todayIso = getTodayIso();
+      let cls = "due-pill";
+      if (!task.completed && task.dueDate && task.dueDate < todayIso) {
+        cls += " due-overdue";
+      } else if (task.duePeriod === "PM") {
+        cls += " due-pm";
+      } else {
+        cls += " due-am";
+      }
+      return '<span class="' + cls + '">Due: ' + escapeHtmlAttr(label) + '</span>';
+    }
+
+    function getUserName(userId) {
+      const list = normalizeArray(state.users);
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === userId) return list[i].name;
+      }
+      return "Unassigned";
+    }
+
+    function getAssigneeBadges(assignedToField) {
+      const ids = normalizeArray(assignedToField);
+      if (ids.length === 0) return '<span class="assignee-pill">Unassigned</span>';
+      return ids.map(function(id) {
+        return '<span class="assignee-pill">' + escapeHtmlAttr(getUserName(id)) + '</span>';
+      }).join(" ");
+    }
+
+    function renderSummaryStripHtml(task) {
+      const chk = normalizeArray(task.checklist);
+      const imgs = normalizeArray(task.images);
+      const notes = normalizeArray(task.notes);
+      const pills = [];
+
+      if (chk.length > 0) {
+        const done = chk.filter(function(i) { return i.done; }).length;
+        const readyCls = (done === chk.length && !task.completed) ? "summary-pill ready" : "summary-pill";
+        pills.push('<span class="' + readyCls + '">Checklist: ' + done + '/' + chk.length + '</span>');
+      }
+      if (imgs.length > 0) {
+        pills.push('<span class="summary-pill">' + imgs.length + (imgs.length === 1 ? ' Photo' : ' Photos') + '</span>');
+      }
+      if (notes.length > 0) {
+        pills.push('<span class="summary-pill">' + notes.length + (notes.length === 1 ? ' Note' : ' Notes') + '</span>');
+      }
+      if (pills.length === 0) {
+        pills.push('<span class="summary-pill">Tap to view details</span>');
+      }
+      return '<div class="task-summary-strip">' + pills.join("") + '</div>';
+    }
+
+    function renderChecklistHtml(task) {
+      const list = normalizeArray(task.checklist);
+      if (list.length === 0) return "";
+
+      const doneCount = list.filter(function(i) { return i.done; }).length;
+      const allItemsChecked = doneCount === list.length;
+
+      let bannerHtml = "";
+      if (allItemsChecked && !task.completed) {
+        bannerHtml = '<div class="checklist-ready-banner">All Items Checked — Ready for Delivery / Final Completion</div>';
+      }
+
+      const rowsHtml = list.map(function(item) {
+        const rowClass = item.done ? "checklist-item-row item-done" : "checklist-item-row";
+        const mark = item.done ? "✓" : "";
+        return '<div class="' + rowClass + '" onclick="toggleChecklistItem(\'' + task.id + '\', \'' + item.id + '\')">' +
+          '<div class="sub-check">' + mark + '</div>' +
+          '<div class="checklist-item-text">' + escapeHtmlAttr(item.text) + '</div>' +
+        '</div>';
+      }).join("");
+
+      return '<div class="checklist-box">' +
+        '<div class="checklist-header"><span>Item Checklist</span><span>' + doneCount + ' / ' + list.length + ' Checked</span></div>' +
+        bannerHtml +
+        rowsHtml +
+      '</div>';
+    }
+
+    function renderTriageCardHtml(t, isAdmin) {
+      const isExpanded = Boolean(expandedTaskIds[t.id]);
+      const cardCls = "card task-card" + (t.urgent ? " urgent-card" : "") + (isExpanded ? " expanded" : "");
+      const selectedForThis = triageSelections[t.id] || [];
+
+      const userRows = state.users.map(function(u) {
+        const isSel = selectedForThis.indexOf(u.id) !== -1;
+        const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
+        return '<div class="' + rowCls + '" onclick="toggleTriageUser(\'' + t.id + '\', \'' + u.id + '\')">' +
+          '<span>' + escapeHtmlAttr(u.name) + '</span>' +
+          '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
+        '</div>';
+      }).join("");
+
+      const urgentBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
+      const urgentBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
+
+      return '<div class="' + cardCls + '">' +
+        '<div class="task-accordion-header" onclick="toggleTaskExpanded(\'' + t.id + '\')">' +
+          '<div class="task-header-left">' +
+            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' ' + getDuePillHtml(t) + '</div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderSummaryStripHtml(t) +
+          '</div>' +
+          '<span class="task-expand-pill">' + (isExpanded ? "Close" : "Open") + '</span>' +
+        '</div>' +
+        (isExpanded ? (
+          '<div class="task-accordion-body">' +
+            renderTaskPhotosHtml(t) +
+            renderChecklistHtml(t) +
+            renderTaskNotesHtml(t, isAdmin) +
+            '<label class="form-label" style="margin-top:6px;">Tap Team Members to Assign</label>' +
+            '<div class="user-select-grid">' + userRows + '</div>' +
+            '<div class="btn-stack">' +
+              '<button class="btn" onclick="assignTriageItem(\'' + t.id + '\')">Assign Selected &amp; Send Notification</button>' +
+              '<button class="' + urgentBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentBtnText + '</button>' +
+              '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Schedule &amp; Checklist</button>' +
+              '<button class="btn btn-danger-outline" onclick="dismissTriageItem(\'' + t.id + '\')">Dismiss Item</button>' +
+            '</div>' +
+          '</div>'
+        ) : '') +
+      '</div>';
+    }
+
+    function renderTaskCardHtml(t, isAdmin) {
+      const isExpanded = Boolean(expandedTaskIds[t.id]);
+      const hasChecklist = normalizeArray(t.checklist).length > 0;
+      const completeBtnText = t.completed
+        ? "Re-Open Task"
+        : (hasChecklist ? "Mark Entire Task Delivered & Complete" : "Mark Task Complete");
+      const urgentCls = (t.urgent && !t.completed) ? " urgent-card" : "";
+      const expCls = isExpanded ? " expanded" : "";
+      const cardCls = (t.completed ? "card task-card completed" : "card task-card") + urgentCls + expCls;
+      const btnCls = t.completed ? "btn btn-secondary" : "btn btn-success";
+      const statusHtml = t.completed
+        ? ('<div class="done-stamp">Completed by ' + escapeHtmlAttr(getUserName(t.completedBy)) + ' (' + escapeHtmlAttr(t.completedAt || "Done") + ')</div>')
+        : ('<div class="task-sub">Assigned by ' + escapeHtmlAttr(getUserName(t.createdBy)) + '</div>');
+
+      const urgentToggleBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
+      const urgentToggleBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
+
+      const adminButtonsHtml = isAdmin
+        ? ((!t.completed ? ('<button class="' + urgentToggleBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentToggleBtnText + '</button>') : "") +
+           '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Schedule &amp; Checklist</button>' +
+           '<button class="btn btn-danger-outline" onclick="deleteTask(\'' + t.id + '\')">Delete Task</button>')
+        : "";
+
+      return '<div class="' + cardCls + '">' +
+        '<div class="task-accordion-header" onclick="toggleTaskExpanded(\'' + t.id + '\')">' +
+          '<div class="task-header-left">' +
+            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' ' + getDuePillHtml(t) + '</div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderSummaryStripHtml(t) +
+          '</div>' +
+          '<span class="task-expand-pill">' + (isExpanded ? "Close" : "Open") + '</span>' +
+        '</div>' +
+        (isExpanded ? (
+          '<div class="task-accordion-body">' +
+            renderTaskPhotosHtml(t) +
+            renderChecklistHtml(t) +
+            renderTaskNotesHtml(t, isAdmin) +
+            statusHtml +
+            '<div class="btn-stack" style="margin-top: 4px;">' +
+              '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
+              adminButtonsHtml +
+            '</div>' +
+          '</div>'
+        ) : '') +
+      '</div>';
+    }
+
+    function renderAll() {
+      state.users = normalizeArray(state.users);
+      if (state.users.length === 0) state.users = DEFAULT_SHARED_STATE.users.slice();
+      state.tasks = normalizeArray(state.tasks).map(normalizeTaskObject);
+      lastRenderedHash = computeStateHash(state);
+
+      const loginSelect = document.getElementById("login-user-select");
+      if (document.activeElement !== loginSelect) {
+        const prevLoginSel = loginSelect.value;
+        loginSelect.innerHTML = state.users.map(function(u) {
+          const roleLabel = (u.role || "member").toUpperCase();
+          return '<option value="' + u.id + '">' + escapeHtmlAttr(u.name) + ' (' + roleLabel + ')</option>';
+        }).join("");
+        if (prevLoginSel && state.users.some(function(u) { return u.id === prevLoginSel; })) {
+          loginSelect.value = prevLoginSel;
+        }
+      }
+
+      const user = getCurrentUser();
+      if (!user) {
+        document.getElementById("app-header").classList.add("hidden");
+        document.getElementById("bottom-nav").classList.add("hidden");
+        document.getElementById("tab-triage").classList.add("hidden");
+        document.getElementById("tab-tasks").classList.add("hidden");
+        document.getElementById("tab-team").classList.add("hidden");
+        document.getElementById("login-screen").classList.remove("hidden");
+        return;
+      }
+
+      document.getElementById("login-screen").classList.add("hidden");
+      const isAdmin = user.role === "admin";
+
+      document.getElementById("app-header").classList.remove("hidden");
+      document.getElementById("bottom-nav").classList.remove("hidden");
+      document.getElementById("header-username").textContent = user.name;
+      const roleBadge = document.getElementById("header-role-badge");
+      roleBadge.textContent = isAdmin ? "Admin" : "Member";
+      roleBadge.className = "role-tag " + (isAdmin ? "role-admin" : "role-member");
+
+      document.getElementById("nav-triage").classList.toggle("hidden", !isAdmin);
+      document.getElementById("nav-team").classList.toggle("hidden", !isAdmin);
+      document.getElementById("admin-task-creator-wrap").classList.toggle("hidden", !isAdmin);
+      document.getElementById("admin-filter-bar").classList.toggle("hidden", !isAdmin);
+
+      document.getElementById("tab-triage").classList.toggle("hidden", !(isAdmin && activeTab === "triage"));
+      document.getElementById("tab-tasks").classList.toggle("hidden", activeTab !== "tasks");
+      document.getElementById("tab-team").classList.toggle("hidden", !(isAdmin && activeTab === "team"));
+
+      document.getElementById("nav-triage").classList.toggle("active", activeTab === "triage");
+      document.getElementById("nav-tasks").classList.toggle("active", activeTab === "tasks");
+      document.getElementById("nav-team").classList.toggle("active", activeTab === "team");
+
+      // Update Sort Mode Chips
+      const sortModes = ["priority_date", "date_only", "group_day"];
+      for (let sm = 0; sm < sortModes.length; sm++) {
+        const chipEl = document.getElementById("sort-chip-" + sortModes[sm]);
+        if (chipEl) chipEl.classList.toggle("active", taskSortMode === sortModes[sm]);
+      }
+
+      if (isAdmin) {
+        renderCreatorUserGrid();
+        syncUrgentToggleUI();
+
+        const keyTriggerLabel = document.getElementById("gemini-key-trigger-label");
+        if (keyTriggerLabel) {
+          keyTriggerLabel.innerHTML = state.geminiApiKey
+            ? 'Gemini API Key <span style="color:#34d399; font-size:12px; margin-left:6px;">(Saved &amp; Active)</span>'
+            : 'Gemini API Key <span style="color:#fbbf24; font-size:12px; margin-left:6px;">(Not Set)</span>';
+        }
+
+        const keyInput = document.getElementById("gemini-key-input");
+        if (document.activeElement !== keyInput && state.geminiApiKey) {
+          keyInput.value = state.geminiApiKey;
+        }
+        if (dropdownState.recoveryScanner) {
+          renderRecoverySnapshots();
+        }
+        if (dropdownState.captureRules) {
+          populateFilterInputs();
+        }
+        if (dropdownState.scanLog) {
+          renderScanLog();
+        }
+      }
+
+      const triageItems = state.tasks
+        .filter(function(t) { return t.visibility === "triage"; })
+        .slice()
+        .sort(function(a, b) {
+          const urgDiff = (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
+          if (urgDiff !== 0) return urgDiff;
+          return computeTaskDueSortScore(a) - computeTaskDueSortScore(b);
+        });
+
+      document.getElementById("triage-count").textContent = triageItems.length;
+      const badgeTriage = document.getElementById("badge-triage");
+      badgeTriage.textContent = triageItems.length;
+      badgeTriage.classList.toggle("hidden", triageItems.length === 0);
+
+      const triageListEl = document.getElementById("triage-list");
+      if (triageItems.length === 0) {
+        triageListEl.innerHTML = '<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No pending work items in triage queue.</div>';
+      } else {
+        triageListEl.innerHTML = triageItems.map(function(t) {
+          return renderTriageCardHtml(t, isAdmin);
+        }).join("");
+      }
+
+      if (isAdmin) {
+        const chips = [{ id: "ALL", label: "All Users" }].concat(state.users.map(function(u) {
+          return { id: u.id, label: u.name };
+        }));
+        document.getElementById("admin-filter-bar").innerHTML = chips.map(function(c) {
+          const cls = adminFilterUserId === c.id ? "chip active" : "chip";
+          return '<button class="' + cls + '" onclick="setAdminFilter(\'' + c.id + '\')">' + escapeHtmlAttr(c.label) + '</button>';
+        }).join("");
+      }
+
+      let visibleTasks = state.tasks.filter(function(t) { return t.visibility === "assigned"; });
+      if (!isAdmin) {
+        visibleTasks = visibleTasks.filter(function(t) {
+          const list = normalizeArray(t.assignedTo);
+          return list.indexOf(user.id) !== -1;
+        });
+        document.getElementById("tasks-heading").textContent = "My Active Tasks";
+      } else {
+        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Active Tasks" : ("Active Tasks for " + getUserName(adminFilterUserId));
+        if (adminFilterUserId !== "ALL") {
+          visibleTasks = visibleTasks.filter(function(t) {
+            const list = normalizeArray(t.assignedTo);
+            return list.indexOf(adminFilterUserId) !== -1;
+          });
+        }
+      }
+
+      const activeTasks = visibleTasks
+        .filter(function(t) { return !t.completed; })
+        .slice()
+        .sort(function(a, b) {
+          if (taskSortMode === "priority_date") {
+            const urgDiff = (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
+            if (urgDiff !== 0) return urgDiff;
+          }
+          return computeTaskDueSortScore(a) - computeTaskDueSortScore(b);
+        });
+
+      const completedTasks = visibleTasks.filter(function(t) { return Boolean(t.completed); });
+      const urgentCount = activeTasks.filter(function(t) { return Boolean(t.urgent); }).length;
+
+      const badgeTasks = document.getElementById("badge-tasks");
+      badgeTasks.textContent = activeTasks.length;
+      badgeTasks.classList.toggle("hidden", activeTasks.length === 0);
+      document.getElementById("tasks-stats").textContent = urgentCount > 0
+        ? ("(" + activeTasks.length + " Active • " + urgentCount + " Urgent)")
+        : ("(" + activeTasks.length + " Active)");
+
+      const tasksListEl = document.getElementById("tasks-list");
+      if (activeTasks.length === 0) {
+        tasksListEl.innerHTML = '<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No active tasks pending.</div>';
+      } else if (taskSortMode === "group_day") {
+        let groupedHtml = "";
+        let lastDateKey = null;
+        for (let i = 0; i < activeTasks.length; i++) {
+          const t = activeTasks[i];
+          const dKey = t.dueDate || getTodayIso();
+          if (dKey !== lastDateKey) {
+            lastDateKey = dKey;
+            groupedHtml += '<div class="day-group-header">' + escapeHtmlAttr(formatDayHeading(dKey)) + '</div>';
+          }
+          groupedHtml += renderTaskCardHtml(t, isAdmin);
+        }
+        tasksListEl.innerHTML = groupedHtml;
+      } else {
+        tasksListEl.innerHTML = activeTasks.map(function(t) {
+          return renderTaskCardHtml(t, isAdmin);
+        }).join("");
+      }
+
+      const completedLabelEl = document.getElementById("completed-trigger-label");
+      if (completedLabelEl) {
+        completedLabelEl.textContent = "Completed Tasks (" + completedTasks.length + ")";
+      }
+      const clearBtnEl = document.getElementById("btn-clear-completed");
+      if (clearBtnEl) {
+        clearBtnEl.classList.toggle("hidden", !(isAdmin && completedTasks.length > 0));
+      }
+
+      const completedListEl = document.getElementById("completed-tasks-list");
+      if (completedListEl) {
+        if (completedTasks.length === 0) {
+          completedListEl.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:13px; padding:14px 0;">No completed tasks in archive.</div>';
+        } else {
+          completedListEl.innerHTML = completedTasks.map(function(t) {
+            return renderTaskCardHtml(t, isAdmin);
+          }).join("");
+        }
+      }
+
+      if (isAdmin) {
+        document.getElementById("team-list").innerHTML = state.users.map(function(u) {
+          const roleCls = u.role === "admin" ? "role-tag role-admin" : "role-tag role-member";
+          const removeBtn = u.id !== user.id
+            ? ('<button class="btn btn-danger-outline" onclick="removeUser(\'' + u.id + '\')">Remove Account</button>')
+            : "";
+          return '<div class="card">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">' +
+              '<div>' +
+                '<div style="font-weight:600; font-size:16px; margin-bottom:4px;">' + escapeHtmlAttr(u.name) + '</div>' +
+                '<div style="font-size:13px; color:var(--muted);">PIN: ' + escapeHtmlAttr(u.pin || "1234") + '</div>' +
+              '</div>' +
+              '<span class="' + roleCls + '">' + (u.role || "member").toUpperCase() + '</span>' +
+            '</div>' +
+            removeBtn +
+          '</div>';
+        }).join("");
+      }
+    }
+
+    function setAdminFilter(userId) {
+      adminFilterUserId = userId;
+      renderAll();
+    }
+
+    renderAll();
+    startCloudSyncLoop();
+  </script>
+</body>
+</html>
