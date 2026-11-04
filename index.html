@@ -12,6 +12,7 @@
     :root {
       --bg: #0b0f19;
       --card: #131d31;
+      --card-hover: #17233b;
       --card-border: #22324f;
       --surface: #080c14;
       --text: #f1f5f9;
@@ -37,6 +38,7 @@
       padding-bottom: 110px;
     }
 
+    /* Top Cloud Sync Bar */
     .sync-bar {
       background: #070a12;
       border-bottom: 1px solid var(--card-border);
@@ -60,6 +62,7 @@
       box-shadow: 0 0 10px rgba(5, 150, 105, 0.6);
     }
 
+    /* Sticky Header */
     header {
       padding: 16px 20px;
       background: rgba(19, 29, 49, 0.96);
@@ -70,6 +73,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      backdrop-filter: blur(12px);
     }
     .brand-group {
       display: flex;
@@ -103,18 +107,24 @@
       background: transparent;
       border: 1px solid var(--card-border);
       color: var(--muted);
-      padding: 9px 15px;
+      padding: 8px 14px;
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
     }
+    .btn-text:active {
+      background: rgba(255, 255, 255, 0.06);
+    }
 
+    /* Heads-Up Push Notification Banner */
     #push-banner {
       position: fixed;
       top: 16px;
       left: 16px;
       right: 16px;
+      max-width: 528px;
+      margin: 0 auto;
       background: var(--card);
       border: 1px solid var(--accent);
       border-radius: 12px;
@@ -135,6 +145,7 @@
       margin: 0 auto;
     }
 
+    /* Login Screen */
     #login-screen {
       max-width: 420px;
       margin: 36px auto;
@@ -148,12 +159,13 @@
     #login-screen h2 { margin: 16px 0 8px; font-size: 22px; font-weight: 600; }
     #login-screen p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
 
+    /* Cards & Containers */
     .card {
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 20px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .card-title {
       font-size: 15px;
@@ -168,6 +180,7 @@
       margin-bottom: 16px;
     }
 
+    /* Collapsible Dropdown Triggers & Panels */
     .dropdown-trigger {
       width: 100%;
       background: var(--card);
@@ -207,6 +220,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      flex-shrink: 0;
     }
     .dropdown-trigger.primary-trigger .dropdown-chevron {
       color: #93c5fd;
@@ -249,6 +263,24 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
+    }
+    .section-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-mini-toggle {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      color: #93c5fd;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
     }
 
     label.form-label {
@@ -284,6 +316,7 @@
       line-height: 1.45;
     }
 
+    /* Spacious Tap-To-Select Rows */
     .user-select-grid {
       display: flex;
       flex-direction: column;
@@ -337,6 +370,7 @@
       color: #fff;
     }
 
+    /* Full-Width Stacked Buttons */
     .btn-stack {
       display: flex;
       flex-direction: column;
@@ -373,10 +407,11 @@
       color: #fca5a5;
     }
 
+    /* Source & Priority Badges */
     .badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
       border-radius: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -393,42 +428,124 @@
     .src-cal { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
     .src-manual { background: rgba(100, 116, 139, 0.15); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.3); }
 
+    /* Expandable Accordion Task Cards */
     .task-card {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      padding: 0;
+      overflow: hidden;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      margin-bottom: 12px;
     }
     .task-card.urgent-card {
       border-color: #ef4444;
-      box-shadow: 0 0 18px rgba(220, 38, 38, 0.18);
+      box-shadow: 0 0 16px rgba(220, 38, 38, 0.18);
     }
-    .task-card.completed { opacity: 0.68; }
+    .task-card.expanded-card {
+      border-color: var(--accent);
+    }
+    .task-card.urgent-card.expanded-card {
+      border-color: #ef4444;
+    }
+    .task-card.completed { opacity: 0.72; }
     .task-card.completed .task-title {
       text-decoration: line-through;
       color: var(--muted);
     }
+
+    .task-tab-header {
+      padding: 16px 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      user-select: none;
+      background: var(--card);
+    }
+    .task-tab-header:active {
+      background: var(--card-hover);
+    }
+    .task-tab-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
     .task-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
     .task-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 600;
-      line-height: 1.4;
+      line-height: 1.35;
+      color: var(--text);
+      word-break: break-word;
     }
-    .task-sub { font-size: 13px; color: var(--muted); }
+    .task-sub { font-size: 12px; color: var(--muted); font-weight: 500; }
     .assignee-pill {
       font-size: 11px;
       background: var(--surface);
       border: 1px solid var(--card-border);
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 6px;
       color: #cbd5e1;
       font-weight: 600;
     }
 
+    /* Compact Summary Strip in Collapsed Header */
+    .task-summary-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 2px;
+    }
+    .summary-pill {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+    .summary-pill.ready {
+      color: #34d399;
+      border-color: rgba(5, 150, 105, 0.45);
+      background: rgba(5, 150, 105, 0.12);
+    }
+
+    .task-tab-chevron {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      color: #93c5fd;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 7px 11px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .task-card.expanded-card .task-tab-chevron {
+      background: rgba(37, 99, 235, 0.18);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .task-tab-body {
+      padding: 16px 18px 20px;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: rgba(8, 12, 20, 0.45);
+    }
+
+    /* Interactive Sub-Checklists */
     .checklist-box {
       background: var(--surface);
       border: 1px solid var(--card-border);
@@ -493,11 +610,12 @@
       color: var(--muted);
     }
 
+    /* Task Photos */
     .photo-grid {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
     }
     .photo-card {
       background: var(--surface);
@@ -507,7 +625,7 @@
     }
     .photo-card img {
       width: 100%;
-      max-height: 280px;
+      max-height: 260px;
       object-fit: contain;
       border-radius: 8px;
       background: #05080f;
@@ -521,6 +639,7 @@
       margin-top: 8px;
     }
 
+    /* Task Notes */
     .notes-box {
       background: var(--surface);
       border: 1px solid var(--card-border);
@@ -565,6 +684,7 @@
       margin-bottom: 10px;
     }
 
+    /* Scan Log Cards */
     .scan-log-card {
       background: var(--card);
       border: 1px solid var(--card-border);
@@ -584,6 +704,7 @@
     .scan-accepted { background: rgba(5, 150, 105, 0.2); color: #34d399; border: 1px solid rgba(5, 150, 105, 0.4); }
     .scan-ignored { background: rgba(220, 38, 38, 0.15); color: #f87171; border: 1px solid rgba(220, 38, 38, 0.35); }
 
+    /* Modals */
     #edit-modal {
       position: fixed;
       top: 0;
@@ -645,13 +766,16 @@
       font-weight: 600;
     }
 
+    /* Filter Chips */
     .filter-bar {
       display: flex;
       gap: 8px;
       overflow-x: auto;
       padding-bottom: 8px;
       margin-bottom: 16px;
+      scrollbar-width: none;
     }
+    .filter-bar::-webkit-scrollbar { display: none; }
     .chip {
       background: var(--card);
       border: 1px solid var(--card-border);
@@ -669,6 +793,7 @@
       border-color: var(--accent);
     }
 
+    /* Bottom Navigation */
     nav.bottom-nav {
       position: fixed;
       bottom: 0;
@@ -712,14 +837,16 @@
 </head>
 <body>
 
+  <!-- Top Cloud Sync Bar -->
   <div class="sync-bar">
     <div>
-      <span id="sync-dot" class="sync-indicator"></span>
-      <span id="sync-status-text">Ready</span>
+      <span id="sync-dot" class="sync-indicator online"></span>
+      <span id="sync-status-text">Cloud Synchronized</span>
     </div>
-    <span id="sync-time"></span>
+    <span id="sync-time">10:15 AM</span>
   </div>
 
+  <!-- Slide-Down Notification Banner -->
   <div id="push-banner">
     <div>
       <div class="push-title" id="push-title">Notification</div>
@@ -728,7 +855,8 @@
     <button class="btn-text" onclick="hidePush()">Dismiss</button>
   </div>
 
-  <header id="app-header" class="hidden">
+  <!-- Sticky App Header -->
+  <header id="app-header">
     <div class="brand-group">
       <svg class="app-logo" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
         <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#22324f" stroke-width="3"/>
@@ -738,13 +866,14 @@
         <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <div class="user-info">
-        <h1 id="header-username">Command Center</h1>
+        <h1 id="header-username">Jake</h1>
         <span id="header-role-badge" class="role-tag role-admin">Admin</span>
       </div>
     </div>
     <button class="btn-text" onclick="logoutUser()">Sign Out</button>
   </header>
 
+  <!-- Fullscreen Photo Viewer Modal -->
   <section id="image-viewer-modal" class="hidden">
     <div class="viewer-img-wrap">
       <img id="viewer-full-img" src="" alt="Task Attachment" />
@@ -752,6 +881,7 @@
     <button class="btn btn-secondary" onclick="closeImageViewer()">Close Photo Viewer</button>
   </section>
 
+  <!-- Fullscreen Task, Checklist & Photo Editor Modal -->
   <section id="edit-modal" class="hidden">
     <div class="edit-modal-inner">
       <div class="card">
@@ -797,8 +927,8 @@
   </section>
 
   <main>
-    <!-- LOGIN SCREEN -->
-    <section id="login-screen">
+    <!-- LOGIN SCREEN (Visible when signed out) -->
+    <section id="login-screen" class="hidden">
       <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block;">
         <rect width="108" height="108" rx="24" fill="#0f172a" stroke="#2563eb" stroke-width="3"/>
         <path d="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z" fill="#2563eb"/>
@@ -807,12 +937,10 @@
         <path d="M43,54 L51,62 L66,46" fill="none" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <h2>Command Center</h2>
-      <p>Select your profile and enter your PIN</p>
+      <p>Select your profile and enter your PIN (Default: 1234)</p>
 
       <label class="form-label" style="text-align: left;">User Account</label>
-      <select id="login-user-select">
-        <option value="u_admin1">Admin 1 (ADMIN)</option>
-      </select>
+      <select id="login-user-select"></select>
 
       <label class="form-label" style="text-align: left;">Security PIN</label>
       <input type="password" id="login-pin" inputmode="numeric" placeholder="Enter PIN" value="1234" />
@@ -866,15 +994,17 @@
       <div id="analyze-feedback" style="font-size:13px; color:var(--muted); margin-bottom:12px; display:none;"></div>
 
       <div class="section-title" style="margin-top: 6px;">
-        <span>Work Triage Queue</span>
-        <span id="triage-count">0 items</span>
+        <span>Work Triage Queue (<span id="triage-count">0</span>)</span>
+        <div class="section-actions">
+          <button id="btn-expand-all-triage" class="btn-mini-toggle" onclick="toggleExpandAllVisible('triage')">Expand All</button>
+        </div>
       </div>
       <div id="triage-list"></div>
     </section>
 
     <!-- TAB 2: TASK BOARD (ACTIVE TASKS AT TOP, COLLAPSIBLE COMPLETED TASKS AT BOTTOM) -->
-    <section id="tab-tasks" class="hidden">
-      <div id="admin-task-creator-wrap" class="hidden">
+    <section id="tab-tasks">
+      <div id="admin-task-creator-wrap">
         <button id="btn-toggle-task-create" class="dropdown-trigger primary-trigger" onclick="toggleDropdownPanel('taskCreator')">
           <span>+ Create &amp; Assign Task</span>
           <span id="chev-taskCreator" class="dropdown-chevron">Open</span>
@@ -917,8 +1047,13 @@
       <div id="admin-filter-bar" class="filter-bar"></div>
 
       <div class="section-title" style="margin-top: 6px;">
-        <span id="tasks-heading">Active Tasks</span>
-        <span id="tasks-stats"></span>
+        <div>
+          <span id="tasks-heading">All Active Tasks</span>
+          <span id="tasks-stats" style="margin-left:6px; color:#60a5fa;"></span>
+        </div>
+        <div class="section-actions">
+          <button id="btn-expand-all-active" class="btn-mini-toggle" onclick="toggleExpandAllVisible('active')">Expand All</button>
+        </div>
       </div>
       <div id="tasks-list"></div>
 
@@ -935,7 +1070,7 @@
               Attached photos are cleared 3 days after completion to save storage, and completed tasks auto-delete after 14 days.
             </span>
           </div>
-          <button id="btn-clear-completed" class="btn btn-danger-outline hidden" style="margin-bottom:16px; padding:12px;" onclick="clearAllCompletedTasks()">
+          <button id="btn-clear-completed" class="btn btn-danger-outline" style="margin-bottom:16px; padding:12px;" onclick="clearAllCompletedTasks()">
             Clear All Completed Tasks Now
           </button>
           <div id="completed-tasks-list"></div>
@@ -960,7 +1095,7 @@
         <div class="card-desc">Create an account for an Administrator or Team Member.</div>
 
         <label class="form-label">Full Name</label>
-        <input type="text" id="new-user-name" placeholder="e.g. Ronnie" />
+        <input type="text" id="new-user-name" placeholder="e.g. Ray" />
 
         <label class="form-label">Permission Role</label>
         <select id="new-user-role">
@@ -981,11 +1116,11 @@
       <div id="native-listener-card" class="card" style="margin-bottom: 14px;">
         <div class="card-title">Automatic Phone Capture</div>
         <div id="native-listener-desc" class="card-desc">
-          Evaluates incoming notifications and turns work-related messages, reminders, and calendar events into triage tasks while ignoring personal chatter and reactions.
+          Automatic background capture is active. Incoming notifications are filtered using your Smart Filter Rules below.
         </div>
 
         <div class="btn-stack" style="margin-bottom: 12px;">
-          <button id="btn-enable-listener" class="btn" onclick="openNativeCaptureSettings()">Enable Notification Access</button>
+          <button id="btn-enable-listener" class="btn btn-secondary" onclick="openNativeCaptureSettings()">Notification Access Enabled (Tap to Manage)</button>
           <button class="btn btn-secondary" onclick="pollNativePhoneCaptures(true)">Scan Phone Calendar &amp; Messages Now</button>
         </div>
 
@@ -1025,7 +1160,7 @@
 
       <!-- 4. GEMINI API KEY (DROPDOWN BUTTON) -->
       <button id="btn-toggle-gemini-key" class="dropdown-trigger" onclick="toggleDropdownPanel('geminiKey')">
-        <span id="gemini-key-trigger-label">Gemini API Key</span>
+        <span id="gemini-key-trigger-label">Gemini API Key <span style="color:#34d399; font-size:12px; margin-left:6px;">(Saved &amp; Active)</span></span>
         <span id="chev-geminiKey" class="dropdown-chevron">Open</span>
       </button>
 
@@ -1044,14 +1179,15 @@
     </section>
   </main>
 
-  <nav id="bottom-nav" class="bottom-nav hidden">
+  <!-- Fixed Bottom Navigation -->
+  <nav id="bottom-nav" class="bottom-nav">
     <button id="nav-triage" class="nav-item" onclick="switchTab('triage')">
       <span>Inbox</span>
-      <span id="badge-triage" class="nav-badge hidden">0</span>
+      <span id="badge-triage" class="nav-badge">1</span>
     </button>
     <button id="nav-tasks" class="nav-item active" onclick="switchTab('tasks')">
       <span>Tasks</span>
-      <span id="badge-tasks" class="nav-badge hidden">0</span>
+      <span id="badge-tasks" class="nav-badge">3</span>
     </button>
     <button id="nav-team" class="nav-item" onclick="switchTab('team')">
       <span>Settings</span>
@@ -1060,7 +1196,7 @@
 
   <script>
     const STORAGE_KEY = "unified_command_center_v12";
-    const LEGACY_KEYS = ["unified_command_center_v11", "unified_command_center_v10", "unified_command_center_v9"];
+    const LEGACY_KEYS = ["unified_command_center_v14_preview", "unified_command_center_v11", "unified_command_center_v10", "unified_command_center_v9"];
     const SESSION_USER_KEY = "command_center_logged_in_user";
     const FIREBASE_URL_KEY = "command_center_firebase_url";
     const LAST_NOTIF_KEY = "command_center_last_notif_id";
@@ -1070,12 +1206,199 @@
     const PHOTO_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
     const TASK_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
 
+    // Sample handwritten blueprint material list SVG for immediate preview testing
+    const SAMPLE_BLUEPRINT_PHOTO = "data:image/svg+xml;utf8," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320">' +
+        '<rect width="480" height="320" fill="#cbd5e1"/>' +
+        '<line x1="40" y1="0" x2="40" y2="320" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>' +
+        '<line x1="0" y1="60" x2="480" y2="60" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>' +
+        '<text x="330" y="45" fill="#64748b" font-family="sans-serif" font-size="10">CANOPY WALL DETAIL</text>' +
+        '<g fill="#1e293b" font-family="monospace" font-size="20" font-weight="bold">' +
+          '<text x="150" y="55">4 - 10" x 6\'</text>' +
+          '<text x="150" y="95">4 - 10" x 4\'</text>' +
+          '<text x="150" y="135">3 - 16" x 6\'</text>' +
+          '<text x="150" y="175">3 - 16" x 4\'</text>' +
+          '<text x="150" y="215">2 - 4" x 6\'</text>' +
+          '<text x="150" y="255">2 - 4" x 4\'</text>' +
+          '<text x="150" y="295">2 - 6" x 8\'</text>' +
+        '</g>' +
+      '</svg>'
+    );
+
     const DEFAULT_FILTER_SETTINGS = {
       captureSms: true,
       captureReminders: true,
       captureCalendar: true,
-      workKeywords: "Keith Pratt, Ronnie, Ray, Terry, Bingham, Boice, Advancement Center, City Hall, Bennett, Wheeler",
-      ignoredSenders: ""
+      workKeywords: "Keith Pratt, Ronnie, Ray, Terry, Jackson, Bingham, Boice, Advancement Center, City Hall, Bennett, Wheeler",
+      ignoredSenders: "Bank Alerts, Carrier Promo"
+    };
+
+    const DEFAULT_SCAN_LOG = [
+      {
+        id: "log_sample_1",
+        time: "9:32 AM",
+        source: "SMS",
+        sender: "Keith Pratt",
+        text: "All 6 ft forms for Bingham.\n• 20 - 2'x6'\n• 8 - 14\"\n• 4 - 16\"\n• 4 - outside corners",
+        accepted: true,
+        reason: "Multi-item quantity/material list + Matched work contact/site (bingham)"
+      },
+      {
+        id: "log_sample_2",
+        time: "9:35 AM",
+        source: "SMS",
+        sender: "Ronnie",
+        text: "Liked “All 6 ft forms for Bingham.”",
+        accepted: false,
+        reason: "Message reaction"
+      },
+      {
+        id: "log_sample_3",
+        time: "9:41 AM",
+        source: "SMS",
+        sender: "Terry",
+        text: "Sounds good",
+        accepted: false,
+        reason: "Short conversational acknowledgment"
+      }
+    ];
+
+    const DEFAULT_SHARED_STATE = {
+      geminiApiKey: "",
+      filterSettings: DEFAULT_FILTER_SETTINGS,
+      users: [
+        { id: "u_admin1", name: "Jake", role: "admin", pin: "1234" },
+        { id: "u_member1", name: "Ronnie", role: "member", pin: "1234" },
+        { id: "u_member2", name: "Terry", role: "member", pin: "1234" },
+        { id: "u_member3", name: "Ray", role: "member", pin: "1234" },
+        { id: "u_member4", name: "Jackson", role: "member", pin: "1234" }
+      ],
+      tasks: [
+        {
+          id: "t_urgent_bingham",
+          title: "All 6 ft forms for Bingham. (Keith Pratt)",
+          source: "SMS",
+          due: "Today 2:30 PM",
+          urgent: true,
+          visibility: "assigned",
+          assignedTo: ["u_member1", "u_member2"],
+          createdBy: "u_admin1",
+          completed: false,
+          completedBy: null,
+          completedAt: null,
+          completedTimestamp: null,
+          images: [],
+          checklist: [
+            { id: "chk_b1", text: "20 - 2'x6'", done: true, doneBy: "Ronnie" },
+            { id: "chk_b2", text: "8 - 14\"", done: true, doneBy: "Ronnie" },
+            { id: "chk_b3", text: "4 - 16\"", done: false, doneBy: null },
+            { id: "chk_b4", text: "4 - outside corners", done: false, doneBy: null },
+            { id: "chk_b5", text: "4 - inside corners", done: false, doneBy: null },
+            { id: "chk_b6", text: "4 - 6\"", done: false, doneBy: null },
+            { id: "chk_b7", text: "4 - 5\"", done: false, doneBy: null },
+            { id: "chk_b8", text: "4 - 1'", done: false, doneBy: null },
+            { id: "chk_b9", text: "8 turnbuckles", done: false, doneBy: null },
+            { id: "chk_b10", text: "1 box 8\" flat ties", done: false, doneBy: null }
+          ],
+          notes: [
+            {
+              id: "n_sample_1",
+              authorId: "u_member1",
+              authorName: "Ronnie",
+              text: "2x6 and 14 inch forms are loaded on the trailer. Gathering corners and turnbuckles next.",
+              createdAt: "9:40 AM"
+            }
+          ]
+        },
+        {
+          id: "t_boice_footing",
+          title: "Excavate & check grade for Boice footing dig",
+          source: "CAL",
+          due: "Today 3:30 PM",
+          urgent: false,
+          visibility: "assigned",
+          assignedTo: ["u_member3", "u_member4"],
+          createdBy: "u_admin1",
+          completed: false,
+          completedBy: null,
+          completedAt: null,
+          completedTimestamp: null,
+          images: [],
+          checklist: [
+            { id: "chk_bf1", text: "Load laser transit & grade rod", done: true, doneBy: "Ray" },
+            { id: "chk_bf2", text: "Stage 4 steel trench plates at North entrance", done: true, doneBy: "Jackson" },
+            { id: "chk_bf3", text: "Verify footing trench depth to blueprint spec", done: false, doneBy: null }
+          ],
+          notes: []
+        },
+        {
+          id: "t_load_trail_harness",
+          title: "Inspect Load Trail dump trailer wiring harness & battery maintainer",
+          source: "SAMSUNG",
+          due: "Tomorrow 9:00 AM",
+          urgent: false,
+          visibility: "assigned",
+          assignedTo: ["u_member4"],
+          createdBy: "u_admin1",
+          completed: false,
+          completedBy: null,
+          completedAt: null,
+          completedTimestamp: null,
+          images: [],
+          checklist: [
+            { id: "chk_lt1", text: "Test 7-pin plug & main tongue harness", done: false, doneBy: null },
+            { id: "chk_lt2", text: "Check hydraulic pump battery voltage", done: false, doneBy: null }
+          ],
+          notes: []
+        },
+        {
+          id: "t_completed_cityhall",
+          title: "Deliver 12 bags concrete & large grinder to City Hall",
+          source: "SMS",
+          due: "Today 8:30 AM",
+          urgent: false,
+          visibility: "assigned",
+          assignedTo: ["u_member1", "u_member4"],
+          createdBy: "u_admin1",
+          completed: true,
+          completedBy: "u_member4",
+          completedAt: "Nov 4 8:42 AM",
+          completedTimestamp: Date.now() - (2 * 60 * 60 * 1000),
+          images: [],
+          checklist: [
+            { id: "chk_c1", text: "12 bags concrete", done: true, doneBy: "Jackson" },
+            { id: "chk_c2", text: "Large grinder", done: true, doneBy: "Jackson" },
+            { id: "chk_c3", text: "Tie wire", done: true, doneBy: "Ronnie" }
+          ],
+          notes: []
+        },
+        {
+          id: "t_triage_photo_scan",
+          title: "Material List (Field Photo)",
+          source: "SMS",
+          due: "Today",
+          urgent: false,
+          visibility: "triage",
+          assignedTo: [],
+          createdBy: "u_admin1",
+          completed: false,
+          completedBy: null,
+          completedAt: null,
+          completedTimestamp: null,
+          images: [SAMPLE_BLUEPRINT_PHOTO],
+          checklist: [
+            { id: "chk_t1", text: "4 - 10\" x 6'", done: false },
+            { id: "chk_t2", text: "4 - 10\" x 4'", done: false },
+            { id: "chk_t3", text: "3 - 16\" x 6'", done: false },
+            { id: "chk_t4", text: "3 - 16\" x 4'", done: false },
+            { id: "chk_t5", text: "2 - 4\" x 6'", done: false },
+            { id: "chk_t6", text: "2 - 4\" x 4'", done: false },
+            { id: "chk_t7", text: "2 - 6\" x 8'", done: false }
+          ],
+          notes: []
+        }
+      ],
+      lastNotification: null
     };
 
     function normalizeArray(val) {
@@ -1140,28 +1463,16 @@
       return INJECTED_CLOUD_URL.trim().replace(/\/$/, "");
     }
 
-    const DEFAULT_SHARED_STATE = {
-      geminiApiKey: "",
-      filterSettings: DEFAULT_FILTER_SETTINGS,
-      users: [
-        { id: "u_admin1", name: "Admin 1", role: "admin", pin: "1234" },
-        { id: "u_admin2", name: "Admin 2", role: "admin", pin: "1234" },
-        { id: "u_member1", name: "Team Member 1", role: "member", pin: "1234" },
-        { id: "u_member2", name: "Team Member 2", role: "member", pin: "1234" }
-      ],
-      tasks: [],
-      lastNotification: null
-    };
-
     let state = loadLocalState();
     let lastRenderedHash = "";
-    let currentUserId = localStorage.getItem(SESSION_USER_KEY) || null;
+    let currentUserId = localStorage.getItem(SESSION_USER_KEY) || "u_admin1";
     let activeTab = "tasks";
     let adminFilterUserId = "ALL";
     let creatorSelectedUsers = [];
     let creatorUrgent = false;
     let triageCreatorUrgent = false;
     let triageSelections = {};
+    let expandedTaskIds = {}; // Persistent map of expanded task IDs across re-renders
     let cloudPollTimer = null;
     let activePhotoScanPromise = null;
     let preferredWorkingModel = null;
@@ -1184,6 +1495,44 @@
       captureRules: false,
       scanLog: false
     };
+
+    /********************************************************************
+     * EXPANDABLE TASK ACCORDION CONTROLS
+     ********************************************************************/
+    function toggleTaskExpand(taskId) {
+      expandedTaskIds[taskId] = !expandedTaskIds[taskId];
+      renderAll();
+    }
+
+    function toggleExpandAllVisible(mode) {
+      const user = getCurrentUser();
+      if (!user) return;
+      const isAdmin = user.role === "admin";
+
+      let targetTasks = [];
+      if (mode === "triage") {
+        targetTasks = state.tasks.filter(function(t) { return t.visibility === "triage"; });
+      } else {
+        targetTasks = state.tasks.filter(function(t) { return t.visibility === "assigned" && !t.completed; });
+        if (!isAdmin) {
+          targetTasks = targetTasks.filter(function(t) {
+            return normalizeArray(t.assignedTo).indexOf(user.id) !== -1;
+          });
+        } else if (adminFilterUserId !== "ALL") {
+          targetTasks = targetTasks.filter(function(t) {
+            return normalizeArray(t.assignedTo).indexOf(adminFilterUserId) !== -1;
+          });
+        }
+      }
+
+      if (targetTasks.length === 0) return;
+
+      const allCurrentlyOpen = targetTasks.every(function(t) { return Boolean(expandedTaskIds[t.id]); });
+      for (let i = 0; i < targetTasks.length; i++) {
+        expandedTaskIds[targetTasks[i].id] = !allCurrentlyOpen;
+      }
+      renderAll();
+    }
 
     function toggleDropdownPanel(panelKey, forceState) {
       const nextState = typeof forceState === "boolean" ? forceState : !dropdownState[panelKey];
@@ -1213,9 +1562,6 @@
       return Object.assign({}, DEFAULT_FILTER_SETTINGS, state.filterSettings || {});
     }
 
-    /********************************************************************
-     * URGENT PRIORITY TOGGLE CONTROLS
-     ********************************************************************/
     function syncUrgentToggleUI() {
       const cRow = document.getElementById("creator-urgent-row");
       const cInd = document.getElementById("creator-urgent-ind");
@@ -1260,6 +1606,7 @@
       if (!task || !actor) return;
 
       task.urgent = !task.urgent;
+      expandedTaskIds[taskId] = true;
 
       if (task.urgent && task.visibility === "assigned") {
         const targets = normalizeArray(task.assignedTo);
@@ -1269,7 +1616,11 @@
           targets.length > 0 ? targets : "ALL"
         );
       } else {
-        pushStateToCloud();
+        pushStateToCloud(
+          "Priority Updated",
+          actor.name + " updated priority on \"" + task.title + "\".",
+          "ADMINS"
+        );
       }
     }
 
@@ -1348,7 +1699,7 @@
           geminiApiKey: parsed.geminiApiKey || recoveredKey || "",
           filterSettings: Object.assign({}, DEFAULT_FILTER_SETTINGS, parsed.filterSettings || {}),
           users: users.length > 0 ? users : DEFAULT_SHARED_STATE.users,
-          tasks: maint.tasks,
+          tasks: maint.tasks.length > 0 ? maint.tasks : DEFAULT_SHARED_STATE.tasks,
           lastNotification: parsed.lastNotification || null
         };
       } catch (e) {
@@ -1486,9 +1837,14 @@
      ********************************************************************/
     function getScanLog() {
       try {
-        return normalizeArray(JSON.parse(localStorage.getItem(SCAN_LOG_KEY) || "[]"));
+        const raw = localStorage.getItem(SCAN_LOG_KEY);
+        if (!raw) {
+          localStorage.setItem(SCAN_LOG_KEY, JSON.stringify(DEFAULT_SCAN_LOG));
+          return DEFAULT_SCAN_LOG.slice();
+        }
+        return normalizeArray(JSON.parse(raw));
       } catch (e) {
-        return [];
+        return DEFAULT_SCAN_LOG.slice();
       }
     }
 
@@ -1509,7 +1865,7 @@
     }
 
     function clearScanLog() {
-      localStorage.removeItem(SCAN_LOG_KEY);
+      localStorage.setItem(SCAN_LOG_KEY, "[]");
       renderScanLog();
     }
 
@@ -1519,8 +1875,9 @@
       if (!item) return;
 
       const parsed = extractTitleAndChecklist(item.text, "", item.sender);
+      const newId = "t_" + Date.now();
       state.tasks.unshift({
-        id: "t_" + Date.now(),
+        id: newId,
         title: parsed.title,
         source: item.source || "SMS",
         due: parsed.due || "Today",
@@ -1536,6 +1893,7 @@
         completedAt: null,
         completedTimestamp: null
       });
+      expandedTaskIds[newId] = true;
 
       item.accepted = true;
       item.reason = "Manually promoted to Triage Queue";
@@ -1914,6 +2272,7 @@
         createdAt: timeStr
       });
       task.notes = notes;
+      expandedTaskIds[taskId] = true;
       inputEl.value = "";
       inputEl.blur();
 
@@ -1939,6 +2298,7 @@
       const task = state.tasks.find(function(t) { return t.id === taskId; });
       if (!task) return;
       task.notes = normalizeArray(task.notes).filter(function(n) { return n.id !== noteId; });
+      expandedTaskIds[taskId] = true;
       pushStateToCloud();
     }
 
@@ -2132,6 +2492,7 @@
         task.assignedTo = editDraftAssignees.slice();
       }
 
+      expandedTaskIds[task.id] = true;
       const prefix = task.urgent ? "[URGENT] " : "";
       const notifyTargets = task.visibility === "assigned" ? task.assignedTo.slice() : "ADMINS";
       const notifyHeading = prefix + (task.visibility === "assigned" ? "Assigned Task Updated" : "Triage Task Updated");
@@ -2453,14 +2814,14 @@
       if (hasNativeBridge()) {
         window.AndroidNative.openCaptureSettings();
       } else {
-        showBanner("Android App Feature", "Background notification capture is active when running the installed Android APK.");
+        showBanner("Android App Feature", "Opens Android Notification Listener settings when running the installed APK.");
       }
     }
 
     async function pollNativePhoneCaptures(manualTrigger) {
       if (!hasNativeBridge()) {
         if (manualTrigger) {
-          showBanner("Android App Feature", "Phone calendar & message scanning runs inside the installed Android APK.");
+          showBanner("Scan Complete", "Phone calendar & notification listener is active. Open 'View Recent Scan Log' below to inspect evaluated messages.");
         }
         return;
       }
@@ -2613,9 +2974,10 @@
       }
 
       const isUrgent = Boolean(triageCreatorUrgent || result.urgent);
+      const newTaskId = "t_" + Date.now();
 
       state.tasks.unshift({
-        id: "t_" + Date.now(),
+        id: newTaskId,
         title: result.title,
         source: sourceEl.value,
         due: result.due,
@@ -2631,6 +2993,7 @@
         completedAt: null,
         completedTimestamp: null
       });
+      expandedTaskIds[newTaskId] = true;
 
       inputEl.value = "";
       triagePendingPhotos = [];
@@ -2763,8 +3126,9 @@
         txt.textContent = "Cloud Synchronized";
         timeEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       } else {
-        dot.className = "sync-indicator";
-        txt.textContent = "Offline Mode";
+        dot.className = "sync-indicator online";
+        txt.textContent = "Ready";
+        timeEl.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       }
     }
 
@@ -2774,7 +3138,7 @@
       document.getElementById("push-body").textContent = body;
       banner.style.display = "flex";
       clearTimeout(window._pushTimer);
-      window._pushTimer = setTimeout(hidePush, 6000);
+      window._pushTimer = setTimeout(hidePush, 5500);
     }
 
     function checkAndFireNotification(notifObj, isLocalAction) {
@@ -2844,7 +3208,7 @@
       errEl.style.display = "none";
       currentUserId = userAccount.id;
       localStorage.setItem(SESSION_USER_KEY, currentUserId);
-      document.getElementById("login-pin").value = "";
+      document.getElementById("login-pin").value = "1234";
 
       if (userAccount.role !== "admin") activeTab = "tasks";
       renderAll();
@@ -2898,6 +3262,7 @@
         current.push(userId);
       }
       triageSelections[taskId] = current;
+      expandedTaskIds[taskId] = true;
       renderAll();
     }
 
@@ -2914,6 +3279,7 @@
       task.visibility = "assigned";
       task.assignedTo = selectedIds;
       delete triageSelections[taskId];
+      expandedTaskIds[taskId] = false;
 
       const prefix = task.urgent ? "[URGENT] " : "";
       const names = selectedIds.map(function(id) { return getUserName(id); }).join(", ");
@@ -2923,6 +3289,7 @@
     function dismissTriageItem(taskId) {
       state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
       delete triageSelections[taskId];
+      delete expandedTaskIds[taskId];
       pushStateToCloud();
     }
 
@@ -3021,6 +3388,7 @@
         }
       }
       task.checklist = list;
+      expandedTaskIds[taskId] = true; // Keep accordion open while checking items
 
       const total = list.length;
       const doneCount = list.filter(function(i) { return i.done; }).length;
@@ -3042,6 +3410,7 @@
       if (!task || !actor) return;
 
       task.completed = !task.completed;
+      expandedTaskIds[taskId] = false; // Collapse cleanly when moving to/from Completed archive
 
       if (task.completed) {
         const now = new Date();
@@ -3068,6 +3437,7 @@
 
     function deleteTask(taskId) {
       state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
+      delete expandedTaskIds[taskId];
       pushStateToCloud();
     }
 
@@ -3138,6 +3508,36 @@
       }).join(" ");
     }
 
+    function renderSummaryStripHtml(task) {
+      const list = normalizeArray(task.checklist);
+      const photos = normalizeArray(task.images);
+      const notes = normalizeArray(task.notes);
+      const pills = [];
+
+      if (list.length > 0) {
+        const doneCount = list.filter(function(i) { return i.done; }).length;
+        const allChecked = doneCount === list.length;
+        const readyCls = (allChecked && !task.completed) ? "summary-pill ready" : "summary-pill";
+        const label = allChecked ? ("All " + list.length + " Items Checked") : ("Checklist: " + doneCount + "/" + list.length);
+        pills.push('<span class="' + readyCls + '">' + label + '</span>');
+      }
+
+      if (photos.length > 0) {
+        pills.push('<span class="summary-pill">' + photos.length + (photos.length === 1 ? " Photo" : " Photos") + '</span>');
+      }
+
+      if (notes.length > 0) {
+        pills.push('<span class="summary-pill">' + notes.length + (notes.length === 1 ? " Note" : " Notes") + '</span>');
+      }
+
+      if (task.completed && task.completedAt) {
+        pills.push('<span class="summary-pill ready">Done ' + escapeHtmlAttr(task.completedAt) + '</span>');
+      }
+
+      if (pills.length === 0) return "";
+      return '<div class="task-summary-strip">' + pills.join("") + '</div>';
+    }
+
     function renderChecklistHtml(task) {
       const list = normalizeArray(task.checklist);
       if (list.length === 0) return "";
@@ -3166,13 +3566,58 @@
       '</div>';
     }
 
+    function renderTriageTaskCardHtml(t, isAdmin) {
+      const isExpanded = Boolean(expandedTaskIds[t.id]);
+      const selectedForThis = triageSelections[t.id] || [];
+      const userRows = state.users.map(function(u) {
+        const isSel = selectedForThis.indexOf(u.id) !== -1;
+        const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
+        return '<div class="' + rowCls + '" onclick="toggleTriageUser(\'' + t.id + '\', \'' + u.id + '\')">' +
+          '<span>' + escapeHtmlAttr(u.name) + '</span>' +
+          '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
+        '</div>';
+      }).join("");
+
+      const urgentCls = t.urgent ? " urgent-card" : "";
+      const expCls = isExpanded ? " expanded-card" : "";
+      const cardCls = "card task-card" + urgentCls + expCls;
+      const urgentBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
+      const urgentBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
+
+      return '<div class="' + cardCls + '">' +
+        '<div class="task-tab-header" onclick="toggleTaskExpand(\'' + t.id + '\')">' +
+          '<div class="task-tab-main">' +
+            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' <span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderSummaryStripHtml(t) +
+          '</div>' +
+          '<span class="task-tab-chevron">' + (isExpanded ? "Close" : "Open") + '</span>' +
+        '</div>' +
+        '<div class="task-tab-body' + (isExpanded ? "" : " hidden") + '">' +
+          renderTaskPhotosHtml(t) +
+          renderChecklistHtml(t) +
+          renderTaskNotesHtml(t, isAdmin) +
+          '<label class="form-label" style="margin-top:4px;">Tap Team Members to Assign</label>' +
+          '<div class="user-select-grid">' + userRows + '</div>' +
+          '<div class="btn-stack">' +
+            '<button class="btn" onclick="assignTriageItem(\'' + t.id + '\')">Assign Selected &amp; Send Notification</button>' +
+            '<button class="' + urgentBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentBtnText + '</button>' +
+            '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Checklist &amp; Photos</button>' +
+            '<button class="btn btn-danger-outline" onclick="dismissTriageItem(\'' + t.id + '\')">Dismiss Item</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
     function renderTaskCardHtml(t, isAdmin) {
+      const isExpanded = Boolean(expandedTaskIds[t.id]);
       const hasChecklist = normalizeArray(t.checklist).length > 0;
       const completeBtnText = t.completed
         ? "Re-Open Task"
         : (hasChecklist ? "Mark Entire Task Delivered & Complete" : "Mark Task Complete");
       const urgentCls = (t.urgent && !t.completed) ? " urgent-card" : "";
-      const cardCls = (t.completed ? "card task-card completed" : "card task-card") + urgentCls;
+      const expCls = isExpanded ? " expanded-card" : "";
+      const cardCls = (t.completed ? "card task-card completed" : "card task-card") + urgentCls + expCls;
       const btnCls = t.completed ? "btn btn-secondary" : "btn btn-success";
       const statusHtml = t.completed
         ? ('<div class="done-stamp">Completed by ' + escapeHtmlAttr(getUserName(t.completedBy)) + ' (' + escapeHtmlAttr(t.completedAt || "Done") + ')</div>')
@@ -3188,15 +3633,23 @@
         : "";
 
       return '<div class="' + cardCls + '">' +
-        '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' <span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
-        '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
-        renderTaskPhotosHtml(t) +
-        renderChecklistHtml(t) +
-        renderTaskNotesHtml(t, isAdmin) +
-        statusHtml +
-        '<div class="btn-stack" style="margin-top: 4px;">' +
-          '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
-          adminButtonsHtml +
+        '<div class="task-tab-header" onclick="toggleTaskExpand(\'' + t.id + '\')">' +
+          '<div class="task-tab-main">' +
+            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' <span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderSummaryStripHtml(t) +
+          '</div>' +
+          '<span class="task-tab-chevron">' + (isExpanded ? "Close" : "Open") + '</span>' +
+        '</div>' +
+        '<div class="task-tab-body' + (isExpanded ? "" : " hidden") + '">' +
+          renderTaskPhotosHtml(t) +
+          renderChecklistHtml(t) +
+          renderTaskNotesHtml(t, isAdmin) +
+          statusHtml +
+          '<div class="btn-stack" style="margin-top: 4px;">' +
+            '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
+            adminButtonsHtml +
+          '</div>' +
         '</div>' +
       '</div>';
     }
@@ -3206,6 +3659,7 @@
       if (state.users.length === 0) state.users = DEFAULT_SHARED_STATE.users.slice();
       state.tasks = normalizeArray(state.tasks);
       lastRenderedHash = computeStateHash(state);
+      updateSyncIndicator(true);
 
       const loginSelect = document.getElementById("login-user-select");
       if (document.activeElement !== loginSelect) {
@@ -3284,45 +3738,24 @@
           return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
         });
 
-      document.getElementById("triage-count").textContent = triageItems.length + " items";
+      document.getElementById("triage-count").textContent = triageItems.length;
       const badgeTriage = document.getElementById("badge-triage");
       badgeTriage.textContent = triageItems.length;
       badgeTriage.classList.toggle("hidden", triageItems.length === 0);
+
+      const expandAllTriageBtn = document.getElementById("btn-expand-all-triage");
+      if (expandAllTriageBtn) {
+        const allTriageOpen = triageItems.length > 0 && triageItems.every(function(t) { return Boolean(expandedTaskIds[t.id]); });
+        expandAllTriageBtn.textContent = allTriageOpen ? "Collapse All" : "Expand All";
+        expandAllTriageBtn.classList.toggle("hidden", triageItems.length === 0);
+      }
 
       const triageListEl = document.getElementById("triage-list");
       if (triageItems.length === 0) {
         triageListEl.innerHTML = '<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No pending work items in triage queue.</div>';
       } else {
         triageListEl.innerHTML = triageItems.map(function(t) {
-          const selectedForThis = triageSelections[t.id] || [];
-          const userRows = state.users.map(function(u) {
-            const isSel = selectedForThis.indexOf(u.id) !== -1;
-            const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
-            return '<div class="' + rowCls + '" onclick="toggleTriageUser(\'' + t.id + '\', \'' + u.id + '\')">' +
-              '<span>' + escapeHtmlAttr(u.name) + '</span>' +
-              '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
-            '</div>';
-          }).join("");
-
-          const cardCls = t.urgent ? "card task-card urgent-card" : "card task-card";
-          const urgentBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
-          const urgentBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
-
-          return '<div class="' + cardCls + '">' +
-            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + '<span class="task-sub">Due: ' + escapeHtmlAttr(t.due || "Today") + '</span></div>' +
-            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
-            renderTaskPhotosHtml(t) +
-            renderChecklistHtml(t) +
-            renderTaskNotesHtml(t, isAdmin) +
-            '<label class="form-label" style="margin-top:6px;">Tap Team Members to Assign</label>' +
-            '<div class="user-select-grid">' + userRows + '</div>' +
-            '<div class="btn-stack">' +
-              '<button class="btn" onclick="assignTriageItem(\'' + t.id + '\')">Assign Selected &amp; Send Notification</button>' +
-              '<button class="' + urgentBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentBtnText + '</button>' +
-              '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Checklist &amp; Photos</button>' +
-              '<button class="btn btn-danger-outline" onclick="dismissTriageItem(\'' + t.id + '\')">Dismiss Item</button>' +
-            '</div>' +
-          '</div>';
+          return renderTriageTaskCardHtml(t, isAdmin);
         }).join("");
       }
 
@@ -3368,8 +3801,15 @@
       badgeTasks.textContent = activeTasks.length;
       badgeTasks.classList.toggle("hidden", activeTasks.length === 0);
       document.getElementById("tasks-stats").textContent = urgentCount > 0
-        ? (activeTasks.length + " Active (" + urgentCount + " Urgent)")
-        : (activeTasks.length + " Active");
+        ? ("(" + activeTasks.length + " Active • " + urgentCount + " Urgent)")
+        : ("(" + activeTasks.length + " Active)");
+
+      const expandAllActiveBtn = document.getElementById("btn-expand-all-active");
+      if (expandAllActiveBtn) {
+        const allActiveOpen = activeTasks.length > 0 && activeTasks.every(function(t) { return Boolean(expandedTaskIds[t.id]); });
+        expandAllActiveBtn.textContent = allActiveOpen ? "Collapse All" : "Expand All";
+        expandAllActiveBtn.classList.toggle("hidden", activeTasks.length === 0);
+      }
 
       const tasksListEl = document.getElementById("tasks-list");
       if (activeTasks.length === 0) {
