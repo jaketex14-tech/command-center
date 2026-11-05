@@ -1568,6 +1568,7 @@
       lastNotification: null
     };
 
+    // STRICT CLOUD WRITE-PROTECTION LOCK: Never PUT to Firebase until initial cloud pull completes
     let hasCompletedInitialCloudPull = false;
 
     let state = loadBestAvailableLocalState();
@@ -1670,6 +1671,7 @@
     function isDemoSeedData(parsedObj) {
       if (!parsedObj) return false;
       const tasks = normalizeArray(parsedObj.tasks);
+      // Detect if a snapshot was one of the Canvas preview seeds
       for (let i = 0; i < tasks.length; i++) {
         if (tasks[i].id === "t_demo_1" || tasks[i].id === "t_demo_2" || tasks[i].id === "chk_demo_1") {
           return true;
@@ -1709,6 +1711,7 @@
         }
       } catch (e) {}
 
+      // Sort non-demo snapshots with the most tasks/users first
       snapshots.sort(function(a, b) {
         if (a.isDemo !== b.isDemo) return a.isDemo ? 1 : -1;
         return (b.tasksCount + b.usersCount) - (a.tasksCount + a.usersCount);
@@ -1762,6 +1765,7 @@
         lastNotification: d.lastNotification || null
       };
 
+      // Ensure current logged in user is valid in restored users
       if (!state.users.some(function(u) { return u.id === currentUserId; })) {
         currentUserId = state.users[0].id;
         localStorage.setItem(SESSION_USER_KEY, currentUserId);
@@ -1792,6 +1796,7 @@
         let bestCandidate = null;
         let recoveredKey = "";
 
+        // Scan all known keys to find the richest non-demo user data
         const allKeys = [SAFETY_BACKUP_KEY, STORAGE_KEY].concat(LEGACY_KEYS);
         for (let i = 0; i < allKeys.length; i++) {
           const raw = localStorage.getItem(allKeys[i]);
@@ -3275,6 +3280,7 @@
       const dbUrl = getFirebaseUrl();
       if (!dbUrl || dbUrl.indexOf("PLACEHOLDER") !== -1) return;
 
+      // CRITICAL PROTECTION: Never overwrite Firebase until initial cloud pull has completed!
       if (!hasCompletedInitialCloudPull) {
         await pullStateFromCloud();
         return;
@@ -3313,6 +3319,7 @@
           return;
         }
 
+        // Before accepting remoteData, save current local state to safety backup if local has real non-demo data
         if (!isDemoSeedData(state) && (state.tasks.length > 0 || state.users.length > 1)) {
           localStorage.setItem(SAFETY_BACKUP_KEY, JSON.stringify(state));
         }
@@ -3685,4 +3692,462 @@
       if (completedCount === 0) return;
       state.tasks = state.tasks.filter(function(t) { return !(t.visibility === "assigned" && t.completed); });
       toggleDropdownPanel("completedTasks", false);
-      pushStateToCloud("Completed Tasks Cleared", "Removed " + completedCount + "
+      pushStateToCloud("Completed Tasks Cleared", "Removed " + completedCount + " completed task(s) from the archive.", "ADMINS");
+    }
+
+    function deleteTask(taskId) {
+      state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
+      pushStateToCloud();
+    }
+
+    function saveGeminiKey() {
+      const keyInput = document.getElementById("gemini-key-input");
+      state.geminiApiKey = keyInput.value.trim();
+      preferredWorkingModel = null;
+      keyInput.blur();
+      toggleDropdownPanel("geminiKey", false);
+      pushStateToCloud("AI Settings Updated", "Gemini API key saved and active for photo scanning.", "ADMINS");
+    }
+
+    function addNewUser() {
+      const nameInput = document.getElementById("new-user-name");
+      const roleSelect = document.getElementById("new-user-role");
+      const pinInput = document.getElementById("new-user-pin");
+      const name = nameInput.value.trim();
+      const pin = pinInput.value.trim() || "1234";
+      if (!name) return;
+
+      state.users.push({
+        id: "u_" + Date.now(),
+        name: name,
+        role: roleSelect.value,
+        pin: pin
+      });
+      nameInput.value = "";
+      nameInput.blur();
+      toggleDropdownPanel("addUser", false);
+      pushStateToCloud("Account Created", "New account created for " + name + ".", "ADMINS");
+    }
+
+    function removeUser(userId) {
+      if (state.users.length <= 1) return;
+      state.users = state.users.filter(function(u) { return u.id !== userId; });
+      pushStateToCloud();
+    }
+
+    function getSourceBadge(source) {
+      const map = {
+        SMS: { cls: "src-sms", label: "Text Message" },
+        SAMSUNG: { cls: "src-samsung", label: "Reminder" },
+        CAL: { cls: "src-cal", label: "Calendar" },
+        MANUAL: { cls: "src-manual", label: "Direct Task" }
+      };
+      const item = map[source] || map.MANUAL;
+      return '<span class="badge ' + item.cls + '">' + item.label + '</span>';
+    }
+
+    function getUrgentBadge(isUrgent) {
+      if (!isUrgent) return "";
+      return '<span class="badge badge-urgent">URGENT</span>';
+    }
+
+    function getDuePillHtml(task) {
+      const label = formatFriendlyDueLabel(task.dueDate, task.duePeriod, task.due || "Today");
+      const todayIso = getTodayIso();
+      let cls = "due-pill";
+      if (!task.completed && task.dueDate && task.dueDate < todayIso) {
+        cls += " due-overdue";
+      } else if (task.duePeriod === "PM") {
+        cls += " due-pm";
+      } else {
+        cls += " due-am";
+      }
+      return '<span class="' + cls + '">Due: ' + escapeHtmlAttr(label) + '</span>';
+    }
+
+    function getUserName(userId) {
+      const list = normalizeArray(state.users);
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === userId) return list[i].name;
+      }
+      return "Unassigned";
+    }
+
+    function getAssigneeBadges(assignedToField) {
+      const ids = normalizeArray(assignedToField);
+      if (ids.length === 0) return '<span class="assignee-pill">Unassigned</span>';
+      return ids.map(function(id) {
+        return '<span class="assignee-pill">' + escapeHtmlAttr(getUserName(id)) + '</span>';
+      }).join(" ");
+    }
+
+    function renderSummaryStripHtml(task) {
+      const chk = normalizeArray(task.checklist);
+      const imgs = normalizeArray(task.images);
+      const notes = normalizeArray(task.notes);
+      const pills = [];
+
+      if (chk.length > 0) {
+        const done = chk.filter(function(i) { return i.done; }).length;
+        const readyCls = (done === chk.length && !task.completed) ? "summary-pill ready" : "summary-pill";
+        pills.push('<span class="' + readyCls + '">Checklist: ' + done + '/' + chk.length + '</span>');
+      }
+      if (imgs.length > 0) {
+        pills.push('<span class="summary-pill">' + imgs.length + (imgs.length === 1 ? ' Photo' : ' Photos') + '</span>');
+      }
+      if (notes.length > 0) {
+        pills.push('<span class="summary-pill">' + notes.length + (notes.length === 1 ? ' Note' : ' Notes') + '</span>');
+      }
+      if (pills.length === 0) {
+        pills.push('<span class="summary-pill">Tap to view details</span>');
+      }
+      return '<div class="task-summary-strip">' + pills.join("") + '</div>';
+    }
+
+    function renderChecklistHtml(task) {
+      const list = normalizeArray(task.checklist);
+      if (list.length === 0) return "";
+
+      const doneCount = list.filter(function(i) { return i.done; }).length;
+      const allItemsChecked = doneCount === list.length;
+
+      let bannerHtml = "";
+      if (allItemsChecked && !task.completed) {
+        bannerHtml = '<div class="checklist-ready-banner">All Items Checked — Ready for Delivery / Final Completion</div>';
+      }
+
+      const rowsHtml = list.map(function(item) {
+        const rowClass = item.done ? "checklist-item-row item-done" : "checklist-item-row";
+        const mark = item.done ? "✓" : "";
+        return '<div class="' + rowClass + '" onclick="toggleChecklistItem(\'' + task.id + '\', \'' + item.id + '\')">' +
+          '<div class="sub-check">' + mark + '</div>' +
+          '<div class="checklist-item-text">' + escapeHtmlAttr(item.text) + '</div>' +
+        '</div>';
+      }).join("");
+
+      return '<div class="checklist-box">' +
+        '<div class="checklist-header"><span>Item Checklist</span><span>' + doneCount + ' / ' + list.length + ' Checked</span></div>' +
+        bannerHtml +
+        rowsHtml +
+      '</div>';
+    }
+
+    function renderTriageCardHtml(t, isAdmin) {
+      const isExpanded = Boolean(expandedTaskIds[t.id]);
+      const cardCls = "card task-card" + (t.urgent ? " urgent-card" : "") + (isExpanded ? " expanded" : "");
+      const selectedForThis = triageSelections[t.id] || [];
+
+      const userRows = state.users.map(function(u) {
+        const isSel = selectedForThis.indexOf(u.id) !== -1;
+        const rowCls = isSel ? "user-pick-row selected" : "user-pick-row";
+        return '<div class="' + rowCls + '" onclick="toggleTriageUser(\'' + t.id + '\', \'' + u.id + '\')">' +
+          '<span>' + escapeHtmlAttr(u.name) + '</span>' +
+          '<div class="pick-indicator">' + (isSel ? "✓" : "") + '</div>' +
+        '</div>';
+      }).join("");
+
+      const urgentBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
+      const urgentBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
+
+      return '<div class="' + cardCls + '">' +
+        '<div class="task-accordion-header" onclick="toggleTaskExpanded(\'' + t.id + '\')">' +
+          '<div class="task-header-left">' +
+            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' ' + getDuePillHtml(t) + '</div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderSummaryStripHtml(t) +
+          '</div>' +
+          '<span class="task-expand-pill">' + (isExpanded ? "Close" : "Open") + '</span>' +
+        '</div>' +
+        (isExpanded ? (
+          '<div class="task-accordion-body">' +
+            renderTaskPhotosHtml(t) +
+            renderChecklistHtml(t) +
+            renderTaskNotesHtml(t, isAdmin) +
+            '<label class="form-label" style="margin-top:6px;">Tap Team Members to Assign</label>' +
+            '<div class="user-select-grid">' + userRows + '</div>' +
+            '<div class="btn-stack">' +
+              '<button class="btn" onclick="assignTriageItem(\'' + t.id + '\')">Assign Selected &amp; Send Notification</button>' +
+              '<button class="' + urgentBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentBtnText + '</button>' +
+              '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Schedule &amp; Checklist</button>' +
+              '<button class="btn btn-danger-outline" onclick="dismissTriageItem(\'' + t.id + '\')">Dismiss Item</button>' +
+            '</div>' +
+          '</div>'
+        ) : '') +
+      '</div>';
+    }
+
+    function renderTaskCardHtml(t, isAdmin) {
+      const isExpanded = Boolean(expandedTaskIds[t.id]);
+      const hasChecklist = normalizeArray(t.checklist).length > 0;
+      const completeBtnText = t.completed
+        ? "Re-Open Task"
+        : (hasChecklist ? "Mark Entire Task Delivered & Complete" : "Mark Task Complete");
+      const urgentCls = (t.urgent && !t.completed) ? " urgent-card" : "";
+      const expCls = isExpanded ? " expanded" : "";
+      const cardCls = (t.completed ? "card task-card completed" : "card task-card") + urgentCls + expCls;
+      const btnCls = t.completed ? "btn btn-secondary" : "btn btn-success";
+      const statusHtml = t.completed
+        ? ('<div class="done-stamp">Completed by ' + escapeHtmlAttr(getUserName(t.completedBy)) + ' (' + escapeHtmlAttr(t.completedAt || "Done") + ')</div>')
+        : ('<div class="task-sub">Assigned by ' + escapeHtmlAttr(getUserName(t.createdBy)) + '</div>');
+
+      const urgentToggleBtnText = t.urgent ? "Remove Urgent Priority" : "Pin as Urgent / High-Priority";
+      const urgentToggleBtnCls = t.urgent ? "btn btn-urgent-active" : "btn btn-secondary";
+
+      const adminButtonsHtml = isAdmin
+        ? ((!t.completed ? ('<button class="' + urgentToggleBtnCls + '" onclick="toggleTaskUrgentDirect(\'' + t.id + '\')">' + urgentToggleBtnText + '</button>') : "") +
+           '<button class="btn btn-secondary" onclick="openEditModal(\'' + t.id + '\')">Edit Task, Schedule &amp; Checklist</button>' +
+           '<button class="btn btn-danger-outline" onclick="deleteTask(\'' + t.id + '\')">Delete Task</button>')
+        : "";
+
+      return '<div class="' + cardCls + '">' +
+        '<div class="task-accordion-header" onclick="toggleTaskExpanded(\'' + t.id + '\')">' +
+          '<div class="task-header-left">' +
+            '<div class="task-meta">' + getUrgentBadge(t.urgent) + ' ' + getSourceBadge(t.source) + ' ' + getAssigneeBadges(t.assignedTo) + ' ' + getDuePillHtml(t) + '</div>' +
+            '<div class="task-title">' + escapeHtmlAttr(t.title) + '</div>' +
+            renderSummaryStripHtml(t) +
+          '</div>' +
+          '<span class="task-expand-pill">' + (isExpanded ? "Close" : "Open") + '</span>' +
+        '</div>' +
+        (isExpanded ? (
+          '<div class="task-accordion-body">' +
+            renderTaskPhotosHtml(t) +
+            renderChecklistHtml(t) +
+            renderTaskNotesHtml(t, isAdmin) +
+            statusHtml +
+            '<div class="btn-stack" style="margin-top: 4px;">' +
+              '<button class="' + btnCls + '" onclick="toggleTaskCompletion(\'' + t.id + '\')">' + completeBtnText + '</button>' +
+              adminButtonsHtml +
+            '</div>' +
+          '</div>'
+        ) : '') +
+      '</div>';
+    }
+
+    function renderAll() {
+      state.users = normalizeArray(state.users);
+      if (state.users.length === 0) state.users = DEFAULT_SHARED_STATE.users.slice();
+      state.tasks = normalizeArray(state.tasks).map(normalizeTaskObject);
+      lastRenderedHash = computeStateHash(state);
+
+      const loginSelect = document.getElementById("login-user-select");
+      if (document.activeElement !== loginSelect) {
+        const prevLoginSel = loginSelect.value;
+        loginSelect.innerHTML = state.users.map(function(u) {
+          const roleLabel = (u.role || "member").toUpperCase();
+          return '<option value="' + u.id + '">' + escapeHtmlAttr(u.name) + ' (' + roleLabel + ')</option>';
+        }).join("");
+        if (prevLoginSel && state.users.some(function(u) { return u.id === prevLoginSel; })) {
+          loginSelect.value = prevLoginSel;
+        }
+      }
+
+      const user = getCurrentUser();
+      if (!user) {
+        document.getElementById("app-header").classList.add("hidden");
+        document.getElementById("bottom-nav").classList.add("hidden");
+        document.getElementById("tab-triage").classList.add("hidden");
+        document.getElementById("tab-tasks").classList.add("hidden");
+        document.getElementById("tab-team").classList.add("hidden");
+        document.getElementById("login-screen").classList.remove("hidden");
+        return;
+      }
+
+      document.getElementById("login-screen").classList.add("hidden");
+      const isAdmin = user.role === "admin";
+
+      document.getElementById("app-header").classList.remove("hidden");
+      document.getElementById("bottom-nav").classList.remove("hidden");
+      document.getElementById("header-username").textContent = user.name;
+      const roleBadge = document.getElementById("header-role-badge");
+      roleBadge.textContent = isAdmin ? "Admin" : "Member";
+      roleBadge.className = "role-tag " + (isAdmin ? "role-admin" : "role-member");
+
+      document.getElementById("nav-triage").classList.toggle("hidden", !isAdmin);
+      document.getElementById("nav-team").classList.toggle("hidden", !isAdmin);
+      document.getElementById("admin-task-creator-wrap").classList.toggle("hidden", !isAdmin);
+      document.getElementById("admin-filter-bar").classList.toggle("hidden", !isAdmin);
+
+      document.getElementById("tab-triage").classList.toggle("hidden", !(isAdmin && activeTab === "triage"));
+      document.getElementById("tab-tasks").classList.toggle("hidden", activeTab !== "tasks");
+      document.getElementById("tab-team").classList.toggle("hidden", !(isAdmin && activeTab === "team"));
+
+      document.getElementById("nav-triage").classList.toggle("active", activeTab === "triage");
+      document.getElementById("nav-tasks").classList.toggle("active", activeTab === "tasks");
+      document.getElementById("nav-team").classList.toggle("active", activeTab === "team");
+
+      // Update Sort Mode Chips
+      const sortModes = ["priority_date", "date_only", "group_day"];
+      for (let sm = 0; sm < sortModes.length; sm++) {
+        const chipEl = document.getElementById("sort-chip-" + sortModes[sm]);
+        if (chipEl) chipEl.classList.toggle("active", taskSortMode === sortModes[sm]);
+      }
+
+      if (isAdmin) {
+        renderCreatorUserGrid();
+        syncUrgentToggleUI();
+
+        const keyTriggerLabel = document.getElementById("gemini-key-trigger-label");
+        if (keyTriggerLabel) {
+          keyTriggerLabel.innerHTML = state.geminiApiKey
+            ? 'Gemini API Key <span style="color:#34d399; font-size:12px; margin-left:6px;">(Saved &amp; Active)</span>'
+            : 'Gemini API Key <span style="color:#fbbf24; font-size:12px; margin-left:6px;">(Not Set)</span>';
+        }
+
+        const keyInput = document.getElementById("gemini-key-input");
+        if (document.activeElement !== keyInput && state.geminiApiKey) {
+          keyInput.value = state.geminiApiKey;
+        }
+        if (dropdownState.recoveryScanner) {
+          renderRecoverySnapshots();
+        }
+        if (dropdownState.captureRules) {
+          populateFilterInputs();
+        }
+        if (dropdownState.scanLog) {
+          renderScanLog();
+        }
+      }
+
+      const triageItems = state.tasks
+        .filter(function(t) { return t.visibility === "triage"; })
+        .slice()
+        .sort(function(a, b) {
+          const urgDiff = (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
+          if (urgDiff !== 0) return urgDiff;
+          return computeTaskDueSortScore(a) - computeTaskDueSortScore(b);
+        });
+
+      document.getElementById("triage-count").textContent = triageItems.length;
+      const badgeTriage = document.getElementById("badge-triage");
+      badgeTriage.textContent = triageItems.length;
+      badgeTriage.classList.toggle("hidden", triageItems.length === 0);
+
+      const triageListEl = document.getElementById("triage-list");
+      if (triageItems.length === 0) {
+        triageListEl.innerHTML = '<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No pending work items in triage queue.</div>';
+      } else {
+        triageListEl.innerHTML = triageItems.map(function(t) {
+          return renderTriageCardHtml(t, isAdmin);
+        }).join("");
+      }
+
+      if (isAdmin) {
+        const chips = [{ id: "ALL", label: "All Users" }].concat(state.users.map(function(u) {
+          return { id: u.id, label: u.name };
+        }));
+        document.getElementById("admin-filter-bar").innerHTML = chips.map(function(c) {
+          const cls = adminFilterUserId === c.id ? "chip active" : "chip";
+          return '<button class="' + cls + '" onclick="setAdminFilter(\'' + c.id + '\')">' + escapeHtmlAttr(c.label) + '</button>';
+        }).join("");
+      }
+
+      let visibleTasks = state.tasks.filter(function(t) { return t.visibility === "assigned"; });
+      if (!isAdmin) {
+        visibleTasks = visibleTasks.filter(function(t) {
+          const list = normalizeArray(t.assignedTo);
+          return list.indexOf(user.id) !== -1;
+        });
+        document.getElementById("tasks-heading").textContent = "My Active Tasks";
+      } else {
+        document.getElementById("tasks-heading").textContent = adminFilterUserId === "ALL" ? "All Active Tasks" : ("Active Tasks for " + getUserName(adminFilterUserId));
+        if (adminFilterUserId !== "ALL") {
+          visibleTasks = visibleTasks.filter(function(t) {
+            const list = normalizeArray(t.assignedTo);
+            return list.indexOf(adminFilterUserId) !== -1;
+          });
+        }
+      }
+
+      const activeTasks = visibleTasks
+        .filter(function(t) { return !t.completed; })
+        .slice()
+        .sort(function(a, b) {
+          if (taskSortMode === "priority_date") {
+            const urgDiff = (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
+            if (urgDiff !== 0) return urgDiff;
+          }
+          return computeTaskDueSortScore(a) - computeTaskDueSortScore(b);
+        });
+
+      const completedTasks = visibleTasks.filter(function(t) { return Boolean(t.completed); });
+      const urgentCount = activeTasks.filter(function(t) { return Boolean(t.urgent); }).length;
+
+      const badgeTasks = document.getElementById("badge-tasks");
+      badgeTasks.textContent = activeTasks.length;
+      badgeTasks.classList.toggle("hidden", activeTasks.length === 0);
+      document.getElementById("tasks-stats").textContent = urgentCount > 0
+        ? ("(" + activeTasks.length + " Active • " + urgentCount + " Urgent)")
+        : ("(" + activeTasks.length + " Active)");
+
+      const tasksListEl = document.getElementById("tasks-list");
+      if (activeTasks.length === 0) {
+        tasksListEl.innerHTML = '<div class="card" style="text-align:center; color:var(--muted); font-size:14px; padding:28px;">No active tasks pending.</div>';
+      } else if (taskSortMode === "group_day") {
+        let groupedHtml = "";
+        let lastDateKey = null;
+        for (let i = 0; i < activeTasks.length; i++) {
+          const t = activeTasks[i];
+          const dKey = t.dueDate || getTodayIso();
+          if (dKey !== lastDateKey) {
+            lastDateKey = dKey;
+            groupedHtml += '<div class="day-group-header">' + escapeHtmlAttr(formatDayHeading(dKey)) + '</div>';
+          }
+          groupedHtml += renderTaskCardHtml(t, isAdmin);
+        }
+        tasksListEl.innerHTML = groupedHtml;
+      } else {
+        tasksListEl.innerHTML = activeTasks.map(function(t) {
+          return renderTaskCardHtml(t, isAdmin);
+        }).join("");
+      }
+
+      const completedLabelEl = document.getElementById("completed-trigger-label");
+      if (completedLabelEl) {
+        completedLabelEl.textContent = "Completed Tasks (" + completedTasks.length + ")";
+      }
+      const clearBtnEl = document.getElementById("btn-clear-completed");
+      if (clearBtnEl) {
+        clearBtnEl.classList.toggle("hidden", !(isAdmin && completedTasks.length > 0));
+      }
+
+      const completedListEl = document.getElementById("completed-tasks-list");
+      if (completedListEl) {
+        if (completedTasks.length === 0) {
+          completedListEl.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:13px; padding:14px 0;">No completed tasks in archive.</div>';
+        } else {
+          completedListEl.innerHTML = completedTasks.map(function(t) {
+            return renderTaskCardHtml(t, isAdmin);
+          }).join("");
+        }
+      }
+
+      if (isAdmin) {
+        document.getElementById("team-list").innerHTML = state.users.map(function(u) {
+          const roleCls = u.role === "admin" ? "role-tag role-admin" : "role-tag role-member";
+          const removeBtn = u.id !== user.id
+            ? ('<button class="btn btn-danger-outline" onclick="removeUser(\'' + u.id + '\')">Remove Account</button>')
+            : "";
+          return '<div class="card">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">' +
+              '<div>' +
+                '<div style="font-weight:600; font-size:16px; margin-bottom:4px;">' + escapeHtmlAttr(u.name) + '</div>' +
+                '<div style="font-size:13px; color:var(--muted);">PIN: ' + escapeHtmlAttr(u.pin || "1234") + '</div>' +
+              '</div>' +
+              '<span class="' + roleCls + '">' + (u.role || "member").toUpperCase() + '</span>' +
+            '</div>' +
+            removeBtn +
+          '</div>';
+        }).join("");
+      }
+    }
+
+    function setAdminFilter(userId) {
+      adminFilterUserId = userId;
+      renderAll();
+    }
+
+    renderAll();
+    startCloudSyncLoop();
+  </script>
+</body>
+</html>
