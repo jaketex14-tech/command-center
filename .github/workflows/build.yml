@@ -41,7 +41,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # JOB 2: Compile Native Android APK with Notification, Calendar & Photo Picker Support
+  # JOB 2: Compile Native Android APK with Notification, Calendar & Direct Camera Stream Support
   build-android-apk:
     runs-on: ubuntu-latest
     steps:
@@ -70,10 +70,10 @@ jobs:
           npx cap add android
           npx cap sync android
 
-          # 1. Configure AndroidManifest permissions, NotificationListenerService & versionCode
+          # 1. Configure AndroidManifest permissions (Including CAMERA), NotificationListenerService & versionCode
           sed -i 's/NoActionBarLaunch/NoActionBar/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/allowBackup="true"/allowBackup="false"/g' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<application/<uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.READ_CALENDAR" \/>\n    <application/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.READ_CALENDAR" \/>\n    <uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>\n    <application/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/<\/application>/    <service android:name=".CaptureService" android:label="Command Center Auto-Capture" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="true">\n            <intent-filter>\n                <action android:name="android.service.notification.NotificationListenerService" \/>\n            <\/intent-filter>\n        <\/service>\n    <\/application>/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/versionCode 1/versionCode ${{ github.run_number }}/g' android/app/build.gradle
           sed -i 's/versionName "1.0"/versionName "1.${{ github.run_number }}"/g' android/app/build.gradle
@@ -191,10 +191,11 @@ jobs:
           }
           EOF
 
-          # 4. Write MainActivity with Notification Bridge, File/Photo Chooser & Calendar Reader
+          # 4. Write MainActivity with Notification Bridge, Camera Stream Permission Grant & Calendar Reader
           cat << 'EOF' > android/app/src/main/java/com/commandcenter/v2/MainActivity.java
           package com.commandcenter.v2;
 
+          import android.Manifest;
           import android.app.NotificationChannel;
           import android.app.NotificationManager;
           import android.app.PendingIntent;
@@ -210,6 +211,7 @@ jobs:
           import android.provider.CalendarContract;
           import android.provider.Settings;
           import android.webkit.JavascriptInterface;
+          import android.webkit.PermissionRequest;
           import android.webkit.ValueCallback;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
@@ -227,6 +229,7 @@ jobs:
               private WebView webView;
               private ValueCallback<Uri[]> filePathCallback;
               private static final int FILE_CHOOSER_RESULT_CODE = 105;
+              private static final int CAMERA_PERMISSION_REQUEST_CODE = 1002;
               private static final String CHANNEL_ID = "command_center_alerts";
 
               @Override
@@ -251,6 +254,33 @@ jobs:
                   webView.setWebViewClient(new WebViewClient());
                   webView.setWebChromeClient(new WebChromeClient() {
                       @Override
+                      public void onPermissionRequest(final PermissionRequest request) {
+                          runOnUiThread(new Runnable() {
+                              @Override
+                              public void run() {
+                                  String[] resources = request.getResources();
+                                  boolean wantsCamera = false;
+                                  for (String r : resources) {
+                                      if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) {
+                                          wantsCamera = true;
+                                          break;
+                                      }
+                                  }
+                                  if (wantsCamera) {
+                                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                                          checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                                          requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+                                      } else {
+                                          request.grant(resources);
+                                      }
+                                  } else {
+                                      request.grant(resources);
+                                  }
+                              }
+                          });
+                      }
+
+                      @Override
                       public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
                           if (MainActivity.this.filePathCallback != null) {
                               MainActivity.this.filePathCallback.onReceiveValue(null);
@@ -266,6 +296,14 @@ jobs:
                   });
                   setContentView(webView);
                   webView.loadUrl("file:///android_asset/public/index.html?v=" + System.currentTimeMillis());
+              }
+
+              @Override
+              public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                  if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+                      // Reload or allow camera stream if granted
+                  }
               }
 
               @Override
@@ -293,7 +331,11 @@ jobs:
               private void requestRuntimePermissions() {
                   if (Build.VERSION.SDK_INT >= 33) {
                       if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
-                          requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS", "android.permission.READ_CALENDAR"}, 101);
+                          requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS", "android.permission.READ_CALENDAR", "android.permission.CAMERA"}, 101);
+                      }
+                  } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                      if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                          requestPermissions(new String[]{Manifest.permission.CAMERA}, 101);
                       }
                   }
               }
@@ -443,6 +485,6 @@ jobs:
         with:
           tag_name: build-${{ github.run_number }}
           name: "Android APK Build #${{ github.run_number }}"
-          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the photo-attachment & field-notes build."
+          body: "Tap **CommandCenter-v${{ github.run_number }}.apk** below to install the live in-app camera stream & field-notes build."
           files: CommandCenter-v${{ github.run_number }}.apk
           prerelease: false
