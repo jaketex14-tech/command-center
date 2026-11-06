@@ -770,6 +770,27 @@
       line-height: 1.4;
       white-space: pre-wrap;
     }
+    .note-photo-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .note-photo-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px;
+    }
+    .note-photo-card img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #05080f;
+      cursor: pointer;
+      display: block;
+    }
     .note-input-wrap {
       margin-top: 10px;
       padding-top: 10px;
@@ -778,6 +799,27 @@
     .note-input-wrap input {
       background: var(--card);
       margin-bottom: 10px;
+    }
+    .note-source-chooser {
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .note-source-chooser-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .note-source-btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
     .scan-log-card {
@@ -1301,6 +1343,10 @@
     </button>
   </nav>
 
+  <!-- SHARED HIDDEN INPUTS FOR TASK NOTE PHOTOS (DIRECT CAMERA STREAM VS GALLERY) -->
+  <input type="file" id="note-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleNotePhotoInput(this)" />
+  <input type="file" id="note-gallery-input" accept="image/*" multiple class="hidden" onchange="handleNotePhotoInput(this)" />
+
   <script>
     const STORAGE_KEY = "unified_command_center_v12";
     const SAFETY_BACKUP_KEY = "command_center_safety_backup_v1";
@@ -1589,6 +1635,11 @@
     let triagePendingPhotos = [];
     let creatorPendingPhotos = [];
 
+    // Task Note Photo Staging State (per task ID)
+    let notePendingPhotos = {};
+    let notePhotoSourceOpen = {};
+    let activeNotePhotoTaskId = null;
+
     let editingTaskId = null;
     let editDraftChecklist = [];
     let editDraftAssignees = [];
@@ -1671,7 +1722,6 @@
     function isDemoSeedData(parsedObj) {
       if (!parsedObj) return false;
       const tasks = normalizeArray(parsedObj.tasks);
-      // Detect if a snapshot was one of the Canvas preview seeds
       for (let i = 0; i < tasks.length; i++) {
         if (tasks[i].id === "t_demo_1" || tasks[i].id === "t_demo_2" || tasks[i].id === "chk_demo_1") {
           return true;
@@ -1711,7 +1761,6 @@
         }
       } catch (e) {}
 
-      // Sort non-demo snapshots with the most tasks/users first
       snapshots.sort(function(a, b) {
         if (a.isDemo !== b.isDemo) return a.isDemo ? 1 : -1;
         return (b.tasksCount + b.usersCount) - (a.tasksCount + a.usersCount);
@@ -1765,7 +1814,6 @@
         lastNotification: d.lastNotification || null
       };
 
-      // Ensure current logged in user is valid in restored users
       if (!state.users.some(function(u) { return u.id === currentUserId; })) {
         currentUserId = state.users[0].id;
         localStorage.setItem(SESSION_USER_KEY, currentUserId);
@@ -1779,6 +1827,11 @@
     function normalizeTaskObject(t) {
       const dueDate = t.dueDate || getTodayIso();
       const duePeriod = (t.duePeriod === "PM") ? "PM" : "AM";
+      const normalizedNotes = normalizeArray(t.notes).map(function(n) {
+        return Object.assign({}, n, {
+          images: normalizeArray(n.images)
+        });
+      });
       return Object.assign({}, t, {
         urgent: Boolean(t.urgent),
         dueDate: dueDate,
@@ -1787,7 +1840,7 @@
         assignedTo: normalizeArray(t.assignedTo),
         checklist: normalizeArray(t.checklist),
         images: normalizeArray(t.images),
-        notes: normalizeArray(t.notes)
+        notes: normalizedNotes
       });
     }
 
@@ -1796,7 +1849,6 @@
         let bestCandidate = null;
         let recoveredKey = "";
 
-        // Scan all known keys to find the richest non-demo user data
         const allKeys = [SAFETY_BACKUP_KEY, STORAGE_KEY].concat(LEGACY_KEYS);
         for (let i = 0; i < allKeys.length; i++) {
           const raw = localStorage.getItem(allKeys[i]);
@@ -1923,11 +1975,23 @@
           continue;
         }
 
-        const imgs = normalizeArray(t.images);
-        if (ageMs > PHOTO_RETENTION_MS && imgs.length > 0) {
-          t.images = [];
-          t.photosPurged = true;
-          changed = true;
+        if (ageMs > PHOTO_RETENTION_MS) {
+          const imgs = normalizeArray(t.images);
+          if (imgs.length > 0) {
+            t.images = [];
+            t.photosPurged = true;
+            changed = true;
+          }
+          const notes = normalizeArray(t.notes);
+          for (let n = 0; n < notes.length; n++) {
+            const noteImgs = normalizeArray(notes[n].images);
+            if (noteImgs.length > 0) {
+              notes[n].images = [];
+              notes[n].photosPurged = true;
+              changed = true;
+            }
+          }
+          t.notes = notes;
         }
 
         kept.push(t);
@@ -2476,11 +2540,94 @@
       '</div>';
     }
 
+    /********************************************************************
+     * TASK NOTES & DIRECT-STREAM CAMERA / GALLERY PHOTO ATTACHMENTS
+     ********************************************************************/
+    function toggleNotePhotoSourceMenu(taskId) {
+      const inputEl = document.getElementById("note-input-" + taskId);
+      const savedDraftText = inputEl ? inputEl.value : "";
+
+      notePhotoSourceOpen[taskId] = !notePhotoSourceOpen[taskId];
+      expandedTaskIds[taskId] = true;
+      renderAll();
+
+      const restoredInput = document.getElementById("note-input-" + taskId);
+      if (restoredInput && savedDraftText) {
+        restoredInput.value = savedDraftText;
+      }
+    }
+
+    function triggerNotePhotoInput(taskId, sourceType) {
+      activeNotePhotoTaskId = taskId;
+      notePhotoSourceOpen[taskId] = false;
+
+      const inputId = sourceType === "camera" ? "note-camera-input" : "note-gallery-input";
+      const fileInput = document.getElementById(inputId);
+      if (fileInput) {
+        fileInput.value = "";
+        fileInput.click();
+      }
+    }
+
+    async function handleNotePhotoInput(inputElem) {
+      const taskId = activeNotePhotoTaskId;
+      const files = inputElem.files ? Array.from(inputElem.files) : [];
+      if (!taskId || files.length === 0) {
+        inputElem.value = "";
+        return;
+      }
+
+      const prevInput = document.getElementById("note-input-" + taskId);
+      const savedDraftText = prevInput ? prevInput.value : "";
+
+      if (!notePendingPhotos[taskId]) {
+        notePendingPhotos[taskId] = [];
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const dataUrl = await compressImageFile(files[i]);
+          notePendingPhotos[taskId].push(dataUrl);
+        } catch (err) {
+          showBanner("Photo Error", "Could not process the selected note image.");
+        }
+      }
+
+      inputElem.value = "";
+      expandedTaskIds[taskId] = true;
+      renderAll();
+
+      const restoredInput = document.getElementById("note-input-" + taskId);
+      if (restoredInput && savedDraftText) {
+        restoredInput.value = savedDraftText;
+      }
+    }
+
+    function removeStagedNotePhoto(taskId, index) {
+      const prevInput = document.getElementById("note-input-" + taskId);
+      const savedDraftText = prevInput ? prevInput.value : "";
+
+      if (notePendingPhotos[taskId]) {
+        notePendingPhotos[taskId].splice(index, 1);
+      }
+      expandedTaskIds[taskId] = true;
+      renderAll();
+
+      const restoredInput = document.getElementById("note-input-" + taskId);
+      if (restoredInput && savedDraftText) {
+        restoredInput.value = savedDraftText;
+      }
+    }
+
     function addTaskNote(taskId) {
       const inputEl = document.getElementById("note-input-" + taskId);
-      if (!inputEl) return;
-      const text = inputEl.value.trim();
-      if (!text) return;
+      const text = inputEl ? inputEl.value.trim() : "";
+      const stagedImgs = normalizeArray(notePendingPhotos[taskId]);
+
+      if (!text && stagedImgs.length === 0) {
+        showBanner("Empty Note", "Write a note or attach a photo first.");
+        return;
+      }
 
       const task = state.tasks.find(function(t) { return t.id === taskId; });
       const actor = getCurrentUser();
@@ -2494,12 +2641,18 @@
         authorId: actor.id,
         authorName: actor.name,
         text: text,
+        images: stagedImgs.slice(),
         createdAt: timeStr
       });
       task.notes = notes;
+
+      delete notePendingPhotos[taskId];
+      delete notePhotoSourceOpen[taskId];
       expandedTaskIds[taskId] = true;
-      inputEl.value = "";
-      inputEl.blur();
+      if (inputEl) {
+        inputEl.value = "";
+        inputEl.blur();
+      }
 
       const assignedIds = normalizeArray(task.assignedTo);
       let targetAudience = "ADMINS";
@@ -2512,9 +2665,12 @@
         targetAudience = adminIds.concat(assignedIds);
       }
 
+      const photoDesc = stagedImgs.length > 0 ? (" [" + stagedImgs.length + " photo(s)]") : "";
+      const bodyPreview = text ? ("\"" + text + "\"" + photoDesc) : ("Attached " + stagedImgs.length + " photo(s) to task notes.");
+
       pushStateToCloud(
         "New Note on \"" + task.title + "\"",
-        actor.name + ": \"" + text + "\"",
+        actor.name + ": " + bodyPreview,
         targetAudience
       );
     }
@@ -2529,24 +2685,68 @@
 
     function renderTaskNotesHtml(task, isAdmin) {
       const notes = normalizeArray(task.notes);
+      const stagedImgs = normalizeArray(notePendingPhotos[task.id]);
+      const isChooserOpen = Boolean(notePhotoSourceOpen[task.id]);
+
       const notesListHtml = notes.length === 0
         ? '<div style="font-size:13px; color:var(--muted); margin-bottom:6px;">No notes added yet.</div>'
         : notes.map(function(n) {
             const delBtn = isAdmin
               ? (' <span style="color:#f87171; cursor:pointer; float:right;" onclick="deleteTaskNote(\'' + task.id + '\', \'' + n.id + '\')">Remove</span>')
               : "";
+            const noteImgs = normalizeArray(n.images);
+            const notePhotosHtml = noteImgs.length > 0
+              ? ('<div class="note-photo-grid">' +
+                  noteImgs.map(function(src, idx) {
+                    return '<div class="note-photo-card">' +
+                      '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Note Photo ' + (idx + 1) + '" />' +
+                      '<div class="photo-caption">Tap photo to view full screen</div>' +
+                    '</div>';
+                  }).join("") +
+                '</div>')
+              : (n.photosPurged ? '<div style="font-size:11px; color:var(--muted); font-style:italic; margin-top:4px;">Note photo cleared after 3-day retention.</div>' : "");
+
             return '<div class="note-item">' +
               '<div class="note-meta">' + escapeHtmlAttr(n.authorName) + ' • ' + escapeHtmlAttr(n.createdAt) + delBtn + '</div>' +
-              '<div class="note-text">' + escapeHtmlAttr(n.text) + '</div>' +
+              (n.text ? ('<div class="note-text">' + escapeHtmlAttr(n.text) + '</div>') : '') +
+              notePhotosHtml +
             '</div>';
           }).join("");
+
+      const stagedPreviewHtml = stagedImgs.length > 0
+        ? ('<div class="note-photo-grid" style="margin-bottom:10px;">' +
+            stagedImgs.map(function(src, idx) {
+              return '<div class="note-photo-card">' +
+                '<img src="' + src + '" onclick="openImageViewer(this.src)" alt="Staged Note Photo" />' +
+                '<button type="button" class="btn btn-danger-outline" style="margin-top:8px; padding:8px; font-size:12px;" onclick="removeStagedNotePhoto(\'' + task.id + '\', ' + idx + ')">Remove Staged Photo</button>' +
+              '</div>';
+            }).join("") +
+          '</div>')
+        : "";
+
+      const sourceChooserHtml = isChooserOpen
+        ? ('<div class="note-source-chooser">' +
+            '<div class="note-source-chooser-title">Select Photo Source (Direct Upload — Not Saved to Phone)</div>' +
+            '<div class="note-source-btn-row">' +
+              '<button type="button" class="btn" style="padding:11px; font-size:13px;" onclick="triggerNotePhotoInput(\'' + task.id + '\', \'camera\')">Take Photo (Camera)</button>' +
+              '<button type="button" class="btn btn-secondary" style="padding:11px; font-size:13px;" onclick="triggerNotePhotoInput(\'' + task.id + '\', \'gallery\')">Photo Gallery</button>' +
+            '</div>' +
+          '</div>')
+        : "";
 
       return '<div class="notes-box">' +
         '<div class="notes-header">Task Notes (' + notes.length + ')</div>' +
         notesListHtml +
         '<div class="note-input-wrap">' +
           '<input type="text" id="note-input-' + task.id + '" placeholder="Write a note or update for this task..." />' +
-          '<button class="btn btn-secondary" style="padding:12px;" onclick="addTaskNote(\'' + task.id + '\')">Add Note &amp; Notify</button>' +
+          stagedPreviewHtml +
+          sourceChooserHtml +
+          '<div class="btn-stack">' +
+            '<button type="button" class="btn btn-secondary" style="padding:11px; font-size:13px;" onclick="toggleNotePhotoSourceMenu(\'' + task.id + '\')">' +
+              (isChooserOpen ? 'Close Photo Options' : 'Attach Photo to Note (Camera / Gallery)') +
+            '</button>' +
+            '<button type="button" class="btn" style="padding:12px;" onclick="addTaskNote(\'' + task.id + '\')">Add Note &amp; Notify</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
     }
@@ -3280,7 +3480,6 @@
       const dbUrl = getFirebaseUrl();
       if (!dbUrl || dbUrl.indexOf("PLACEHOLDER") !== -1) return;
 
-      // CRITICAL PROTECTION: Never overwrite Firebase until initial cloud pull has completed!
       if (!hasCompletedInitialCloudPull) {
         await pullStateFromCloud();
         return;
@@ -3319,7 +3518,6 @@
           return;
         }
 
-        // Before accepting remoteData, save current local state to safety backup if local has real non-demo data
         if (!isDemoSeedData(state) && (state.tasks.length > 0 || state.users.length > 1)) {
           localStorage.setItem(SAFETY_BACKUP_KEY, JSON.stringify(state));
         }
@@ -3785,6 +3983,11 @@
       const chk = normalizeArray(task.checklist);
       const imgs = normalizeArray(task.images);
       const notes = normalizeArray(task.notes);
+      let notePhotoCount = 0;
+      for (let i = 0; i < notes.length; i++) {
+        notePhotoCount += normalizeArray(notes[i].images).length;
+      }
+      const totalPhotos = imgs.length + notePhotoCount;
       const pills = [];
 
       if (chk.length > 0) {
@@ -3792,8 +3995,8 @@
         const readyCls = (done === chk.length && !task.completed) ? "summary-pill ready" : "summary-pill";
         pills.push('<span class="' + readyCls + '">Checklist: ' + done + '/' + chk.length + '</span>');
       }
-      if (imgs.length > 0) {
-        pills.push('<span class="summary-pill">' + imgs.length + (imgs.length === 1 ? ' Photo' : ' Photos') + '</span>');
+      if (totalPhotos > 0) {
+        pills.push('<span class="summary-pill">' + totalPhotos + (totalPhotos === 1 ? ' Photo' : ' Photos') + '</span>');
       }
       if (notes.length > 0) {
         pills.push('<span class="summary-pill">' + notes.length + (notes.length === 1 ? ' Note' : ' Notes') + '</span>');
