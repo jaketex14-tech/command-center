@@ -1311,11 +1311,10 @@
         <input type="text" id="new-user-name" placeholder="e.g. Ronnie" />
 
         <label class="form-label">Permission Role</label>
-<select id="new-user-role">
-  <option value="member">Team Member (Crew)</option>
-  <option value="delegator">Delegator (Task Manager)</option>
-  <option value="admin">Administrator (Full Access)</option>
-</select>
+        <select id="new-user-role">
+          <option value="member">Team Member (Assigned Tasks Only)</option>
+          <option value="admin">Administrator (Full Access)</option>
+        </select>
 
         <label class="form-label">4-Digit PIN</label>
         <input type="text" id="new-user-pin" inputmode="numeric" placeholder="1234" value="1234" />
@@ -3859,14 +3858,7 @@
 
     function switchTab(tabName) {
       const user = getCurrentUser();
-      const isAdmin = user && user.role === "admin";
-      const isDelegator = user && user.role === "delegator";
-      const canDelegate = isAdmin || isDelegator;
-
-      if (!user) return;
-      if (tabName === "team" && !isAdmin) return;
-      if (tabName === "triage" && !canDelegate) return;
-
+      if (!user || (user.role !== "admin" && tabName !== "tasks")) return;
       activeTab = tabName;
       renderAll();
     }
@@ -4220,7 +4212,7 @@
       '</div>';
     }
 
-    function renderTriageCardHtml(t, canDelegate) {
+    function renderTriageCardHtml(t, isAdmin) {
       const isExpanded = Boolean(expandedTaskIds[t.id]);
       const cardCls = "card task-card" + (t.urgent ? " urgent-card" : "") + (isExpanded ? " expanded" : "");
       const selectedForThis = triageSelections[t.id] || [];
@@ -4264,7 +4256,7 @@
       '</div>';
     }
 
-    function renderTaskCardHtml(t, canDelegate) {
+    function renderTaskCardHtml(t, isAdmin) {
       const isExpanded = Boolean(expandedTaskIds[t.id]);
       const hasChecklist = normalizeArray(t.checklist).length > 0;
       const completeBtnText = t.completed
@@ -4341,32 +4333,21 @@
       }
 
       document.getElementById("login-screen").classList.add("hidden");
-      
       const isAdmin = user.role === "admin";
-      const isDelegator = user.role === "delegator";
-      const canDelegate = isAdmin || isDelegator;
-      
+
       document.getElementById("app-header").classList.remove("hidden");
       document.getElementById("bottom-nav").classList.remove("hidden");
       document.getElementById("header-username").textContent = user.name;
-      
       const roleBadge = document.getElementById("header-role-badge");
       roleBadge.textContent = isAdmin ? "Admin" : "Member";
       roleBadge.className = "role-tag " + (isAdmin ? "role-admin" : "role-member");
 
-     const roleBadge = document.getElementById("header-role-badge");
-      roleBadge.textContent = isAdmin ? "Admin" : (isDelegator ? "Delegator" : "Member");
-      roleBadge.className = "role-tag " + (isAdmin ? "role-admin" : (isDelegator ? "role-delegator" : "role-member"));
-
-      // Triage Inbox & Task Creation visible to Admin and Delegator
-      document.getElementById("nav-triage").classList.toggle("hidden", !canDelegate);
-      // Settings tab restricted to Admin only
+      document.getElementById("nav-triage").classList.toggle("hidden", !isAdmin);
       document.getElementById("nav-team").classList.toggle("hidden", !isAdmin);
-      
-      document.getElementById("admin-task-creator-wrap").classList.toggle("hidden", !canDelegate);
-      document.getElementById("admin-filter-bar").classList.toggle("hidden", !canDelegate);
+      document.getElementById("admin-task-creator-wrap").classList.toggle("hidden", !isAdmin);
+      document.getElementById("admin-filter-bar").classList.toggle("hidden", !isAdmin);
 
-      document.getElementById("tab-triage").classList.toggle("hidden", !(canDelegate && activeTab === "triage"));
+      document.getElementById("tab-triage").classList.toggle("hidden", !(isAdmin && activeTab === "triage"));
       document.getElementById("tab-tasks").classList.toggle("hidden", activeTab !== "tasks");
       document.getElementById("tab-team").classList.toggle("hidden", !(isAdmin && activeTab === "team"));
 
