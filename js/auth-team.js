@@ -44,6 +44,7 @@ function logoutUser() {
   closeEditModal();
   closeImageViewer();
   closeLiveCameraModal();
+  if (typeof closeConfirmModal === "function") closeConfirmModal();
   renderAll();
 }
 
@@ -170,10 +171,26 @@ function updateUserRole(userId, newRole) {
 }
 
 function removeUser(userId) {
-  if (!isAdminRole(getCurrentUser())) return;
+  const actor = getCurrentUser();
+  if (!isAdminRole(actor) || userId === actor.id) return;
   if (state.users.length <= 1) return;
-  state.users = state.users.filter(function(u) { return u.id !== userId; });
-  pushStateToCloud();
+
+  const target = state.users.find(function(u) { return u.id === userId; });
+  if (!target) return;
+
+  openConfirmModal(
+    "Remove User Account?",
+    "Remove \"" + target.name + "\" (" + getRoleDisplayLabel(target.role) + ")? They will no longer be able to sign in.",
+    "Remove Account",
+    function() {
+      if (state.users.length <= 1) return;
+      state.users = state.users.filter(function(u) { return u.id !== userId; });
+      if (adminFilterUserId === userId) {
+        adminFilterUserId = "ALL";
+      }
+      pushStateToCloud("Account Removed", "Removed user account for " + target.name + ".", "ADMINS");
+    }
+  );
 }
 
 /********************************************************************
