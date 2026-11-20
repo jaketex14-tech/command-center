@@ -514,9 +514,25 @@ function deleteTaskNote(taskId, noteId) {
   if (!isDelegatorOrAdminRole(getCurrentUser())) return;
   const task = state.tasks.find(function(t) { return t.id === taskId; });
   if (!task) return;
-  task.notes = normalizeArray(task.notes).filter(function(n) { return n.id !== noteId; });
-  expandedTaskIds[taskId] = true;
-  pushStateToCloud();
+  const note = normalizeArray(task.notes).find(function(n) { return n.id === noteId; });
+  if (!note) return;
+
+  const preview = note.text
+    ? ("\"" + (note.text.length > 60 ? note.text.slice(0, 60) + "..." : note.text) + "\"")
+    : (normalizeArray(note.images).length + " attached photo(s)");
+
+  openConfirmModal(
+    "Delete Task Note?",
+    "Remove " + (note.authorName || "this user") + "'s note (" + preview + ")? This cannot be undone.",
+    "Delete Note",
+    function() {
+      const currentTask = state.tasks.find(function(t) { return t.id === taskId; });
+      if (!currentTask) return;
+      currentTask.notes = normalizeArray(currentTask.notes).filter(function(n) { return n.id !== noteId; });
+      expandedTaskIds[taskId] = true;
+      pushStateToCloud();
+    }
+  );
 }
 
 /********************************************************************
