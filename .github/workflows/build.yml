@@ -25,10 +25,11 @@ jobs:
         run: |
           mkdir -p www
           cp index.html www/index.html
+          cp -r css www/
+          cp -r js www/
           sed -i "s|PLACEHOLDER_FIREBASE_URL|${{ secrets.FIREBASE_URL }}|g" www/index.html
           cp manifest.json www/ 2>/dev/null || true
           cp sw.js www/ 2>/dev/null || true
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
@@ -59,16 +60,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Generate Native Android Project & Background Harvesters
+     - name: Generate Native Android Project & Background Harvesters
         run: |
           mkdir -p www
           cp index.html www/index.html
+          cp -r css www/
+          cp -r js www/
           sed -i "s|PLACEHOLDER_FIREBASE_URL|${{ secrets.FIREBASE_URL }}|g" www/index.html
           npm init -y
-          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          echo '{"appId":"com.commandcenter.v2","appName":"Command Center","webDir":"www"}' > capacitor.config.json
-          npx cap add android
-          npx cap sync android
 
           # 1. Configure AndroidManifest permissions (Including CAMERA), NotificationListenerService & versionCode
           sed -i 's/NoActionBarLaunch/NoActionBar/g' android/app/src/main/AndroidManifest.xml
