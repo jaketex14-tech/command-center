@@ -28,8 +28,10 @@ jobs:
           cp -r css www/
           cp -r js www/
           sed -i "s|PLACEHOLDER_FIREBASE_URL|${{ secrets.FIREBASE_URL }}|g" www/index.html
+          sed -i "s|BUILD_VERSION|${{ github.run_number }}|g" www/index.html
           cp manifest.json www/ 2>/dev/null || true
           cp sw.js www/ 2>/dev/null || true
+          sed -i "s|BUILD_VERSION|${{ github.run_number }}|g" www/sw.js 2>/dev/null || true
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -68,6 +70,7 @@ jobs:
           cp -r css www/
           cp -r js www/
           sed -i "s|PLACEHOLDER_FIREBASE_URL|${{ secrets.FIREBASE_URL }}|g" www/index.html
+          sed -i "s|BUILD_VERSION|${{ github.run_number }}|g" www/index.html
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           echo '{"appId":"com.commandcenter.v2","appName":"Command Center","webDir":"www"}' > capacitor.config.json
