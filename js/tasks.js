@@ -1,4 +1,28 @@
 /********************************************************************
+ * DELETE CONFIRMATION MODAL
+ ********************************************************************/
+let pendingConfirmAction = null;
+
+function openConfirmModal(title, message, confirmLabel, onConfirm) {
+  pendingConfirmAction = typeof onConfirm === "function" ? onConfirm : null;
+  document.getElementById("confirm-modal-title").textContent = title || "Confirm Action";
+  document.getElementById("confirm-modal-message").textContent = message || "Are you sure?";
+  document.getElementById("confirm-modal-ok").textContent = confirmLabel || "Delete";
+  document.getElementById("confirm-modal").classList.remove("hidden");
+}
+
+function closeConfirmModal() {
+  pendingConfirmAction = null;
+  const modal = document.getElementById("confirm-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function executePendingConfirm() {
+  const action = pendingConfirmAction;
+  closeConfirmModal();
+  if (action) action();
+}
+/********************************************************************
  * URGENT PRIORITY CONTROLS
  ********************************************************************/
 function syncUrgentToggleUI() {
@@ -108,9 +132,19 @@ function assignTriageItem(taskId) {
 
 function dismissTriageItem(taskId) {
   if (!isAdminRole(getCurrentUser())) return;
-  state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
-  delete triageSelections[taskId];
-  pushStateToCloud();
+  const task = state.tasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+
+  openConfirmModal(
+    "Dismiss Triage Item?",
+    "Remove \"" + task.title + "\" from the triage queue? This cannot be undone.",
+    "Dismiss & Delete",
+    function() {
+      state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
+      delete triageSelections[taskId];
+      pushStateToCloud();
+    }
+  );
 }
 
 async function handleManualAnalyze() {
@@ -386,15 +420,34 @@ function clearAllCompletedTasks() {
   if (!isAdminRole(getCurrentUser())) return;
   const completedCount = state.tasks.filter(function(t) { return t.visibility === "assigned" && t.completed; }).length;
   if (completedCount === 0) return;
-  state.tasks = state.tasks.filter(function(t) { return !(t.visibility === "assigned" && t.completed); });
-  toggleDropdownPanel("completedTasks", false);
-  pushStateToCloud("Completed Tasks Cleared", "Removed " + completedCount + " completed task(s) from the archive.", "ADMINS");
+
+  openConfirmModal(
+    "Clear All Completed Tasks?",
+    "Permanently delete all " + completedCount + " completed task" + (completedCount === 1 ? "" : "s") + " from the archive? This cannot be undone.",
+    "Delete All Completed",
+    function() {
+      state.tasks = state.tasks.filter(function(t) { return !(t.visibility === "assigned" && t.completed); });
+      toggleDropdownPanel("completedTasks", false);
+      pushStateToCloud("Completed Tasks Cleared", "Removed " + completedCount + " completed task(s) from the archive.", "ADMINS");
+    }
+  );
 }
 
 function deleteTask(taskId) {
   if (!isDelegatorOrAdminRole(getCurrentUser())) return;
-  state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
-  pushStateToCloud();
+  const task = state.tasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+
+  const heading = task.completed ? "Delete Completed Task?" : "Delete Active Task?";
+  openConfirmModal(
+    heading,
+    "Permanently delete \"" + task.title + "\"? This cannot be undone.",
+    "Delete Task",
+    function() {
+      state.tasks = state.tasks.filter(function(t) { return t.id !== taskId; });
+      pushStateToCloud();
+    }
+  );
 }
 
 /********************************************************************
