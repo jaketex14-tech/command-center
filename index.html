@@ -53,7 +53,19 @@
     </div>
     <button class="btn btn-secondary" onclick="closeImageViewer()">Close Photo Viewer</button>
   </section>
-
+  
+<!-- DELETE CONFIRMATION MODAL -->
+  <section id="confirm-modal" class="hidden" onclick="closeConfirmModal()">
+    <div class="confirm-modal-card" onclick="event.stopPropagation()">
+      <div id="confirm-modal-title" class="card-title" style="font-size:18px; margin-bottom:8px;">Confirm Delete</div>
+      <div id="confirm-modal-message" class="card-desc" style="margin-bottom:20px;"></div>
+      <div class="btn-stack">
+        <button type="button" id="confirm-modal-ok" class="btn btn-danger" onclick="executePendingConfirm()">Delete</button>
+        <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      </div>
+    </div>
+  </section>
+  
   <!-- DIRECT IN-APP WEBRTC CAMERA MODAL (CAPTURES STRAIGHT TO MEMORY WITHOUT SAVING TO DEVICE) -->
   <section id="camera-capture-modal" class="hidden">
     <div class="camera-header-bar">
