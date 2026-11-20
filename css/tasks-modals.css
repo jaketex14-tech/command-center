@@ -395,3 +395,33 @@
   width: 100%;
   margin: 0 auto;
 }
+/* Delete Confirmation Modal */
+#confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(5, 8, 15, 0.84);
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.confirm-modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  border-radius: 16px;
+  padding: 22px 20px;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.75);
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:active {
+  background: #b91c1c;
+}
