@@ -127,6 +127,13 @@
   </section>
 
   <main>
+    <div id="push-optin-card" class="card hidden" style="border-color: var(--accent); background: rgba(37, 99, 235, 0.12);">
+    <div class="card-title">Enable Background Push Alerts</div>
+    <div class="card-desc" style="margin-bottom: 12px;">
+      Get notified on your lock screen for new tasks, urgent updates, and notes even when the app is closed. (On iPhone, open from your Home Screen icon first.)
+    </div>
+    <button type="button" id="btn-enable-push" class="btn" style="padding: 12px;" onclick="enablePushNotificationsFromClick()">Enable Push Alerts</button>
+  </div>
     <!-- LOGIN SCREEN -->
     <section id="login-screen">
       <svg width="64" height="64" viewBox="0 0 108 108" style="border-radius:16px; margin: 0 auto; display:block;">
@@ -416,16 +423,21 @@
   <input type="file" id="note-gallery-input" accept="image/*" multiple class="hidden" onchange="handleNotePhotoInput(this)" />
 
   <!-- Kept inline so GitHub Actions PLACEHOLDER_FIREBASE_URL replacement works untouched -->
-  <script>
+ <script>
     window.APP_CONFIG = {
-      CLOUD_URL: "PLACEHOLDER_FIREBASE_URL"
+      CLOUD_URL: "PLACEHOLDER_FIREBASE_URL",
+      FIREBASE_WEB_CONFIG: PLACEHOLDER_FIREBASE_WEB_CONFIG
     };
   </script>
+
+  <script src="https://www.gstatic.com/firebasejs/13.4.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.4.0/firebase-messaging-compat.js"></script>
 
   <script src="js/config.js?v=BUILD_VERSION"></script>
   <script src="js/state.js?v=BUILD_VERSION"></script>
   <script src="js/calendar.js?v=BUILD_VERSION"></script>
   <script src="js/sync.js?v=BUILD_VERSION"></script>
+  <script src="js/push.js?v=BUILD_VERSION"></script>
   <script src="js/ai-vision.js?v=BUILD_VERSION"></script>
   <script src="js/capture.js?v=BUILD_VERSION"></script>
   <script src="js/media.js?v=BUILD_VERSION"></script>
