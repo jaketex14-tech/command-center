@@ -140,8 +140,8 @@ jobs:
           sed -i 's/allowBackup="true"/allowBackup="false"/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/<application/<uses-permission android:name="android.permission.POST_NOTIFICATIONS" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.READ_CALENDAR" \/>\n    <uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>\n    <application/g' android/app/src/main/AndroidManifest.xml
           sed -i 's/<\/application>/    <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="command_center_alerts" \/>\n        <service android:name=".CaptureService" android:label="Command Center Auto-Capture" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="true">\n            <intent-filter>\n                <action android:name="android.service.notification.NotificationListenerService" \/>\n            <\/intent-filter>\n        <\/service>\n        <service android:name=".CommandMessagingService" android:exported="false">\n            <intent-filter>\n                <action android:name="com.google.firebase.MESSAGING_EVENT" \/>\n            <\/intent-filter>\n        <\/service>\n    <\/application>/g' android/app/src/main/AndroidManifest.xml
-          sed -i 's/versionCode 1/versionCode ${{ github.run_number }}/g' android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "1.${{ github.run_number }}"/g' android/app/build.gradle
+          sed -i "s/versionCode 1/versionCode ${BUILD_NUM}/g" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.${BUILD_NUM}\"/g" android/app/build.gradle
 
           # 2. Inject Custom Adaptive Launcher Icon
           rm -rf android/app/src/main/res/drawable-v24
