@@ -368,6 +368,10 @@ function checkAndFireNotification(notifObj, isLocalAction) {
 
   showBanner(notifObj.title, notifObj.body);
 
+  if (typeof isPushActiveOnThisDevice === "function" && isPushActiveOnThisDevice()) {
+    return;
+  }
+
   try {
     if (window.AndroidNative && typeof window.AndroidNative.sendNotification === "function") {
       window.AndroidNative.sendNotification(notifObj.title, notifObj.body);
