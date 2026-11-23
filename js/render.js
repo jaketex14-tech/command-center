@@ -546,3 +546,6 @@ function renderAll() {
 state = loadBestAvailableLocalState();
 renderAll();
 startCloudSyncLoop();
+if (typeof initPushForCurrentUser === "function") {
+  initPushForCurrentUser();
+}
