@@ -36,9 +36,13 @@ function handleLogin() {
   if (!isAdminRole(userAccount)) activeTab = "tasks";
   renderAll();
   pollNativePhoneCaptures(false);
+  if (typeof initPushForCurrentUser === "function") initPushForCurrentUser();
 }
 
 function logoutUser() {
+  if (currentUserId && typeof removeCurrentDeviceToken === "function") {
+    removeCurrentDeviceToken(currentUserId);
+  }
   currentUserId = null;
   localStorage.removeItem(SESSION_USER_KEY);
   closeEditModal();
